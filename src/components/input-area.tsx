@@ -1,29 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import useChatStore from '@/store';
+import { getAgents } from '@/services/api'; // Import API function
+import webSocketService from '@/services/websocket'; // Import WebSocket service
 import { AgentInfo } from '@/types/api';
 
-export const InputArea: React.FC = () => {
+interface InputAreaProps {
+  activeSessionId: string | null; // Need session ID to know where to send messages
+}
+
+export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
   const [text, setText] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); // Keep file upload state
   const [mentionQuery, setMentionQuery] = useState('');
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionDropdownIndex, setMentionDropdownIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Zustand store
-  const sendTextMessage = useChatStore(state => state.sendTextMessage);
-  const agentConnectionStatus = useChatStore(state => state.agentConnectionStatus);
-  const availableAgents = useChatStore(state => state.availableAgents);
-  const agentErrors = useChatStore(state => state.agentErrors);
-  const clearAgentError = useChatStore(state => state.clearAgentError);
+  // Fetch available agents for @mention feature
+  const { data: availableAgents = [], isLoading: isLoadingAgents } = useQuery<AgentInfo[]>({
+    queryKey: ['agents'],
+    queryFn: getAgents,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
-  // Allow sending if any agent is connected
-  const isAnyAgentConnected = Object.values(agentConnectionStatus).includes('connected');
+  // Removed Zustand store state: sendTextMessage, agentConnectionStatus, agentErrors, clearAgentError
 
-  // Mention logic
+  // Simplified check: Allow sending if agents are loaded and a session is active
+  const canSendMessage = !isLoadingAgents && availableAgents.length > 0 && !!activeSessionId;
+
+  // --- Mention logic (uses fetched availableAgents) ---
   const getMentionCandidates = () => {
     if (!mentionQuery) return availableAgents;
     return availableAgents.filter(agent =>
@@ -32,17 +41,15 @@ export const InputArea: React.FC = () => {
   };
   const mentionCandidates = getMentionCandidates();
 
-  // Detect @mention trigger and update dropdown state
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setText(value);
 
-    // Find the last "@" before the caret
     const caret = e.target.selectionStart ?? value.length;
     const textBeforeCaret = value.slice(0, caret);
     const atMatch = textBeforeCaret.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
 
-    if (atMatch) {
+    if (atMatch && availableAgents.length > 0) { // Only show dropdown if agents exist
       setMentionQuery(atMatch[1]);
       setShowMentionDropdown(true);
       setMentionDropdownIndex(0);
@@ -52,17 +59,15 @@ export const InputArea: React.FC = () => {
     }
   };
 
-  // Insert @mention at caret
   const insertMention = (agent: AgentInfo) => {
+    // ... (Keep existing insertMention implementation)
     if (!textareaRef.current) return;
     const caret = textareaRef.current.selectionStart ?? text.length;
     const value = text;
     const textBeforeCaret = value.slice(0, caret);
     const textAfterCaret = value.slice(caret);
 
-    // Replace the last "@..." with "@agentName "
     const newTextBeforeCaret = textBeforeCaret.replace(/(?:^|\s)@([a-zA-Z0-9_]*)$/, match => {
-      // Preserve leading space if present
       return (match.startsWith(' ') ? ' ' : '') + `@${agent.name} `;
     });
     const newText = newTextBeforeCaret + textAfterCaret;
@@ -71,7 +76,6 @@ export const InputArea: React.FC = () => {
     setMentionQuery('');
     setMentionDropdownIndex(0);
 
-    // Move caret to after inserted mention
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -80,8 +84,8 @@ export const InputArea: React.FC = () => {
     }, 0);
   };
 
-  // Keyboard navigation for mention dropdown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // ... (Keep existing handleKeyDown implementation for mention dropdown)
     if (showMentionDropdown && mentionCandidates.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -104,25 +108,57 @@ export const InputArea: React.FC = () => {
         return;
       }
     }
-    // Normal send on Enter (if not in mention dropdown)
+    // Normal send on Enter
     if (e.key === 'Enter' && !e.shiftKey && !showMentionDropdown) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  // Send logic
+  // --- Send logic (uses WebSocket service directly) ---
   const handleSend = () => {
-    if (!text.trim() || !isAnyAgentConnected) return;
-    sendTextMessage(text);
+    const trimmedText = text.trim();
+    if (!trimmedText || !canSendMessage || !activeSessionId) return;
+
+    // --- Replicate @mention/broadcast logic ---
+    const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+    const mentionedNames = Array.from(trimmedText.matchAll(mentionRegex)).map(m => m[1].toLowerCase());
+    const mentionedAgents = availableAgents.filter(agent =>
+      mentionedNames.includes(agent.name.toLowerCase())
+    );
+
+    // TODO: Need connection status to send only to connected agents.
+    // For now, sending based only on mention or broadcast to all available.
+    // This requires the parent component/context to provide connection status.
+    // --- TEMPORARY: Send to all mentioned or all available ---
+    const targetAgentIds = new Set<string>();
+    if (mentionedAgents.length > 0) {
+        mentionedAgents.forEach(agent => targetAgentIds.add(agent.id));
+        console.log(`Sending message to mentioned agents: ${mentionedAgents.map(a => a.name).join(', ')}`);
+    } else {
+        availableAgents.forEach(agent => targetAgentIds.add(agent.id));
+        console.log(`Broadcasting message to all available agents for session ${activeSessionId}`);
+    }
+
+    targetAgentIds.forEach(agentId => {
+        // Note: WebSocketService handles the check if the socket for agentId is actually open
+        webSocketService.sendTextMessage(agentId, trimmedText);
+    });
+    // --- End Temporary Logic ---
+
+
     setText('');
     setShowMentionDropdown(false);
     setMentionQuery('');
     setMentionDropdownIndex(0);
+    if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'; // Reset height after sending
+    }
   };
 
-  // File upload logic (unchanged)
+  // --- File upload logic (unchanged) ---
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ... (Keep existing handleFileSelect implementation)
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -130,8 +166,6 @@ export const InputArea: React.FC = () => {
       setIsUploading(true);
       const reader = new FileReader();
       reader.onload = (event) => {
-        // Not implemented for ADK streaming
-        // Optionally, show a toast or warning here
         console.warn("File upload not implemented for ADK streaming yet.");
       };
       reader.readAsDataURL(file);
@@ -145,40 +179,35 @@ export const InputArea: React.FC = () => {
     }
   };
 
-  // Mention dropdown positioning (basic, below textarea)
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset height
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Set to scroll height
+    }
+  }, [text]);
+
+  // Mention dropdown positioning (unchanged)
   const mentionDropdownStyle: React.CSSProperties = {
     position: 'absolute',
     left: 0,
-    bottom: '100%',
+    bottom: '100%', // Position above the textarea
+    marginBottom: '4px', // Add some space
     zIndex: 10,
-    background: '#23272a',
+    background: '#23272a', // Dark background
     border: '1px solid #444',
     borderRadius: 4,
-    minWidth: 120,
+    minWidth: 150, // Ensure enough width
     maxHeight: 180,
     overflowY: 'auto',
     boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
   };
 
-  // Error display: show any agent error
-  const firstError = Object.values(agentErrors).find(e => e);
+  // Removed error display section
 
   return (
     <section className="p-4 border-t border-gray-700 relative">
-      {firstError && (
-        <div className="text-red-500 text-sm mb-2 text-center">
-          {firstError}
-          <button
-            onClick={() => {
-              // Clear all errors
-              availableAgents.forEach(agent => clearAgentError(agent.id));
-            }}
-            className="ml-2 text-red-400 hover:text-red-300"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
+      {/* Removed error display */}
       <form className="flex items-center" onSubmit={e => { e.preventDefault(); handleSend(); }}>
         <input
           type="file"
@@ -191,8 +220,9 @@ export const InputArea: React.FC = () => {
           type="button"
           variant="ghost"
           className="mr-2"
-          disabled={isUploading || !isAnyAgentConnected}
+          disabled={isUploading || !canSendMessage} // Simplified disabled logic
           onClick={() => fileInputRef.current?.click()}
+          title="Upload file (not implemented)"
         >
           {isUploading ? '📤' : '📎'}
         </Button>
@@ -200,16 +230,16 @@ export const InputArea: React.FC = () => {
           <Textarea
             ref={textareaRef}
             placeholder={
-              !isAnyAgentConnected
-                ? "Waiting for agent connection..."
-                : "Type a message... (Shift+Enter for new line, @ to mention an agent)"
+              !canSendMessage
+                ? "Connect to an agent to chat..." // Updated placeholder
+                : "Type a message... (Shift+Enter for new line, @ to mention)"
             }
             rows={1}
-            className="flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded"
+            className="flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded pr-10" // Added padding for send button overlap
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            disabled={!isAnyAgentConnected || isUploading}
+            disabled={!canSendMessage || isUploading}
             autoComplete="off"
           />
           {showMentionDropdown && mentionCandidates.length > 0 && (
@@ -217,11 +247,12 @@ export const InputArea: React.FC = () => {
               {mentionCandidates.map((agent, idx) => (
                 <div
                   key={agent.id}
-                  className={`px-3 py-1 cursor-pointer ${idx === mentionDropdownIndex ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'}`}
-                  onMouseDown={e => { e.preventDefault(); insertMention(agent); }}
+                  className={`px-3 py-1.5 text-sm cursor-pointer ${idx === mentionDropdownIndex ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'}`}
+                  onMouseDown={e => { e.preventDefault(); insertMention(agent); }} // Use onMouseDown to prevent blur
                 >
                   <span className="font-semibold">@{agent.name}</span>
-                  <span className="ml-2 text-xs" style={{ color: agent.color }}>{agent.color}</span>
+                  {/* Optional: Show agent color or description */}
+                  {/* <span className="ml-2 text-xs" style={{ color: agent.color }}>●</span> */}
                 </div>
               ))}
             </div>
@@ -230,7 +261,8 @@ export const InputArea: React.FC = () => {
         <Button
           type="submit"
           variant="default"
-          disabled={!text.trim() || !isAnyAgentConnected || isUploading}
+          disabled={!text.trim() || !canSendMessage || isUploading} // Simplified disabled logic
+          className="ml-2" // Ensure space between textarea and button
         >
           Send
         </Button>

@@ -1,22 +1,21 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import useChatStore from '@/store'; // Use the new store
+// Removed useChatStore import
 
 interface ChatListItemProps {
   chatId: string;
   chatTitle: string;
   isActive: boolean;
+  onClick: (chatId: string) => void; // Add onClick prop
 }
 
-export const ChatListItem: React.FC<ChatListItemProps> = ({ chatId, chatTitle, isActive }) => {
-  // Use the renamed action from the new store
-  const setActiveSession = useChatStore((state) => state.setActiveSession); 
+export const ChatListItem: React.FC<ChatListItemProps> = ({ chatId, chatTitle, isActive, onClick }) => {
+  // Removed setActiveSession from store
 
   const handleClick = () => {
-    setActiveSession(chatId); // Call the renamed action
+    onClick(chatId); // Call the onClick prop passed from parent
   };
 
-  // Optionally add dynamic styling for active state
   return (
     <Button
       variant="ghost"

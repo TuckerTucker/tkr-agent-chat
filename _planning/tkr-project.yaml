@@ -15,7 +15,7 @@ app:
     project_type: "multi_agent_chat_application"
     framework: "react"
     language: "typescript"
-    last_updated: "2025-04-11" # Today's date
+    last_updated: "2025-04-12" # Updated date
   documentation:
     ui_overview: "multiagent_chat_ui.md" # Link to the UI documentation
     adk_docs: "adk_overview.md"
@@ -25,17 +25,18 @@ app:
 architecture:
   server-client: "strict server/client architecture"
   patterns:
-    state: "Zustand for global state (conversations, active chat, agents), component state for local UI"
-    data_flow: "UI Events -> Zustand Store -> WebSocket -> ADK Backend -> WebSocket -> Zustand Store -> UI Update"
-    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors"
+    state: "TanStack Query for managing server state cache, React state/context for local UI state (e.g., active session ID, theme)."
+    # Updated data flow for server-side persistence
+    data_flow: "UI Events -> API Call (React Query Mutation) / WebSocket -> API Gateway (DB Persistence, ADK Runner) -> WebSocket -> React Query Cache Invalidation -> UI Update"
+    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors, React Query error handling."
     component_development: "Storybook stories with shadcn/ui components"
   scalability:
     real_time:
       strategy: "WebSockets for message passing"
       rationale: "Essential for real-time chat updates between user and agents."
     state_management:
-      strategy: "Selective subscriptions in Zustand to minimize re-renders"
-      rationale: "Efficient updates for potentially high-frequency messages."
+      strategy: "TanStack Query caching and background updates. WebSocket invalidates relevant queries."
+      rationale: "Efficient server state management and synchronization."
   security:
     auth: # Assuming local development for now, placeholder
       provider: "None (Local Development)"
@@ -50,8 +51,8 @@ architecture:
       tree_shaking: true
     dependencies:
       ui: "shadcn/ui"
-      state: "Zustand"
-      websockets: "socket.io-client or native WebSocket API"
+      state: "@tanstack/react-query" # Changed from Zustand
+      websockets: "native WebSocket API" # Using native WebSocket API
       forms: "React Hook Form (if complex forms needed)"
       component_library: "storybook"
 
@@ -60,7 +61,7 @@ components:
   conversations_sidebar:
     metadata:
       purpose: "Manage and navigate between different chat conversations."
-      dependencies: ["zustand", "shadcn/ui/button", "shadcn/ui/scroll-area"]
+      dependencies: ["@tanstack/react-query", "shadcn/ui/button", "shadcn/ui/scroll-area"] # Updated dependency
       required: true
     type: "section"
     properties:
@@ -84,8 +85,8 @@ components:
       className: "m-2"
     interactions:
       on_click:
-        action: "createNewChatSession"
-        store_effect: "zustand/chats"
+        action: "createSession" # Action now triggers API call via React Query mutation
+        # Removed store_effect
 
   chat_list:
     type: "list"
@@ -95,7 +96,7 @@ components:
     properties:
       className: "flex-grow p-2"
     data_handling:
-      store: "zustand/chats"
+      # Removed store, data fetched via React Query
       item_component: "chat_list_item"
     accessibility:
       role: "list"
@@ -112,9 +113,9 @@ components:
       className: "w-full justify-start text-left mb-1"
     interactions:
       on_click:
-        action: "setActiveChatSession"
-        params: ["chatId"]
-        store_effect: "zustand/activeChat"
+        action: "setActiveSession" # Action now likely calls a prop function from parent
+        params: ["sessionId"]
+        # Removed store_effect
 
   library_section: # Placeholder based on UI doc
     type: "section"
@@ -127,7 +128,7 @@ components:
   chat_area:
     metadata:
       purpose: "Display the main conversation interface for the active chat."
-      dependencies: ["zustand", "message_display", "dark_mode_toggle"]
+      dependencies: ["@tanstack/react-query", "message_display", "dark_mode_toggle"] # Updated dependency
       required: true
     type: "section"
     properties:
@@ -137,19 +138,41 @@ components:
       - component: "message_display"
       - component: "input_area"
 
-  chat_header:
+  chat_header: # Updated to include agent connection controls
     type: "header"
     metadata:
-      purpose: "Display the current chat title and UI controls like dark mode toggle."
+      purpose: "Display chat title and dark mode toggle. Agent status removed."
+      dependencies: ["dark_mode_toggle", "@tanstack/react-query"] # Updated dependencies
     properties:
-      className: "p-4 border-b border-gray-700 flex justify-between items-center"
+      className: "p-4 border-b border-gray-700 flex flex-col gap-3"
     children:
-      - type: "title"
+      - type: "div" # Container for title and disconnect button
         properties:
-          text: "{Active Chat Title}" # From Zustand store
-          className: "text-xl font-semibold"
-      - component: "dark_mode_toggle"
-
+           className: "flex justify-between items-center"
+        children:
+          - type: "title"
+            properties:
+              text: "{Active Chat Title}" # Fetched via React Query
+              className: "text-xl font-semibold"
+          # Removed disconnect_button and agent connection buttons/status
+      # Removed agent connection div
+      - component: "dark_mode_toggle" # Kept dark mode toggle
+            metadata:
+              purpose: "Disconnect from the currently connected agent."
+            interactions:
+              on_click:
+                action: "disconnectFromAgent"
+      - type: "div" # Container for agent connection buttons
+        properties:
+           className: "flex gap-2 items-center flex-wrap"
+        children:
+           # Dynamically renders connect buttons based on availableAgents
+           - component: "connect_agent_button" # Placeholder component representing connect buttons
+             metadata:
+               purpose: "Connect to a specific available agent."
+             interactions:
+               on_click:
+                 action: "connectToAgent"
   dark_mode_toggle:
     type: "icon_button"
     component: "shadcn/ui/button"
@@ -161,7 +184,7 @@ components:
     interactions:
       on_click:
         action: "toggleTheme"
-        store_effect: "zustand/theme" # Or local storage/context
+        # Removed store_effect, handled via localStorage/context
 
   message_display:
     type: "section"
@@ -172,9 +195,9 @@ components:
     properties:
       className: "flex-grow p-4 overflow-y-auto"
     data_handling:
-      store: "zustand/activeChatMessages"
+      # Removed store, data fetched via React Query + local state for streaming
       item_mapping: # Logic to determine which component to render
-        condition: "message.sender === 'user'"
+        condition: "message.type === 'user'" # Updated condition field
         component: "user_message"
         else_component: "agent_message"
     accessibility:
@@ -216,35 +239,27 @@ components:
       shape: "circle" # Or square, etc.
       className: "w-6 h-6 rounded-full mr-2 flex-shrink-0" # Example
 
-  input_area:
+  input_area: # Updated dependencies and children
     metadata:
-      purpose: "Allow user to compose messages, select agents, and send."
-      dependencies: ["agent_selection_icons", "text_input_field", "send_button", "upload_button"]
+      purpose: "Allow user to compose messages and send to the connected agent."
+      dependencies: ["text_input_field", "send_button", "upload_button"] # Removed agent_selection_icons
       required: true
     type: "section"
     properties:
       className: "p-4 border-t border-gray-700"
     children:
-      - component: "agent_selection_icons"
+      # Removed agent_selection_icons component
       - type: "form" # Wrap input elements
         properties:
-          className: "flex items-center mt-2"
+          className: "flex items-center" # Removed mt-2 as agent icons are gone
         children:
           - component: "upload_button"
           - component: "text_input_field"
           - component: "send_button"
 
-  agent_selection_icons:
-    type: "icon_group"
-    metadata:
-      purpose: "Allow user to select which agent(s) to interact with."
-    properties:
-      className: "flex space-x-2 mb-2"
-    data_handling:
-      store: "zustand/availableAgents"
-      item_component: "agent_selection_icon"
+  # Removed agent_selection_icons component definition
 
-  agent_selection_icon:
+  # Removed agent_selection_icon component definition
     type: "icon_button"
     component: "shadcn/ui/button" # Or custom icon component
     metadata:
@@ -272,7 +287,7 @@ components:
       className: "flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded"
     interactions:
       on_key_press: # Handle Shift+Enter for new line, Enter for send
-        "Enter": "sendMessage"
+        "Enter": "sendTextMessage" # Renamed action
         "Shift+Enter": "insertNewline"
 
   send_button:
@@ -285,7 +300,7 @@ components:
       variant: "default"
     interactions:
       on_click:
-        action: "sendMessage"
+        action: "sendTextMessage" # Renamed action
 
   upload_button:
     type: "icon_button"
@@ -311,7 +326,7 @@ development:
       - "src/stories/"           # Storybook stories
       - "src/hooks/"
       - "src/services/"          # WebSocket service, API calls
-      - "src/store/"             # Zustand store
+      # Removed src/store/
       - "src/types/"
       - "src/utils/"
       - "src/assets/"
@@ -348,7 +363,7 @@ theme:
     text_secondary: "gray-400"
     border: "gray-700"
     agent_chloe: "rgb(34 197 94)" # Green icon approx
-    agent_architect: "rgb(249 115 22)" # Orange icon approx
+    agent_Phil_Connors: "rgb(249 115 22)" # Orange icon approx (Renamed key)
   typography:
     font_family: "sans-serif" # Default system font
     base_size: "14px" # Typical for chat interfaces
@@ -388,10 +403,10 @@ agents:
   tools: "Each agent has its own tools/ directory for modular tool implementations. Tools are registered with the agent via the tools property."
   prompts: "Prompt logic is modular and file-based (prompt.py), supporting easy customization and extension."
   testing: "Unit tests are required for agent logic and tools, located in tests/."
-  integration:
-    runner: "Agents are registered with the ADK runner/session system for message routing and state management."
-    ui: "Agent metadata and chat endpoints are exposed to the React UI via the API Gateway (REST/WebSocket)."
-    events: "Agent responses, tool events, and metadata are surfaced to the UI for real-time interaction."
+  integration: # Updated for ADK Streaming Model
+    runner: "Agents are loaded by the API Gateway and executed using the google-adk Runner."
+    ui: "Agent metadata is exposed via a REST endpoint (/api/v1/agents). Chat interaction occurs via a direct WebSocket connection per agent (/ws/v1/chat/{session_id}/{agent_id}) managed by the API Gateway, which uses the ADK Runner internally."
+    events: "Agent responses (text chunks, turn completion) are streamed directly to the UI via the WebSocket connection."
   best_practices:
     - "Keep each agent self-contained and modular."
     - "Use clear, documented configuration for UI integration."
@@ -412,7 +427,7 @@ agents:
       recommendation: "Default to stateless functions or lightweight classes. Use persistent objects only if stateful behavior is required."
     discovery: "Tools are auto-registered by scanning the tools/ directory at agent startup. Use naming conventions or decorators to mark tool entry points."
     config: "Tools are configured per agent and do not support runtime configuration by default."
-    invocation: "Tools are invoked exclusively via the MCP protocol."
+    invocation: "Tools are invoked internally by the agent logic (e.g., via ADK's function calling or direct calls), not via MCP." # Updated invocation
     error_handling: |
       - Catch and handle all exceptions within tool logic.
       - Return structured error responses via MCP protocol (error code, message).

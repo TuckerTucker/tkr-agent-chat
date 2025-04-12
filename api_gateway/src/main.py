@@ -20,7 +20,8 @@ from agents.phil_connors.src.index import get_agent as get_phil_connors_agent # 
 
 # Import routes and services
 from .routes import api, ws, agents # Remove tasks import
-from .services.chat_service import chat_service
+from .services.chat_service import chat_service # Import global instance
+from .database import init_db # Import DB init function
 # from .services.adk_runner_service import adk_runner_service # Remove ADK runner service import
 from dotenv import load_dotenv # Import dotenv
 
@@ -78,11 +79,15 @@ def load_agents() -> Dict[str, object]:
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize services on startup."""
+    """Initialize services and database on startup."""
     try:
+        # Initialize Database
+        await init_db()
+        logger.info("Database initialized.")
+
         # Load agents into ChatService (ADK runner is now managed within ws.py)
         loaded_agents = load_agents()
-        chat_service.set_agents(loaded_agents)
+        chat_service.set_agents(loaded_agents) # Set agents on the global instance
         logger.info("Chat service initialized with agents.")
     except Exception as e:
         logger.error(f"Startup error: {e}")

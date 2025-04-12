@@ -24,6 +24,13 @@ export interface ChatSession {
   metadata?: Record<string, any>;
 }
 
+// Pydantic Read Model for Sessions (Matches backend)
+export interface ChatSessionRead {
+  id: string;
+  title?: string;
+  created_at: string; // Keep as string for simplicity, parse if needed
+}
+
 // Message Types
 export type MessageType = 'user' | 'agent' | 'system' | 'error';
 
@@ -41,6 +48,19 @@ export interface Message {
   parts: MessagePart[];
   metadata?: Record<string, any>;
 }
+
+// Pydantic Read Model for Messages (Matches backend)
+export interface MessageRead {
+  id: number; // Matches DB primary key
+  message_uuid: string;
+  session_id: string;
+  type: MessageType;
+  agent_id?: string;
+  parts: MessagePart[]; // Keep using MessagePart for consistency
+  metadata?: Record<string, any>;
+  created_at: string; // Keep as string
+}
+
 
 // WebSocket Message Format
 export interface WebSocketMessage {

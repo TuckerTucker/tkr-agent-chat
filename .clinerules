@@ -15,7 +15,7 @@ app:
     project_type: "multi_agent_chat_application"
     framework: "react"
     language: "typescript"
-    last_updated: "2025-04-11" # Today's date
+    last_updated: "2025-04-12" # Updated date
   documentation:
     ui_overview: "multiagent_chat_ui.md" # Link to the UI documentation
     adk_docs: "adk_overview.md"
@@ -25,18 +25,18 @@ app:
 architecture:
   server-client: "strict server/client architecture"
   patterns:
-    state: "Zustand for global state (conversations, active chat, agents), component state for local UI"
-    # Updated data flow for direct ADK streaming via Gateway WebSocket
-    data_flow: "UI Events -> Zustand Store -> WebSocket -> API Gateway (ADK Runner) -> WebSocket -> Zustand Store -> UI Update" 
-    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors"
+    state: "TanStack Query for managing server state cache, React state/context for local UI state (e.g., active session ID, theme)."
+    # Updated data flow for server-side persistence
+    data_flow: "UI Events -> API Call (React Query Mutation) / WebSocket -> API Gateway (DB Persistence, ADK Runner) -> WebSocket -> React Query Cache Invalidation -> UI Update"
+    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors, React Query error handling."
     component_development: "Storybook stories with shadcn/ui components"
   scalability:
     real_time:
       strategy: "WebSockets for message passing"
       rationale: "Essential for real-time chat updates between user and agents."
     state_management:
-      strategy: "Selective subscriptions in Zustand to minimize re-renders"
-      rationale: "Efficient updates for potentially high-frequency messages."
+      strategy: "TanStack Query caching and background updates. WebSocket invalidates relevant queries."
+      rationale: "Efficient server state management and synchronization."
   security:
     auth: # Assuming local development for now, placeholder
       provider: "None (Local Development)"
@@ -51,8 +51,8 @@ architecture:
       tree_shaking: true
     dependencies:
       ui: "shadcn/ui"
-      state: "Zustand"
-      websockets: "socket.io-client or native WebSocket API"
+      state: "@tanstack/react-query" # Changed from Zustand
+      websockets: "native WebSocket API" # Using native WebSocket API
       forms: "React Hook Form (if complex forms needed)"
       component_library: "storybook"
 
@@ -61,7 +61,7 @@ components:
   conversations_sidebar:
     metadata:
       purpose: "Manage and navigate between different chat conversations."
-      dependencies: ["zustand", "shadcn/ui/button", "shadcn/ui/scroll-area"]
+      dependencies: ["@tanstack/react-query", "shadcn/ui/button", "shadcn/ui/scroll-area"] # Updated dependency
       required: true
     type: "section"
     properties:
@@ -85,8 +85,8 @@ components:
       className: "m-2"
     interactions:
       on_click:
-        action: "createSession" # Renamed action
-        store_effect: "zustand/sessions" # Updated state slice
+        action: "createSession" # Action now triggers API call via React Query mutation
+        # Removed store_effect
 
   chat_list:
     type: "list"
@@ -96,7 +96,7 @@ components:
     properties:
       className: "flex-grow p-2"
     data_handling:
-      store: "zustand/chats"
+      # Removed store, data fetched via React Query
       item_component: "chat_list_item"
     accessibility:
       role: "list"
@@ -113,9 +113,9 @@ components:
       className: "w-full justify-start text-left mb-1"
     interactions:
       on_click:
-        action: "setActiveSession" # Renamed action
-        params: ["sessionId"] # Parameter name consistency
-        store_effect: "zustand/activeSessionId" # Updated state slice
+        action: "setActiveSession" # Action now likely calls a prop function from parent
+        params: ["sessionId"]
+        # Removed store_effect
 
   library_section: # Placeholder based on UI doc
     type: "section"
@@ -128,7 +128,7 @@ components:
   chat_area:
     metadata:
       purpose: "Display the main conversation interface for the active chat."
-      dependencies: ["zustand", "message_display", "dark_mode_toggle"]
+      dependencies: ["@tanstack/react-query", "message_display", "dark_mode_toggle"] # Updated dependency
       required: true
     type: "section"
     properties:
@@ -141,10 +141,10 @@ components:
   chat_header: # Updated to include agent connection controls
     type: "header"
     metadata:
-      purpose: "Display chat title, agent connection controls, and dark mode toggle."
-      dependencies: ["dark_mode_toggle", "zustand/availableAgents", "zustand/activeConnectionAgentId"] # Added store dependencies
+      purpose: "Display chat title and dark mode toggle. Agent status removed."
+      dependencies: ["dark_mode_toggle", "@tanstack/react-query"] # Updated dependencies
     properties:
-      className: "p-4 border-b border-gray-700 flex flex-col gap-3" # Updated class for layout
+      className: "p-4 border-b border-gray-700 flex flex-col gap-3"
     children:
       - type: "div" # Container for title and disconnect button
         properties:
@@ -152,9 +152,11 @@ components:
         children:
           - type: "title"
             properties:
-              text: "{Active Chat Title}" # From Zustand store
+              text: "{Active Chat Title}" # Fetched via React Query
               className: "text-xl font-semibold"
-          - component: "disconnect_button" # Placeholder for disconnect logic/button
+          # Removed disconnect_button and agent connection buttons/status
+      # Removed agent connection div
+      - component: "dark_mode_toggle" # Kept dark mode toggle
             metadata:
               purpose: "Disconnect from the currently connected agent."
             interactions:
@@ -171,9 +173,6 @@ components:
              interactions:
                on_click:
                  action: "connectToAgent"
-                 params: ["agentId"]
-      - component: "dark_mode_toggle" # Kept dark mode toggle
-
   dark_mode_toggle:
     type: "icon_button"
     component: "shadcn/ui/button"
@@ -185,7 +184,7 @@ components:
     interactions:
       on_click:
         action: "toggleTheme"
-        store_effect: "zustand/theme" # Or local storage/context
+        # Removed store_effect, handled via localStorage/context
 
   message_display:
     type: "section"
@@ -196,9 +195,9 @@ components:
     properties:
       className: "flex-grow p-4 overflow-y-auto"
     data_handling:
-      store: "zustand/activeChatMessages"
+      # Removed store, data fetched via React Query + local state for streaming
       item_mapping: # Logic to determine which component to render
-        condition: "message.sender === 'user'"
+        condition: "message.type === 'user'" # Updated condition field
         component: "user_message"
         else_component: "agent_message"
     accessibility:
@@ -327,7 +326,7 @@ development:
       - "src/stories/"           # Storybook stories
       - "src/hooks/"
       - "src/services/"          # WebSocket service, API calls
-      - "src/store/"             # Zustand store
+      # Removed src/store/
       - "src/types/"
       - "src/utils/"
       - "src/assets/"

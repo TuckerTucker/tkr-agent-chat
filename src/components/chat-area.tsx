@@ -1,132 +1,71 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { MessageDisplay } from '@/components/message-display';
 import { InputArea } from '@/components/input-area';
-import useChatStore from '@/store';
-import { AgentInfo } from '@/types/api'; // Import AgentInfo type
+import { getSession } from '@/services/api'; // API function to get session details
+// Removed useChatStore and AgentInfo imports
 
-// Define connection status types locally if not imported
-type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
+// Removed AgentStatusIndicator component
 
 interface ChatHeaderProps {
   title: string;
+  isLoading: boolean; // Add loading state for title
 }
 
-// Helper component for displaying agent status
-const AgentStatusIndicator: React.FC<{ agent: AgentInfo }> = ({ agent }) => {
-  const status = useChatStore(state => state.agentConnectionStatus[agent.id] || 'disconnected');
-  const error = useChatStore(state => state.agentErrors[agent.id]);
-  const clearError = useChatStore(state => state.clearAgentError);
-
-  let bgColor = 'bg-gray-500'; // Default: disconnected
-  let title = `${agent.name}: Disconnected`;
-  let animate = false;
-
-  switch (status) {
-    case 'connected':
-      bgColor = 'bg-green-500';
-      title = `${agent.name}: Connected`;
-      break;
-    case 'connecting':
-      bgColor = 'bg-yellow-500';
-      title = `${agent.name}: Connecting...`;
-      animate = true;
-      break;
-    case 'error':
-      bgColor = 'bg-red-500';
-      title = `${agent.name}: Error - ${error || 'Unknown error'}`;
-      break;
-  }
-
-  return (
-    <div 
-      className="flex items-center gap-1 text-xs text-gray-300 cursor-help" 
-      title={title}
-      onClick={() => status === 'error' && clearError(agent.id)} // Allow clearing error on click
-    >
-      <span 
-        className={`w-3 h-3 rounded-full inline-block ${bgColor} ${animate ? 'animate-pulse' : ''}`} 
-        style={{ backgroundColor: status === 'connected' ? agent.color : undefined }} // Use agent color only when connected
-      />
-      <span>{agent.name}</span>
-      {status === 'error' && <span className="text-red-400">(Error)</span>}
-    </div>
-  );
-};
-
-
-const ChatHeader: React.FC<ChatHeaderProps> = ({ title }) => {
-  const availableAgents = useChatStore(state => state.availableAgents);
-  // Removed state related to single connection: activeConnectionAgentId, connectToAgent, disconnectFromAgent, isConnecting
+const ChatHeader: React.FC<ChatHeaderProps> = ({ title, isLoading }) => {
+  // Removed fetching availableAgents and agent status logic
 
   return (
     <header className="p-4 border-b border-gray-700 flex flex-col gap-3">
       {/* Session Title */}
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        {/* Removed Disconnect Button */}
+        <h1 className="text-xl font-semibold">
+          {isLoading ? 'Loading...' : title}
+        </h1>
       </div>
-
-      {/* Agent Connection Status Display */}
-      <div>
-        <span className="text-sm text-gray-400 mr-2">Agent Status:</span>
-        <div className="flex gap-3 items-center flex-wrap">
-          {availableAgents.map(agent => (
-            <AgentStatusIndicator key={agent.id} agent={agent} />
-          ))}
-          {!availableAgents.length && <span className="text-sm text-gray-500">No agents available.</span>}
-        </div>
-      </div>
+      {/* Removed Agent Connection Status Display */}
     </header>
   );
 };
 
-export const ChatArea: React.FC = () => {
-  // All hooks must be called at the top, before any returns!
-  const { 
-    initializeStore,
-    activeSessionId, 
-    sessions, 
-    isLoading
-  } = useChatStore();
-  const agentErrors = useChatStore(state => state.agentErrors);
-  const hasErrors = Object.values(agentErrors).some(e => e !== null);
+interface ChatAreaProps {
+  activeSessionId: string | null; // Receive activeSessionId as a prop
+}
 
-  // Initialize store on mount
-  useEffect(() => {
-    initializeStore();
-    // Run only once on mount
-  }, [initializeStore]); 
+export const ChatArea: React.FC<ChatAreaProps> = ({ activeSessionId }) => {
+  // Removed Zustand hooks (initializeStore, sessions, isLoading, agentErrors)
 
-  // Show loading state while initializing
-  if (isLoading && sessions.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-900 text-white">
-        <div className="text-gray-400">Initializing chat...</div>
-      </div>
-    );
-  }
-  
-  // Handle case where no session could be created or activated after init
-  const activeSession = sessions.find(s => s.id === activeSessionId);
-  if (!activeSession) {
+  // Fetch active session details for the title
+  const { data: activeSession, isLoading: isLoadingSession, error: sessionError } = useQuery({
+    queryKey: ['session', activeSessionId], // Query key includes session ID
+    queryFn: () => activeSessionId ? getSession(activeSessionId) : Promise.reject(new Error("No active session")),
+    enabled: !!activeSessionId, // Only run query if activeSessionId exists
+    staleTime: 5 * 60 * 1000, // Cache session details for 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  // Handle loading and error states for the active session query
+  if (!activeSessionId) {
      return (
        <div className="flex items-center justify-center h-full bg-gray-900 text-white">
-         <div className="text-gray-400">No active chat session. Create one from the sidebar.</div>
+         <div className="text-gray-400">Select or create a chat session.</div>
        </div>
      );
   }
 
+  // Note: Loading/error for messages is handled within MessageDisplay
+  // Note: Loading/error for agents is handled within MessageDisplay and InputArea
+
   return (
     <section className="flex flex-col h-full bg-gray-900 text-white">
-      {/* Display agent-specific errors (optional, could be handled by indicators) */}
-      {/* {hasErrors && (
-         <div className="p-2 bg-red-800 text-center text-sm">
-           Agent connection errors detected. Check status indicators.
-         </div>
-      )} */}
-      <ChatHeader title={activeSession.title || 'New Chat'} />
-      <MessageDisplay />
-      <InputArea />
+      {/* Display session loading/error in header */}
+      <ChatHeader
+        title={sessionError ? 'Error loading title' : (activeSession?.title || 'Chat')}
+        isLoading={isLoadingSession}
+      />
+      {/* Pass activeSessionId down */}
+      <MessageDisplay activeSessionId={activeSessionId} />
+      <InputArea activeSessionId={activeSessionId} />
     </section>
   );
 };
