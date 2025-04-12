@@ -1,66 +1,140 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import useChatStore from '@/store';
+import { AgentInfo } from '@/types/api';
 
 export const InputArea: React.FC = () => {
   const [text, setText] = useState('');
-  const [isUploading, setIsUploading] = useState(false); // Keep file upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionDropdownIndex, setMentionDropdownIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Use new store state and actions
+  // Zustand store
   const sendTextMessage = useChatStore(state => state.sendTextMessage);
-  const activeConnectionAgentId = useChatStore(state => state.activeConnectionAgentId);
-  const error = useChatStore(state => state.error);
-  const clearError = useChatStore(state => state.clearError);
+  const agentConnectionStatus = useChatStore(state => state.agentConnectionStatus);
+  const availableAgents = useChatStore(state => state.availableAgents);
+  const agentErrors = useChatStore(state => state.agentErrors);
+  const clearAgentError = useChatStore(state => state.clearAgentError);
 
-  const isConnected = !!activeConnectionAgentId;
+  // Allow sending if any agent is connected
+  const isAnyAgentConnected = Object.values(agentConnectionStatus).includes('connected');
 
-  const handleSend = () => { // No longer async, just sends text
-    if (!text.trim() || !isConnected) return;
-    
-    sendTextMessage(text);
-    setText('');
-    if (error) clearError(); // Clear error on successful send attempt
+  // Mention logic
+  const getMentionCandidates = () => {
+    if (!mentionQuery) return availableAgents;
+    return availableAgents.filter(agent =>
+      agent.name.toLowerCase().startsWith(mentionQuery.toLowerCase())
+    );
+  };
+  const mentionCandidates = getMentionCandidates();
+
+  // Detect @mention trigger and update dropdown state
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setText(value);
+
+    // Find the last "@" before the caret
+    const caret = e.target.selectionStart ?? value.length;
+    const textBeforeCaret = value.slice(0, caret);
+    const atMatch = textBeforeCaret.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+
+    if (atMatch) {
+      setMentionQuery(atMatch[1]);
+      setShowMentionDropdown(true);
+      setMentionDropdownIndex(0);
+    } else {
+      setShowMentionDropdown(false);
+      setMentionQuery('');
+    }
   };
 
+  // Insert @mention at caret
+  const insertMention = (agent: AgentInfo) => {
+    if (!textareaRef.current) return;
+    const caret = textareaRef.current.selectionStart ?? text.length;
+    const value = text;
+    const textBeforeCaret = value.slice(0, caret);
+    const textAfterCaret = value.slice(caret);
+
+    // Replace the last "@..." with "@agentName "
+    const newTextBeforeCaret = textBeforeCaret.replace(/(?:^|\s)@([a-zA-Z0-9_]*)$/, match => {
+      // Preserve leading space if present
+      return (match.startsWith(' ') ? ' ' : '') + `@${agent.name} `;
+    });
+    const newText = newTextBeforeCaret + textAfterCaret;
+    setText(newText);
+    setShowMentionDropdown(false);
+    setMentionQuery('');
+    setMentionDropdownIndex(0);
+
+    // Move caret to after inserted mention
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = newTextBeforeCaret.length;
+      }
+    }, 0);
+  };
+
+  // Keyboard navigation for mention dropdown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (showMentionDropdown && mentionCandidates.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionDropdownIndex(i => (i + 1) % mentionCandidates.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionDropdownIndex(i => (i - 1 + mentionCandidates.length) % mentionCandidates.length);
+        return;
+      }
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault();
+        insertMention(mentionCandidates[mentionDropdownIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setShowMentionDropdown(false);
+        setMentionQuery('');
+        return;
+      }
+    }
+    // Normal send on Enter (if not in mention dropdown)
+    if (e.key === 'Enter' && !e.shiftKey && !showMentionDropdown) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  // Send logic
+  const handleSend = () => {
+    if (!text.trim() || !isAnyAgentConnected) return;
+    sendTextMessage(text);
+    setText('');
+    setShowMentionDropdown(false);
+    setMentionQuery('');
+    setMentionDropdownIndex(0);
+  };
+
+  // File upload logic (unchanged)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsUploading(true);
-      
-      // Convert file to base64
       const reader = new FileReader();
-      reader.onload = (event) => { // No longer async
-        const base64 = event.target?.result as string;
-        
-        // TODO: File sending needs re-evaluation with ADK streaming model.
-        // The current backend ws.py only handles plain text via send_content.
-        // Sending files might require a separate mechanism or protocol extension.
-        // For now, we'll log a warning and not send the file.
-        console.warn("File upload selected, but sending files via ADK streaming is not yet implemented in this example.");
-        // Use the setError action from the store
-        useChatStore.setState({ error: "File upload not implemented for ADK streaming yet." }); 
-        
-        // Original (non-functional for current backend):
-        // sendTextMessage(`[Uploading file: ${file.name}]`); // Send placeholder text?
-        // Or potentially send structured data if backend/ADK supports it:
-        // webSocketService.sendRawJson({ type: 'file', ... }); 
-        
-        // Clear error if one existed before upload attempt
-        // if (error) clearError(); 
+      reader.onload = (event) => {
+        // Not implemented for ADK streaming
+        // Optionally, show a toast or warning here
+        console.warn("File upload not implemented for ADK streaming yet.");
       };
       reader.readAsDataURL(file);
-      
     } catch (err) {
       console.error('Failed to upload file:', err);
     } finally {
@@ -71,13 +145,34 @@ export const InputArea: React.FC = () => {
     }
   };
 
+  // Mention dropdown positioning (basic, below textarea)
+  const mentionDropdownStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: 0,
+    bottom: '100%',
+    zIndex: 10,
+    background: '#23272a',
+    border: '1px solid #444',
+    borderRadius: 4,
+    minWidth: 120,
+    maxHeight: 180,
+    overflowY: 'auto',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  };
+
+  // Error display: show any agent error
+  const firstError = Object.values(agentErrors).find(e => e);
+
   return (
-    <section className="p-4 border-t border-gray-700">
-      {error && (
+    <section className="p-4 border-t border-gray-700 relative">
+      {firstError && (
         <div className="text-red-500 text-sm mb-2 text-center">
-          {error}
+          {firstError}
           <button
-            onClick={clearError}
+            onClick={() => {
+              // Clear all errors
+              availableAgents.forEach(agent => clearAgentError(agent.id));
+            }}
             className="ml-2 text-red-400 hover:text-red-300"
           >
             Dismiss
@@ -96,28 +191,46 @@ export const InputArea: React.FC = () => {
           type="button"
           variant="ghost"
           className="mr-2"
-          disabled={isUploading || !isConnected} // Disable upload if not connected
+          disabled={isUploading || !isAnyAgentConnected}
           onClick={() => fileInputRef.current?.click()}
         >
           {isUploading ? '📤' : '📎'}
         </Button>
-        <Textarea
-          placeholder={
-            !isConnected
-              ? "Connect to an agent above to start chatting..."
-              : "Type a message... (Shift+Enter for new line)"
-          }
-          rows={1}
-          className="flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded"
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={!isConnected || isUploading} // Disable if not connected or uploading
-        />
+        <div className="relative flex-grow">
+          <Textarea
+            ref={textareaRef}
+            placeholder={
+              !isAnyAgentConnected
+                ? "Waiting for agent connection..."
+                : "Type a message... (Shift+Enter for new line, @ to mention an agent)"
+            }
+            rows={1}
+            className="flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded"
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            disabled={!isAnyAgentConnected || isUploading}
+            autoComplete="off"
+          />
+          {showMentionDropdown && mentionCandidates.length > 0 && (
+            <div style={mentionDropdownStyle}>
+              {mentionCandidates.map((agent, idx) => (
+                <div
+                  key={agent.id}
+                  className={`px-3 py-1 cursor-pointer ${idx === mentionDropdownIndex ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'}`}
+                  onMouseDown={e => { e.preventDefault(); insertMention(agent); }}
+                >
+                  <span className="font-semibold">@{agent.name}</span>
+                  <span className="ml-2 text-xs" style={{ color: agent.color }}>{agent.color}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <Button
           type="submit"
           variant="default"
-          disabled={!text.trim() || !isConnected || isUploading} // Disable if no text, not connected, or uploading
+          disabled={!text.trim() || !isAnyAgentConnected || isUploading}
         >
           Send
         </Button>

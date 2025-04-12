@@ -233,23 +233,32 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, agent_id: st
         # Start the specific agent session using ADK
         live_events, live_request_queue = start_agent_session(session_id, agent_id)
 
-        # Run bidirectional communication concurrently
-        agent_to_client_task = asyncio.create_task(
-            agent_to_client_messaging(websocket, live_events)
-        )
-        client_to_agent_task = asyncio.create_task(
-            client_to_agent_messaging(websocket, live_request_queue)
-        )
-        
-        # Keep connection open until one task finishes (e.g., due to disconnect)
-        done, pending = await asyncio.wait(
-            [agent_to_client_task, client_to_agent_task],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-        
-        # Cancel any pending tasks to ensure clean exit
-        for task in pending:
-            task.cancel()
+        # Run bidirectional communication in a loop for continual conversation
+        while True:
+            agent_to_client_task = asyncio.create_task(
+                agent_to_client_messaging(websocket, live_events)
+            )
+            client_to_agent_task = asyncio.create_task(
+                client_to_agent_messaging(websocket, live_request_queue)
+            )
+
+            # Wait for either task to finish (client disconnect or error)
+            done, pending = await asyncio.wait(
+                [agent_to_client_task, client_to_agent_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            # If client disconnected, break the loop and close the connection
+            if client_to_agent_task in done:
+                for task in pending:
+                    task.cancel()
+                break
+
+            # If agent turn is complete, continue the loop for the next turn
+            for task in pending:
+                task.cancel()
+            # live_events and live_request_queue remain valid for the session
+
             
     except ValueError as e: # Catch agent not found error from start_agent_session
          logger.error(f"Failed to start session {session_id} for agent {agent_id}: {e}")
