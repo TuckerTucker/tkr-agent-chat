@@ -1,0 +1,7 @@
+# Requirements for phil_connors agent
+
+# For weather_check tool
+requests>=2.20.0
+
+# For loading agent-specific .env file
+python-dotenv>=1.0.0

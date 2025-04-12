@@ -1,0 +1,444 @@
+# Project Definition for the Multi-Agent Chat System
+app:
+  name: "Tucker's Team - Multi-Agent Chat"
+  author: "Tucker" # Assuming based on chat title
+  role: "Developer" # Assuming
+  description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK)."
+  taskboard:
+    Board: TKR Multi-Agent Chat Implementation Plan
+    ID: b829b5e1-d533-4ebb-81de-7b3336fc00ef
+  github:
+    user:"tuckertucker"
+    repo:"tkr-agent-chat"
+  version: "0.1.0"
+  metadata:
+    project_type: "multi_agent_chat_application"
+    framework: "react"
+    language: "typescript"
+    last_updated: "2025-04-11" # Today's date
+  documentation:
+    ui_overview: "multiagent_chat_ui.md" # Link to the UI documentation
+    adk_docs: "adk_overview.md"
+    component_library: "https://storybook.js.org/" # Assuming Storybook usage
+    api_docs: "agent_development_kit_documentation.md" # Link to ADK docs
+
+architecture:
+  server-client: "strict server/client architecture"
+  patterns:
+    state: "Zustand for global state (conversations, active chat, agents), component state for local UI"
+    # Updated data flow for direct ADK streaming via Gateway WebSocket
+    data_flow: "UI Events -> Zustand Store -> WebSocket -> API Gateway (ADK Runner) -> WebSocket -> Zustand Store -> UI Update" 
+    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors"
+    component_development: "Storybook stories with shadcn/ui components"
+  scalability:
+    real_time:
+      strategy: "WebSockets for message passing"
+      rationale: "Essential for real-time chat updates between user and agents."
+    state_management:
+      strategy: "Selective subscriptions in Zustand to minimize re-renders"
+      rationale: "Efficient updates for potentially high-frequency messages."
+  security:
+    auth: # Assuming local development for now, placeholder
+      provider: "None (Local Development)"
+      strategy: "N/A"
+    input_sanitization:
+      strategy: "Sanitize user input on the client and server"
+      rationale: "Prevent XSS attacks via chat messages."
+  build:
+    bundler: "Vite" # Modern alternative to Webpack/Next.js for SPAs
+    optimization:
+      code_splitting: "Route-based (if multiple pages) and component-based"
+      tree_shaking: true
+    dependencies:
+      ui: "shadcn/ui"
+      state: "Zustand"
+      websockets: "socket.io-client or native WebSocket API"
+      forms: "React Hook Form (if complex forms needed)"
+      component_library: "storybook"
+
+# Component definitions based on multiagent_chat_ui.md
+components:
+  conversations_sidebar:
+    metadata:
+      purpose: "Manage and navigate between different chat conversations."
+      dependencies: ["zustand", "shadcn/ui/button", "shadcn/ui/scroll-area"]
+      required: true
+    type: "section"
+    properties:
+      className: "flex flex-col h-full bg-gray-800 text-white border-r border-gray-700" # Example styling
+    accessibility:
+      role: "navigation"
+      aria_label: "Chat Conversations"
+    children:
+      - component: "new_chat_button"
+      - component: "chat_list"
+      - component: "library_section" # Placeholder for Library(2)
+
+  new_chat_button:
+    type: "button"
+    component: "shadcn/ui/button"
+    metadata:
+      purpose: "Initiate a new chat session."
+    properties:
+      text: "New Chat"
+      variant: "default" # Or a custom variant
+      className: "m-2"
+    interactions:
+      on_click:
+        action: "createSession" # Renamed action
+        store_effect: "zustand/sessions" # Updated state slice
+
+  chat_list:
+    type: "list"
+    component: "shadcn/ui/scroll-area" # To handle many chats
+    metadata:
+      purpose: "Display existing chat sessions for selection."
+    properties:
+      className: "flex-grow p-2"
+    data_handling:
+      store: "zustand/chats"
+      item_component: "chat_list_item"
+    accessibility:
+      role: "list"
+      aria_label: "List of conversations"
+
+  chat_list_item:
+    type: "button" # Or a custom component
+    component: "shadcn/ui/button" # Example
+    metadata:
+      purpose: "Represent a single chat session in the list."
+    properties:
+      text: "{Chat Title}" # Dynamic based on chat data
+      variant: "ghost"
+      className: "w-full justify-start text-left mb-1"
+    interactions:
+      on_click:
+        action: "setActiveSession" # Renamed action
+        params: ["sessionId"] # Parameter name consistency
+        store_effect: "zustand/activeSessionId" # Updated state slice
+
+  library_section: # Placeholder based on UI doc
+    type: "section"
+    metadata:
+      purpose: "Access library resources (agents, prompts, etc.) - Functionality TBD."
+    properties:
+      text: "Library ({count})"
+      className: "p-2 border-t border-gray-700"
+
+  chat_area:
+    metadata:
+      purpose: "Display the main conversation interface for the active chat."
+      dependencies: ["zustand", "message_display", "dark_mode_toggle"]
+      required: true
+    type: "section"
+    properties:
+      className: "flex flex-col h-full bg-gray-900 text-white" # Dark theme
+    children:
+      - component: "chat_header"
+      - component: "message_display"
+      - component: "input_area"
+
+  chat_header: # Updated to include agent connection controls
+    type: "header"
+    metadata:
+      purpose: "Display chat title, agent connection controls, and dark mode toggle."
+      dependencies: ["dark_mode_toggle", "zustand/availableAgents", "zustand/activeConnectionAgentId"] # Added store dependencies
+    properties:
+      className: "p-4 border-b border-gray-700 flex flex-col gap-3" # Updated class for layout
+    children:
+      - type: "div" # Container for title and disconnect button
+        properties:
+           className: "flex justify-between items-center"
+        children:
+          - type: "title"
+            properties:
+              text: "{Active Chat Title}" # From Zustand store
+              className: "text-xl font-semibold"
+          - component: "disconnect_button" # Placeholder for disconnect logic/button
+            metadata:
+              purpose: "Disconnect from the currently connected agent."
+            interactions:
+              on_click:
+                action: "disconnectFromAgent"
+      - type: "div" # Container for agent connection buttons
+        properties:
+           className: "flex gap-2 items-center flex-wrap"
+        children:
+           # Dynamically renders connect buttons based on availableAgents
+           - component: "connect_agent_button" # Placeholder component representing connect buttons
+             metadata:
+               purpose: "Connect to a specific available agent."
+             interactions:
+               on_click:
+                 action: "connectToAgent"
+                 params: ["agentId"]
+      - component: "dark_mode_toggle" # Kept dark mode toggle
+
+  dark_mode_toggle:
+    type: "icon_button"
+    component: "shadcn/ui/button"
+    metadata:
+      purpose: "Toggle between light and dark UI themes."
+    properties:
+      icon: "moon" # Or 'sun' depending on state
+      variant: "ghost"
+    interactions:
+      on_click:
+        action: "toggleTheme"
+        store_effect: "zustand/theme" # Or local storage/context
+
+  message_display:
+    type: "section"
+    component: "shadcn/ui/scroll-area" # To handle scrolling messages
+    metadata:
+      purpose: "Display the chronological list of user and agent messages."
+      dependencies: ["user_message", "agent_message"]
+    properties:
+      className: "flex-grow p-4 overflow-y-auto"
+    data_handling:
+      store: "zustand/activeChatMessages"
+      item_mapping: # Logic to determine which component to render
+        condition: "message.sender === 'user'"
+        component: "user_message"
+        else_component: "agent_message"
+    accessibility:
+      role: "log"
+      aria_live: "polite"
+
+  user_message:
+    type: "chat_bubble"
+    metadata:
+      purpose: "Display a message sent by the user."
+    properties:
+      text: "{message.content}"
+      alignment: "right"
+      className: "bg-blue-600 p-2 rounded-lg mb-2 ml-auto max-w-xs md:max-w-md" # Example styling
+      sender: "User"
+      timestamp: "{message.timestamp}"
+
+  agent_message:
+    type: "chat_bubble"
+    metadata:
+      purpose: "Display a message sent by an AI agent."
+      dependencies: ["agent_icon"]
+    properties:
+      text: "{message.content}"
+      alignment: "left"
+      className: "bg-gray-700 p-2 rounded-lg mb-2 mr-auto max-w-xs md:max-w-md flex items-start" # Example styling
+      sender: "{message.agentName}"
+      timestamp: "{message.timestamp}"
+      agent_icon_color: "{message.agentColor}" # e.g., 'green', 'orange'
+    children:
+      - component: "agent_icon" # Display agent icon next to message
+
+  agent_icon:
+    type: "icon"
+    metadata:
+      purpose: "Visually represent an agent."
+    properties:
+      color: "{agentColor}" # Passed from parent
+      shape: "circle" # Or square, etc.
+      className: "w-6 h-6 rounded-full mr-2 flex-shrink-0" # Example
+
+  input_area: # Updated dependencies and children
+    metadata:
+      purpose: "Allow user to compose messages and send to the connected agent."
+      dependencies: ["text_input_field", "send_button", "upload_button"] # Removed agent_selection_icons
+      required: true
+    type: "section"
+    properties:
+      className: "p-4 border-t border-gray-700"
+    children:
+      # Removed agent_selection_icons component
+      - type: "form" # Wrap input elements
+        properties:
+          className: "flex items-center" # Removed mt-2 as agent icons are gone
+        children:
+          - component: "upload_button"
+          - component: "text_input_field"
+          - component: "send_button"
+
+  # Removed agent_selection_icons component definition
+
+  # Removed agent_selection_icon component definition
+    type: "icon_button"
+    component: "shadcn/ui/button" # Or custom icon component
+    metadata:
+      purpose: "Represent a single selectable agent."
+    properties:
+      icon_color: "{agent.color}"
+      icon_shape: "circle"
+      variant: "outline" # Indicate selection state
+      className: "w-8 h-8 rounded-full" # Example
+      tooltip: "{agent.name}"
+    interactions:
+      on_click:
+        action: "toggleAgentSelection"
+        params: ["agentId"]
+        store_effect: "zustand/selectedAgents"
+
+  text_input_field:
+    type: "textarea"
+    component: "shadcn/ui/textarea"
+    metadata:
+      purpose: "Input field for composing messages."
+    properties:
+      placeholder: "Type a message... (Shift+Enter for new line)"
+      rows: 1 # Start small, auto-resize
+      className: "flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded"
+    interactions:
+      on_key_press: # Handle Shift+Enter for new line, Enter for send
+        "Enter": "sendTextMessage" # Renamed action
+        "Shift+Enter": "insertNewline"
+
+  send_button:
+    type: "button"
+    component: "shadcn/ui/button"
+    metadata:
+      purpose: "Send the composed message."
+    properties:
+      text: "Send"
+      variant: "default"
+    interactions:
+      on_click:
+        action: "sendTextMessage" # Renamed action
+
+  upload_button:
+    type: "icon_button"
+    component: "shadcn/ui/button"
+    metadata:
+      purpose: "Upload files or attachments (functionality TBD)."
+    properties:
+      icon: "upload" # Or paperclip
+      variant: "ghost"
+      className: "mr-2"
+    interactions:
+      on_click:
+        action: "openFileUploadDialog" # Placeholder
+
+development:
+  framework: "React"
+  language: "TypeScript"
+  package_manager: "npm" # Or yarn/pnpm
+  code_organization:
+    structure:
+      - "src/components/"
+      - "src/components/ui/"      # shadcn/ui components
+      - "src/stories/"           # Storybook stories
+      - "src/hooks/"
+      - "src/services/"          # WebSocket service, API calls
+      - "src/store/"             # Zustand store
+      - "src/types/"
+      - "src/utils/"
+      - "src/assets/"
+    naming:
+      components: "PascalCase"
+      files: "kebab-case"
+      constants: "SCREAMING_SNAKE_CASE"
+      types: "PascalCase"
+  testing:
+    component:
+      framework: "storybook"
+      focus: ["component isolation", "visual regression", "interaction testing", "accessibility"]
+      stories:
+        structure: "src/**/*.stories.{ts,tsx}"
+    unit:
+      framework: "Vitest" # Modern alternative to Jest
+      focus: ["store logic", "utility functions", "hook logic"]
+    integration:
+      framework: "React Testing Library"
+      focus: ["component interactions", "state updates", "WebSocket message handling"]
+    e2e:
+      framework: "Playwright" # Modern alternative to Cypress
+      critical_flows: ["sending/receiving messages", "switching chats", "agent interaction"]
+
+theme: 
+  screenshot: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/_planning/Screenshot 2025-04-11 at 12.28.06 PM.png" # Based on the dark mode screenshot
+  colors:
+    primary: "blue-600" # Send button, user message
+    secondary: "gray-700" # Agent message background
+    accent: "emerald-500" # Example from template, maybe agent color?
+    background: "gray-900" # Main chat area background
+    sidebar_background: "gray-800"
+    text_primary: "white"
+    text_secondary: "gray-400"
+    border: "gray-700"
+    agent_chloe: "rgb(34 197 94)" # Green icon approx
+    agent_Phil_Connors: "rgb(249 115 22)" # Orange icon approx (Renamed key)
+  typography:
+    font_family: "sans-serif" # Default system font
+    base_size: "14px" # Typical for chat interfaces
+  spacing:
+    small: "4px"
+    medium: "8px"
+    large: "16px"
+    xl: "24px"
+
+agents:
+  architecture: "Each agent is a self-contained Python module following ADK conventions, designed for modularity, testability, and easy integration."
+  directory_structure: |
+    agents/
+      base_agent.py            # Shared BaseAgent class for all agents
+      agent_name/
+        README.md                # Agent documentation and usage
+        pyproject.toml           # Python package metadata (or setup.py)
+        src/
+          agent.py               # Core agent logic (inherits from agents/base_agent.py)
+          config.py              # Agent config: id, name, description, color, capabilities, etc.
+          index.py               # Entry point/factory for agent instantiation
+          prompt.py              # Modular prompt templates and logic
+          tools/
+            __init__.py
+            ...                  # Individual tool implementations (Python modules/classes)
+          tests/
+            __init__.py
+            test_agent.py        # Unit tests for agent and tools
+          assets/                # Static assets (optional, e.g., icons, data)
+  config_and_metadata:
+    - id: "Unique agent identifier"
+    - name: "Display name"
+    - description: "Short description of the agent"
+    - color: "UI theming color"
+    - capabilities: "List of supported features/tools"
+    - optional: ["icon_path", "version"]
+  tools: "Each agent has its own tools/ directory for modular tool implementations. Tools are registered with the agent via the tools property."
+  prompts: "Prompt logic is modular and file-based (prompt.py), supporting easy customization and extension."
+  testing: "Unit tests are required for agent logic and tools, located in tests/."
+  integration: # Updated for ADK Streaming Model
+    runner: "Agents are loaded by the API Gateway and executed using the google-adk Runner."
+    ui: "Agent metadata is exposed via a REST endpoint (/api/v1/agents). Chat interaction occurs via a direct WebSocket connection per agent (/ws/v1/chat/{session_id}/{agent_id}) managed by the API Gateway, which uses the ADK Runner internally."
+    events: "Agent responses (text chunks, turn completion) are streamed directly to the UI via the WebSocket connection."
+  best_practices:
+    - "Keep each agent self-contained and modular."
+    - "Use clear, documented configuration for UI integration."
+    - "Write unit tests for all core logic and tools."
+    - "Document agent capabilities and usage in README.md."
+    - "Prefer composition (tools, prompts) over inheritance for extensibility."
+
+  mcp_tools:
+    architecture: |
+      MCP tools are implemented using the Python SDK and included in each agent's tools/ directory.
+      - Prefer an MCP server per agent for modularity and isolation.
+      - For lightweight or tightly-coupled agents, a shared server may be considered.
+    interface:
+      options:
+        - stateless_function: "Simple, easy to test, no side effects. Cannot maintain state between invocations."
+        - class: "Encapsulates logic, easy to extend, supports dependency injection. Still stateless unless state is persisted externally."
+        - persistent_object: "Maintains state across invocations (e.g., cache, session). Use only when necessary; harder to test."
+      recommendation: "Default to stateless functions or lightweight classes. Use persistent objects only if stateful behavior is required."
+    discovery: "Tools are auto-registered by scanning the tools/ directory at agent startup. Use naming conventions or decorators to mark tool entry points."
+    config: "Tools are configured per agent and do not support runtime configuration by default."
+    invocation: "Tools are invoked internally by the agent logic (e.g., via ADK's function calling or direct calls), not via MCP." # Updated invocation
+    error_handling: |
+      - Catch and handle all exceptions within tool logic.
+      - Return structured error responses via MCP protocol (error code, message).
+      - Avoid leaking stack traces or sensitive info to the client.
+    logging: |
+      - Log tool invocations, errors, and important events using Python's logging module.
+      - Use per-agent log files or structured logging for easier debugging.
+    testing: |
+      - Write unit tests for each tool in tools/tests/ or tests/.
+      - Test both normal and error cases.
+      - Use mocks for external dependencies.
+
+# End of project definition

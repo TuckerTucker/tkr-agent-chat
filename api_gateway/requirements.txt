@@ -1,0 +1,24 @@
+# API Gateway Dependencies
+
+# Web Framework
+fastapi>=0.100.0
+uvicorn>=0.22.0
+
+# WebSocket Support
+websockets>=11.0.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# CORS Support
+fastapi-cors>=0.0.6
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Google Agent Development Kit
+google-adk>=0.1.0 # Assuming a version, adjust if needed
+
+# Web Scraping (for Chloe agent tool)
+beautifulsoup4>=4.10.0 
+requests>=2.20.0 # Also needed by web_scraper
