@@ -20,14 +20,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 
 # --- ADK Imports ---
+print("DEBUG: Starting ADK imports in ws.py...")
 try:
     from google.genai.types import Part, Content
     from google.adk.runners import Runner
     from google.adk.agents import LiveRequestQueue
     from google.adk.agents.run_config import RunConfig
     from google.adk.sessions.in_memory_session_service import InMemorySessionService
+    print("DEBUG: Successfully imported ADK components in ws.py")
     ADK_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    print(f"DEBUG: Failed to import ADK components in ws.py: {str(e)}")
     logging.warning("google-adk library not found. WebSocket functionality will be limited.")
     ADK_AVAILABLE = False
     # Define dummy classes if ADK is not available to avoid runtime errors on import
@@ -43,7 +46,7 @@ except ImportError:
 # --- Local Imports ---
 from ..services.chat_service import chat_service # Import global instance
 from ..database import get_db # Database dependency injector
-from ..models.messages import MessageType # Enum for message types
+from ..models.messages import Message, MessageType # Import Message model for type hinting
 
 # --- Configuration ---
 router = APIRouter()
@@ -56,41 +59,48 @@ APP_NAME = "TKR Multi-Agent Chat"
 
 # --- ADK Setup (if available) ---
 if ADK_AVAILABLE:
-    session_service = InMemorySessionService()
+    # session_service instance is now managed by ChatService
 
-    def start_agent_session(session_id: str, agent_id: str): # Removed chat_service_instance param
-        """Starts an ADK agent session for streaming."""
-        logger.info(f"Starting ADK session {session_id} for agent {agent_id}")
+    async def start_agent_session(session_id: str, agent_id: str): # Removed db param
+        """
+        Starts an ADK agent session for streaming using the shared ADK Session.
+        """
+        logger.info(f"Starting or reusing ADK session {session_id} for agent {agent_id}")
+
+        # Get the shared ADK session object from ChatService
+        # Use session_id as user_id for simplicity here
+        adk_session = chat_service.get_or_create_adk_session(session_id=session_id, user_id=session_id)
+        if not adk_session:
+            raise RuntimeError("Failed to get or create ADK session.")
 
         # Get the specific agent instance from the global ChatService instance
-        agent_instance = chat_service.get_agent(agent_id) # Use imported global instance
+        agent_instance = chat_service.get_agent(agent_id)
         if not agent_instance:
              logger.error(f"Agent instance '{agent_id}' not found in global ChatService.")
              raise ValueError(f"Agent '{agent_id}' not found.")
 
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=session_id,
-            session_id=session_id,
-        )
+        # Use the shared session service from ChatService
+        if not chat_service.adk_session_service:
+             raise RuntimeError("ADK Session Service not initialized in ChatService.")
+
         runner = Runner(
             app_name=APP_NAME,
             agent=agent_instance,
-            session_service=session_service,
+            session_service=chat_service.adk_session_service, # Use service from ChatService
         )
         run_config = RunConfig(response_modalities=["TEXT"])
         live_request_queue = LiveRequestQueue()
         live_events = runner.run_live(
-            session=session,
+            session=adk_session, # Use the shared ADK session
             live_request_queue=live_request_queue,
             run_config=run_config,
         )
-        logger.info(f"ADK session {session_id} started successfully.")
-        return live_events, live_request_queue
+        logger.info(f"ADK runner started for session {session_id}, agent {agent_id}")
+        return live_events, live_request_queue # Return only runner components
 else:
-    def start_agent_session(session_id: str, agent_id: str, chat_service_instance: ChatService):
+    async def start_agent_session(session_id: str, agent_id: str): # Match signature
         logger.error("ADK library not available. Cannot start agent session.")
-        raise RuntimeError("ADK library not installed or available.") # Corrected indentation
+        raise RuntimeError("ADK library not installed or available.")
 
 # --- WebSocket Communication Handlers ---
 # Note: These handlers now use the global chat_service instance implicitly via start_agent_session
@@ -110,21 +120,30 @@ async def agent_to_client_messaging(
     logger.debug(f"[{agent_id}] Starting agent_to_client_messaging loop.")
     accumulated_text = ""
     final_event_processed = False
+    message_saved_in_loop = False # Flag to track if save happened in the loop
     try:
         async for event in live_events:
             logger.debug(f"[{agent_id}] Received ADK event: {event}")
-            final_event_processed = False
+            final_event_processed = False # Reset on each event iteration
 
             part: Optional[Part] = (
                 event.content and event.content.parts and event.content.parts[0]
             )
             text_chunk = getattr(part, 'text', None)
+            # Check if the event contains partial content (default to True if attribute missing)
+            is_partial_content = getattr(event, 'partial', True)
 
             response_packet: Dict[str, Any] = {}
             is_final_turn = event.turn_complete or event.interrupted
 
+            # If this event contains the full message (not partial), reset accumulator first
+            # to avoid duplicating content already sent in chunks.
+            if not is_partial_content and text_chunk:
+                 logger.debug(f"[{agent_id}] Received full message event. Resetting accumulator.")
+                 accumulated_text = ""
+
             if text_chunk:
-                # Send chunk immediately for streaming effect
+                # Send chunk immediately (still useful for potential future streaming re-enablement)
                 chunk_packet = {"message": text_chunk, "turn_complete": False}
                 await websocket.send_text(json.dumps(chunk_packet))
                 logger.debug(f"[{agent_id}] Sent text chunk: '{text_chunk}'")
@@ -132,55 +151,84 @@ async def agent_to_client_messaging(
                 accumulated_text += text_chunk
 
             if is_final_turn:
-                response_packet["turn_complete"] = True
-                if event.interrupted:
-                    response_packet["interrupted"] = True
-                    logger.info(f"[{agent_id}] ADK event: Interrupted.")
-                else:
-                    logger.info(f"[{agent_id}] ADK event: Turn complete.")
-
-                # Send final completion packet (even if no text was accumulated this turn)
-                await websocket.send_text(json.dumps(response_packet))
-                final_event_processed = True
-
-                # --- Save accumulated agent message to DB ---
+                # --- Save accumulated agent message to DB FIRST ---
+                saved_message_uuid = None
                 if accumulated_text.strip():
                     try:
                         message_parts = [{"type": "text", "content": accumulated_text.strip()}]
-                        msg_metadata = {"timestamp": datetime.utcnow().isoformat(), "streaming": False} # Renamed variable
-                        # Use global chat_service instance to save
-                        await chat_service.save_message(
+                        msg_metadata = {"timestamp": datetime.utcnow().isoformat(), "streaming": False}
+                        # Save message and get the result
+                        saved_message = await chat_service.save_message(
                             db=db,
                             session_id=session_id,
                             msg_type=MessageType.AGENT,
                             agent_id=agent_id,
                             parts=message_parts,
-                            message_metadata=msg_metadata # Pass renamed argument
+                            message_metadata=msg_metadata
                         )
-                        logger.info(f"[{agent_id}] Saved agent message to DB: '{accumulated_text[:50]}...'")
+                        saved_message_uuid = saved_message.message_uuid # Get the UUID
+                        logger.info(f"[{agent_id}] Saved agent message to DB (UUID: {saved_message_uuid}): '{accumulated_text[:50]}...'")
+                        message_saved_in_loop = True # Set flag
+                        # Send confirmation packet AFTER successful save
+                        try:
+                            confirmation_packet = {
+                                "type": "message_saved", # New packet type
+                                "agent_id": agent_id,
+                                "message_uuid": saved_message_uuid
+                            }
+                            await websocket.send_text(json.dumps(confirmation_packet))
+                            logger.debug(f"[{agent_id}] Sent message_saved confirmation for {saved_message_uuid}")
+                        except Exception as send_err:
+                             logger.error(f"[{agent_id}] Failed to send message_saved confirmation: {send_err}")
+
                     except Exception as db_err:
                         logger.error(f"[{agent_id}] Failed to save agent message to DB: {db_err}", exc_info=True)
-                        # Optionally inform client of DB save error?
                 # --- End DB Save ---
+
+                # Send final turn_complete packet (mainly for stream end signal now)
+                response_packet = {
+                    "turn_complete": True,
+                    "interrupted": event.interrupted if event.interrupted else False
+                }
+                await websocket.send_text(json.dumps(response_packet))
+                final_event_processed = True # Mark that the final turn logic was processed
+
+                if event.interrupted:
+                    logger.info(f"[{agent_id}] ADK event: Interrupted.")
+                else:
+                    logger.info(f"[{agent_id}] ADK event: Turn complete.")
 
                 # Reset for the next potential turn
                 accumulated_text = ""
                 if event.turn_complete:
-                     break # Exit loop for this turn
+                    break # Exit loop for this turn
 
-        # Safeguard: Save if loop finishes unexpectedly with content
-        if not final_event_processed and accumulated_text.strip():
-             logger.warning(f"[{agent_id}] Saving accumulated text after event loop finished unexpectedly.")
+        # Safeguard: Save ONLY if the loop finished with content AND it wasn't saved inside the loop
+        if not message_saved_in_loop and accumulated_text.strip():
+             logger.warning(f"[{agent_id}] Safeguard: Saving accumulated text because loop finished unexpectedly before final save.")
              try:
                  message_parts = [{"type": "text", "content": accumulated_text.strip()}]
-                 msg_metadata = {"timestamp": datetime.utcnow().isoformat(), "streaming": False} # Renamed variable
+                 msg_metadata = {"timestamp": datetime.utcnow().isoformat(), "streaming": False}
                  # Use global chat_service instance to save
-                 await chat_service.save_message(
+                 saved_message = await chat_service.save_message(
                      db=db, session_id=session_id, msg_type=MessageType.AGENT,
-                     agent_id=agent_id, parts=message_parts, message_metadata=msg_metadata # Pass renamed argument
+                     agent_id=agent_id, parts=message_parts, message_metadata=msg_metadata
                  )
+                 # Also send confirmation for safeguard save
+                 if saved_message:
+                     try:
+                         confirmation_packet = {
+                             "type": "message_saved", # New packet type
+                             "agent_id": agent_id,
+                             "message_uuid": saved_message.message_uuid
+                         }
+                         await websocket.send_text(json.dumps(confirmation_packet))
+                         logger.debug(f"[{agent_id}] Safeguard: Sent message_saved confirmation for {saved_message.message_uuid}")
+                     except Exception as send_err:
+                         logger.error(f"[{agent_id}] Safeguard: Failed to send message_saved confirmation: {send_err}")
+
              except Exception as db_err:
-                 logger.error(f"[{agent_id}] Failed to save final agent message to DB: {db_err}", exc_info=True)
+                 logger.error(f"[{agent_id}] Safeguard: Failed to save final agent message to DB: {db_err}", exc_info=True)
 
     except WebSocketDisconnect:
         logger.info(f"[{agent_id}] Client disconnected during agent_to_client messaging.")
@@ -198,18 +246,20 @@ async def client_to_agent_messaging(
     websocket: WebSocket,
     live_request_queue: LiveRequestQueue,
     session_id: str,
-    agent_id: str, # Added agent_id for logging
-    db: AsyncSession # Removed chat_service_instance param
+    agent_id: str,
+    db: AsyncSession # Removed history_content parameter
 ):
     """
     Receives messages from client, saves user message to DB,
     and sends them to the agent via LiveRequestQueue.
+    History is managed by the shared ADK Session.
     """
     logger.debug(f"[{agent_id}] Starting client_to_agent_messaging loop.")
+    # Removed is_first_message flag
     try:
         while True:
             text = await websocket.receive_text()
-            logger.info(f"[{agent_id}] Received text from client: {text}")
+            logger.info(f"[{agent_id}] Received text from client: '{text[:50]}...'")
 
             # --- Save user message to DB ---
             try:
@@ -231,12 +281,12 @@ async def client_to_agent_messaging(
                  # For now, we'll proceed but log the error.
             # --- End DB Save ---
 
-            # Construct ADK Content object
-            content = Content(role="user", parts=[Part.from_text(text=text)])
+            # Construct ADK Content object for the new message
+            new_user_content = Content(role="user", parts=[Part.from_text(text=text)])
 
-            # Send content to the agent's request queue
-            live_request_queue.send_content(content=content)
-            logger.debug(f"[{agent_id}] Sent content to agent's LiveRequestQueue.")
+            # Send only the new user content to the queue
+            live_request_queue.send_content(content=new_user_content)
+            logger.debug(f"[{agent_id}] Sent new user content to agent's LiveRequestQueue.")
 
     except WebSocketDisconnect:
         logger.info(f"[{agent_id}] Client disconnected during client_to_agent messaging.")
@@ -273,44 +323,48 @@ async def websocket_endpoint(
 
     live_events = None
     live_request_queue = None
+    # Removed history_content initialization
 
     try:
         # Validate session exists in DB before starting ADK (using global chat_service)
-        session = await chat_service.get_session(db, session_id)
-        if not session:
+        db_session_check = await chat_service.get_session(db, session_id) # Renamed variable
+        if not db_session_check:
             logger.error(f"WebSocket connection attempt for non-existent session: {session_id}")
             await websocket.send_text(json.dumps({"error": "Session not found"}))
             await websocket.close(code=1008) # Policy Violation
             return
 
-        # Start the specific agent session using ADK (uses global chat_service implicitly)
-        live_events, live_request_queue = start_agent_session(session_id, agent_id)
+        # Start the specific agent session using the shared ADK session
+        live_events, live_request_queue = await start_agent_session(session_id, agent_id) # Removed db, history return
 
+        # --- Main communication loop ---
         while True:
+            # Run agent->client and client->agent tasks concurrently
             agent_to_client_task = asyncio.create_task(
-                agent_to_client_messaging(websocket, live_events, session_id, agent_id, db) # Removed chat_service_instance
+                agent_to_client_messaging(websocket, live_events, session_id, agent_id, db)
             )
             client_to_agent_task = asyncio.create_task(
-                client_to_agent_messaging(websocket, live_request_queue, session_id, agent_id, db) # Removed chat_service_instance
+                # History is no longer passed here
+                client_to_agent_messaging(websocket, live_request_queue, session_id, agent_id, db)
             )
 
             done, pending = await asyncio.wait(
-                [agent_to_client_task, client_to_agent_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+                    [agent_to_client_task, client_to_agent_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
 
-            if client_to_agent_task in done:
+            if client_to_agent_task in done: # Correct indentation
                 logger.info(f"[{agent_id}] Client task finished (likely disconnect). Cancelling agent task.")
                 for task in pending:
                     task.cancel()
                 break # Exit the while loop on client disconnect
 
             # If agent task finished (turn complete), cancel client task and loop
-            if agent_to_client_task in done:
+            if agent_to_client_task in done: # Correct indentation
                  logger.info(f"[{agent_id}] Agent task finished (likely turn complete). Cancelling client task.")
                  for task in pending:
                      task.cancel()
-                 # Continue the loop to wait for next client input
+                 # Continue the while loop to wait for next client input
 
     except ValueError as e: # Catch agent not found or session not found
          logger.error(f"Failed to start session {session_id} for agent {agent_id}: {e}")
@@ -329,5 +383,8 @@ async def websocket_endpoint(
     finally:
         logger.info(f"Closing WebSocket connection for session {session_id}, agent {agent_id}")
         # ADK cleanup might be needed here depending on library behavior
-        # if live_request_queue: live_request_queue.close() # Example
-        # session_service.delete_session(session_id) # Example
+        # if live_request_queue: live_request_queue.close() # Example?
+        # Clear the shared ADK session from our management if this was the last connection?
+        # For simplicity, let's clear it on any disconnect for now.
+        # A more robust solution might involve tracking connection counts per session_id.
+        chat_service.clear_adk_session(session_id)

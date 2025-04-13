@@ -4,8 +4,25 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getMessages, getAgents } from '@/services/api';
 import webSocketService from '@/services/websocket';
 import { Message, MessagePart, AgentInfo, MessageRead } from '@/types/api'; // Use MessageRead for fetched data
+import { debounce } from 'lodash-es'; // Assuming lodash is available, or implement simple debounce
 
 // --- Helper Components (Mostly Unchanged, but AgentMessage needs prop) ---
+
+// Simple debounce function (if lodash isn't available)
+// function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+//   let timeout: ReturnType<typeof setTimeout> | null = null;
+//   return (...args: Parameters<T>): void => {
+//     const later = () => {
+//       timeout = null;
+//       func(...args);
+//     };
+//     if (timeout !== null) {
+//       clearTimeout(timeout);
+//     }
+//     timeout = setTimeout(later, wait);
+//   };
+// }
+
 
 interface MessageContentProps {
   part: MessagePart;
@@ -120,7 +137,7 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({ activeSessionId 
   const queryClient = useQueryClient();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // State for messages currently being streamed via WebSocket
+  // RE-INTRODUCE streamingMessages state
   const [streamingMessages, setStreamingMessages] = useState<Record<string, Message>>({}); // agentId -> Message
 
   // Fetch available agents
@@ -141,65 +158,63 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({ activeSessionId 
 
   // Effect to handle WebSocket messages for streaming updates
   useEffect(() => {
-    if (!activeSessionId) return; // Don't setup if no active session
+    if (!activeSessionId) return;
+
+    // REMOVED debouncedInvalidate
 
     const handlePacket = (agentId: string, packet: any) => {
       console.log(`[WS Packet] Agent ${agentId}:`, packet);
       const hasMessageContent = typeof packet.message === 'string' && packet.message.length > 0;
+      // Use turn_complete to mark stream end, ignore message_saved for display logic now
       const isFinalChunk = packet.turn_complete === true;
 
       setStreamingMessages(prev => {
         const currentStream = prev[agentId];
-        let newStream = { ...prev }; // Copy previous state
+        let newState = { ...prev };
 
-        if (hasMessageContent) {
-          if (!currentStream || isFinalChunk) {
-            // Start new streaming message or replace completed one
-            newStream[agentId] = {
-              id: `stream_${agentId}_${Date.now()}`, // Temporary unique ID for streaming
+        if (isFinalChunk) {
+          // Mark the local stream as complete, DO NOT invalidate query
+          if (currentStream) {
+            newState[agentId] = {
+              ...currentStream,
+              // Use the final message_uuid if provided by backend (optional robustness)
+              id: packet.message_uuid || currentStream.id,
+              metadata: { ...currentStream.metadata, streaming: false }
+            };
+            console.log(`[WS] Marked stream ${agentId} as complete locally.`);
+          }
+        } else if (hasMessageContent) {
+          // Handle content chunks: Start new or append
+          if (!currentStream || !currentStream.metadata?.streaming) {
+            newState[agentId] = {
+              id: `stream_${agentId}_${Date.now()}`,
               type: 'agent',
               agent_id: agentId,
-              session_id: activeSessionId,
+              session_id: activeSessionId!, // Should be valid if effect runs
               parts: [{ type: 'text', content: packet.message }],
-              metadata: { timestamp: new Date().toISOString(), streaming: !isFinalChunk }
+              metadata: { timestamp: new Date().toISOString(), streaming: true }
             };
           } else {
-            // Append to existing streaming message
-            newStream[agentId] = {
-              ...currentStream,
-              parts: [{ ...currentStream.parts[0], content: currentStream.parts[0].content + packet.message }],
-              metadata: { ...currentStream.metadata, timestamp: new Date().toISOString(), streaming: !isFinalChunk }
-            };
+             newState[agentId] = {
+                ...currentStream,
+                parts: [{ ...currentStream.parts[0], content: currentStream.parts[0].content + packet.message }],
+                metadata: { ...currentStream.metadata, timestamp: new Date().toISOString() }
+             };
           }
-        } else if (currentStream && isFinalChunk) {
-           // Final chunk signal without content, just mark existing as not streaming
-           newStream[agentId] = {
-               ...currentStream,
-               metadata: { ...currentStream.metadata, streaming: false }
-           };
         }
-
-        // If it's the final chunk for this agent, remove from streaming state
-        // and invalidate the query to fetch the persisted message list
-        if (isFinalChunk) {
-          delete newStream[agentId]; // Remove from local streaming state
-          console.log(`[WS] Turn complete for ${agentId}. Invalidating messages query.`);
-          queryClient.invalidateQueries({ queryKey: ['messages', activeSessionId] });
-        }
-
-        return newStream;
+        return newState;
       });
     };
 
     const handleError = (agentId: string, error: any) => {
         console.error(`[WS Error] Agent ${agentId}:`, error);
-        // TODO: Display error to user (maybe add to a separate error state?)
-        // Clear any streaming message for this agent on error
+        // Clear the specific streaming message on error
         setStreamingMessages(prev => {
             const newState = { ...prev };
             delete newState[agentId];
             return newState;
         });
+        // TODO: Display error to user
     };
 
     // Register WebSocket callbacks
@@ -229,13 +244,49 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({ activeSessionId 
    }, [fetchedMessages, streamingMessages]); // Scroll when fetched or streaming messages change
 
 
-  // Combine fetched messages and currently streaming messages
-  const allMessages = [
-    ...fetchedMessages,
-    ...Object.values(streamingMessages)
-  ].sort((a, b) => {
-      const dateA = new Date(a.metadata?.timestamp || ('created_at' in a ? a.created_at : 0));
-      const dateB = new Date(b.metadata?.timestamp || ('created_at' in b ? b.created_at : 0));
+  // Combine fetched messages and streaming messages (including completed ones)
+  // Deduplicate, prioritizing the streaming version if IDs match
+  const combinedMessages = new Map<string, MessageRead | Message>();
+
+  // Add streaming messages first (prioritize local state)
+  Object.values(streamingMessages).forEach(streamMsg => {
+     // Add check for valid ID
+     if (typeof streamMsg.id === 'string') {
+         combinedMessages.set(streamMsg.id, streamMsg); // Use streamMsg.id (can be temp or final)
+     } else {
+         console.warn("Skipping streaming message with invalid id:", streamMsg);
+     }
+  });
+
+  // Add fetched messages ONLY if they don't already exist from streaming state
+  fetchedMessages.forEach(msg => {
+    if (!combinedMessages.has(msg.message_uuid)) { // Check if key exists
+        combinedMessages.set(msg.message_uuid, msg);
+    }
+  });
+
+  // Convert map back to array and sort
+  const allMessages = Array.from(combinedMessages.values()).sort((a, b) => {
+      // Robust date extraction for sorting
+      const getDateValue = (msg: MessageRead | Message): string | number => {
+          // Prioritize database timestamp if available
+          if ('created_at' in msg && msg.created_at) {
+              return msg.created_at; // ISO string
+          }
+          // Otherwise use local metadata timestamp
+          if (msg.metadata?.timestamp) {
+              return msg.metadata.timestamp; // ISO string
+          }
+          // Fallback if no date is found
+          return new Date(0).toISOString(); // Return epoch start as ISO string
+      };
+      const dateA = new Date(getDateValue(a));
+      const dateB = new Date(getDateValue(b));
+      // Add check for invalid dates just in case
+      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+          console.error("Invalid date encountered during sorting:", a, b);
+          return 0; // Avoid crash if dates are invalid
+      }
       return dateA.getTime() - dateB.getTime();
   });
 
@@ -261,7 +312,8 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({ activeSessionId 
       )}
       {allMessages.map((message) => {
         const agent = availableAgents.find(a => a.id === message.agent_id);
-        const messageKey = ('message_uuid' in message ? message.message_uuid : message.id); // Use DB uuid or streaming ID
+        // Correct key handling for mixed types
+        const messageKey = ('message_uuid' in message) ? message.message_uuid : message.id;
 
         switch (message.type) {
           case 'user':

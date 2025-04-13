@@ -32,13 +32,16 @@ load_dotenv(dotenv_path=dotenv_path)
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG to see more details
     format='[%(asctime)s] %(levelname)s %(name)s: %(message)s',
     handlers=[
         logging.StreamHandler(),
         # logging.FileHandler('api_gateway.log') # Optional: Keep file logging if desired
     ]
 )
+
+# Ensure root logger is also set to DEBUG
+logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Check for necessary environment variables (e.g., Gemini API Key for ADK)

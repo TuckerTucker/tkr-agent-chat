@@ -12,23 +12,34 @@ import logging
 from typing import Dict, Any, List, Optional
 
 # --- ADK Import ---
+print("DEBUG: Starting ADK import attempts...")
 try:
-    from google.adk.agents import Agent as ADKAgentBase # Rename to avoid conflict
+    print("DEBUG: Attempting to import Agent directly from google.adk...")
+    from google.adk import Agent as ADKAgentBase # Try importing directly from google.adk
+    print("DEBUG: Successfully imported Agent from google.adk")
     ADK_AGENT_AVAILABLE = True
-except ImportError:
-    logging.warning("google.adk.agents.Agent not found. Using dummy base class.")
-    ADK_AGENT_AVAILABLE = False
-    class ADKAgentBase: # Dummy class
-         def __init__(self, name: str, model: Optional[str] = None, description: Optional[str] = None, 
-                      instruction: Optional[str] = None, tools: Optional[List[Any]] = None, **kwargs):
-             self.name = name
-             self.model = model
-             self.description = description
-             self.instruction = instruction
-             self.tools = tools or []
-             self.sub_agents = [] # Ensure dummy also has sub_agents
-             # Add dummy model_config for consistency if needed
-             model_config = {} 
+except ImportError as e1:
+    print(f"DEBUG: Failed to import from google.adk directly: {str(e1)}")
+    try:
+        print("DEBUG: Attempting to import Agent from google.adk.agents...")
+        from google.adk.agents import Agent as ADKAgentBase # Try the submodule if direct import fails
+        print("DEBUG: Successfully imported Agent from google.adk.agents")
+        ADK_AGENT_AVAILABLE = True
+    except ImportError as e2:
+        print(f"DEBUG: Failed to import from google.adk.agents: {str(e2)}")
+        print("DEBUG: google.adk Agent class not found. Using dummy base class.")
+        ADK_AGENT_AVAILABLE = False
+        class ADKAgentBase: # Dummy class
+            def __init__(self, name: str, model: Optional[str] = None, description: Optional[str] = None, 
+                        instruction: Optional[str] = None, tools: Optional[List[Any]] = None, **kwargs):
+                self.name = name
+                self.model = model
+                self.description = description
+                self.instruction = instruction
+                self.tools = tools or []
+                self.sub_agents = [] # Ensure dummy also has sub_agents
+                # Add dummy model_config for consistency if needed
+                model_config = {} 
 
 class BaseAgent(ADKAgentBase):
     """Our custom base agent, inheriting from ADK's Agent."""
