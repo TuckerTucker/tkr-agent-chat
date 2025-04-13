@@ -28,7 +28,7 @@ __pycache__/
 *.pyc
 build/
 *.egg-info/
-tkr_env/
+
 
 # Environment variables - IMPORTANT: Ignore secrets!
 .env*
