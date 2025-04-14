@@ -1,4 +1,4 @@
-import React from "react";
+// Removed unused React import
 import { AppLayout } from "@/components/app-layout";
 
 function App() {

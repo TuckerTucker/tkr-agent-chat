@@ -7,8 +7,9 @@ export interface AgentInfo {
   id: string;
   name: string;
   description: string;
-  color: string;
+  color: string; // Hex format
   capabilities: string[];
+  avatar?: string; // Optional: URL or SVG string for agent avatar
 }
 
 export interface AgentList {

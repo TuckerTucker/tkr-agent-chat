@@ -7,7 +7,8 @@
  * - Reconnection logic
  */
 
-import { WebSocketMessage, ErrorResponse } from '../types/api'; // Removed Message as it's not used directly here
+// Removed unused WebSocketMessage, ErrorResponse imports
+// import { WebSocketMessage, ErrorResponse } from '../types/api';
 
 // API Gateway WebSocket URL (Now includes /v1)
 const WS_BASE_URL = 'ws://localhost:8000/ws/v1'; // TODO: Make configurable

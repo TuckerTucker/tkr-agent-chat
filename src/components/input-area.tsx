@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAgents } from '@/services/api'; // Import API function
 import webSocketService from '@/services/websocket'; // Import WebSocket service
 import { AgentInfo } from '@/types/api';
+import AgentSelectionIcons from './agent-selection-icons'; // Import the new component
 
 interface InputAreaProps {
   activeSessionId: string | null; // Need session ID to know where to send messages
@@ -165,7 +166,8 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
     try {
       setIsUploading(true);
       const reader = new FileReader();
-      reader.onload = (event) => {
+      // Removed unused 'event' parameter
+      reader.onload = () => {
         console.warn("File upload not implemented for ADK streaming yet.");
       };
       reader.readAsDataURL(file);
@@ -208,7 +210,8 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
   return (
     <section className="p-4 border-t border-gray-700 relative">
       {/* Removed error display */}
-      <form className="flex items-center" onSubmit={e => { e.preventDefault(); handleSend(); }}>
+      <AgentSelectionIcons /> {/* Render the agent icons */}
+      <form className="flex items-center mt-2" onSubmit={e => { e.preventDefault(); handleSend(); }}> {/* Added mt-2 */}
         <input
           type="file"
           ref={fileInputRef}

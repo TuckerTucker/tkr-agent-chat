@@ -117,13 +117,16 @@ components:
         params: ["sessionId"]
         # Removed store_effect
 
-  library_section: # Placeholder based on UI doc
-    type: "section"
+  library_section: # Updated to reflect screenshot appearance
+    type: "section" # Or potentially 'accordion_trigger', 'dropdown_trigger' depending on implementation
     metadata:
-      purpose: "Access library resources (agents, prompts, etc.) - Functionality TBD."
+      purpose: "Display and potentially toggle access to library resources (agents, prompts, etc.). Shows item count."
+      # dependencies: Add if specific components like icons are used
     properties:
-      text: "Library ({count})"
-      className: "p-2 border-t border-gray-700"
+      text: "Library ({count})" # Dynamic count
+      icon_right: "chevron-down" # Placeholder for dropdown arrow icon
+      className: "p-2 border-t border-gray-700 flex justify-between items-center cursor-pointer" # Added flex, justify, items, cursor
+    # interactions: Add on_click if it's interactive (e.g., toggle library visibility)
 
   chat_area:
     metadata:
@@ -138,11 +141,11 @@ components:
       - component: "message_display"
       - component: "input_area"
 
-  chat_header: # Updated to include agent connection controls
+  chat_header: # Simplified to match screenshot
     type: "header"
     metadata:
-      purpose: "Display chat title and dark mode toggle. Agent status removed."
-      dependencies: ["dark_mode_toggle", "@tanstack/react-query"] # Updated dependencies
+      purpose: "Display static chat title ('Tucker's Team') and dark mode toggle."
+      dependencies: ["dark_mode_toggle"] # Removed query dependency as title is static
     properties:
       className: "p-4 border-b border-gray-700 flex flex-col gap-3"
     children:
@@ -152,27 +155,9 @@ components:
         children:
           - type: "title"
             properties:
-              text: "{Active Chat Title}" # Fetched via React Query
+              text: "Tucker's Team" # Static title from screenshot
               className: "text-xl font-semibold"
-          # Removed disconnect_button and agent connection buttons/status
-      # Removed agent connection div
       - component: "dark_mode_toggle" # Kept dark mode toggle
-            metadata:
-              purpose: "Disconnect from the currently connected agent."
-            interactions:
-              on_click:
-                action: "disconnectFromAgent"
-      - type: "div" # Container for agent connection buttons
-        properties:
-           className: "flex gap-2 items-center flex-wrap"
-        children:
-           # Dynamically renders connect buttons based on availableAgents
-           - component: "connect_agent_button" # Placeholder component representing connect buttons
-             metadata:
-               purpose: "Connect to a specific available agent."
-             interactions:
-               on_click:
-                 action: "connectToAgent"
   dark_mode_toggle:
     type: "icon_button"
     component: "shadcn/ui/button"
@@ -211,9 +196,11 @@ components:
     properties:
       text: "{message.content}"
       alignment: "right"
-      className: "bg-blue-600 p-2 rounded-lg mb-2 ml-auto max-w-xs md:max-w-md" # Example styling
+      className: "bg-blue-600 p-2 rounded-lg mb-2 ml-auto max-w-xs md:max-w-md flex items-end" # Added flex for icon alignment
       sender: "User"
       timestamp: "{message.timestamp}"
+    children:
+      - component: "user_icon" # Added user icon component
 
   agent_message:
     type: "chat_bubble"
@@ -248,18 +235,30 @@ components:
     properties:
       className: "p-4 border-t border-gray-700"
     children:
-      # Removed agent_selection_icons component
+      - component: "agent_selection_icons" # Added back agent selection icons
       - type: "form" # Wrap input elements
         properties:
-          className: "flex items-center" # Removed mt-2 as agent icons are gone
+          className: "flex items-center mt-2" # Added margin-top back
         children:
           - component: "upload_button"
           - component: "text_input_field"
           - component: "send_button"
 
-  # Removed agent_selection_icons component definition
+  agent_selection_icons:
+    type: "container"
+    metadata:
+      purpose: "Display selectable agent icons for targeting messages."
+      dependencies: ["agent_selection_icon", "@tanstack/react-query"] # Assuming query needed for agent list
+    properties:
+      className: "flex gap-2 mb-2" # Spacing for icons
+    data_handling:
+      source: "availableAgents" # Fetched via React Query
+      item_component: "agent_selection_icon"
+    accessibility:
+      role: "toolbar"
+      aria_label: "Select agents to message"
 
-  # Removed agent_selection_icon component definition
+  agent_selection_icon:
     type: "icon_button"
     component: "shadcn/ui/button" # Or custom icon component
     metadata:
@@ -392,14 +391,14 @@ agents:
           tests/
             __init__.py
             test_agent.py        # Unit tests for agent and tools
-          assets/                # Static assets (optional, e.g., icons, data)
+          assets/                # Static assets (e.g., avatar image file)
   config_and_metadata:
     - id: "Unique agent identifier"
     - name: "Display name"
     - description: "Short description of the agent"
-    - color: "UI theming color"
+    - color: "UI theming color (Hex format, e.g., #RRGGBB)"
     - capabilities: "List of supported features/tools"
-    - optional: ["icon_path", "version"]
+    - optional: ["icon_path (path to avatar file in assets/)", "version"]
   tools: "Each agent has its own tools/ directory for modular tool implementations. Tools are registered with the agent via the tools property."
   prompts: "Prompt logic is modular and file-based (prompt.py), supporting easy customization and extension."
   testing: "Unit tests are required for agent logic and tools, located in tests/."
