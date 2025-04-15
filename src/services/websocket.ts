@@ -28,8 +28,21 @@ interface WebSocketCallbacks {
   onError?: (agentId: string, error: { code: number; message: string }) => void; 
   onReconnect?: (agentId: string) => void;
   onDisconnect?: (agentId: string) => void;
-  onOpen?: (agentId: string) => void; 
+  onOpen?: (agentId: string) => void;
+  // New callback for status changes
+  onStatusChange?: (agentId: string, status: AgentStatus) => void;
 }
+
+// Define the structure for agent status
+export interface AgentStatus {
+  connection: ConnectionStatus;
+  activity: AgentActivityStatus;
+}
+
+// Define possible statuses
+type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
+type AgentActivityStatus = 'idle' | 'thinking' | 'responding' | 'error';
+
 
 // Type for managing individual connection state
 interface AgentConnection {
@@ -40,11 +53,15 @@ interface AgentConnection {
     reconnectAttempts: number;
     reconnectTimeout: NodeJS.Timeout | null;
     isConnecting: boolean;
+    // Add status tracking to the connection object
+    status: AgentStatus;
 }
 
 class WebSocketService {
   // Manage multiple connections: agentId -> AgentConnection
-  private connections: Map<string, AgentConnection> = new Map(); 
+  private connections: Map<string, AgentConnection> = new Map();
+  // Store the latest known status even if disconnected
+  private agentStatuses: Map<string, AgentStatus> = new Map();
   private callbacks: WebSocketCallbacks = {};
   private maxReconnectAttempts = 5;
   // Removed singleton-level state like currentSessionId, currentAgentId, etc.
@@ -54,6 +71,10 @@ class WebSocketService {
    * Manages connection state within the `connections` map.
    */
   connect(sessionId: string, agentId: string) {
+    // Get last known status or default
+    const initialStatus = this.agentStatuses.get(agentId) ?? { connection: 'disconnected', activity: 'idle' };
+    this.updateAgentStatus(agentId, { ...initialStatus, connection: 'connecting' });
+
     const existingConnection = this.connections.get(agentId);
 
     // Avoid reconnecting if already connected/connecting for this agent
@@ -97,23 +118,54 @@ class WebSocketService {
         reconnectAttempts: 0,
         reconnectTimeout: null,
         isConnecting: true, // Mark as connecting
+        status: { connection: 'connecting', activity: 'idle' }, // Initial status
     };
     this.connections.set(agentId, connection);
+    // Also update the persistent status map
+    this.agentStatuses.set(agentId, connection.status);
+
 
     socket.onopen = () => {
       console.log(`[Agent: ${agentId}] WebSocket connected.`);
       connection.isConnecting = false;
       connection.reconnectAttempts = 0; // Reset on successful connection
+      this.updateAgentStatus(agentId, { connection: 'connected', activity: 'idle' }); // Update status
       this.callbacks.onOpen?.(agentId);
     };
 
     socket.onmessage = (event) => {
+      let currentActivity: AgentActivityStatus = 'responding'; // Assume responding if packet received
       try {
         const packet: AgentStreamingPacket = JSON.parse(event.data);
-        // console.log(`[Agent: ${agentId}] WebSocket packet received:`, packet); // Less verbose logging
+        // console.log(`[Agent: ${agentId}] WebSocket packet received:`, packet);
+
+        // Infer agent activity status from packet
+        if (packet.error) {
+            currentActivity = 'error';
+            console.error(`[Agent: ${agentId}] Error packet received:`, packet.error);
+            // Optionally trigger onError callback here too?
+            // this.handleError(agentId, { code: 500, message: packet.error });
+        } else if (packet.turn_complete) {
+            currentActivity = 'idle'; // Turn complete, back to idle
+        } else if (packet.interrupted) {
+            currentActivity = 'idle'; // Interrupted, back to idle (or maybe 'interrupted' status?)
+            console.log(`[Agent: ${agentId}] Turn interrupted.`);
+        } else if (packet.message) {
+            // If only message, assume still responding/thinking
+            // We could add a 'thinking' state if the backend sends specific signals
+            currentActivity = 'responding';
+        }
+
+        // Update status only if activity changed
+        const currentStatus = this.agentStatuses.get(agentId);
+        if (currentStatus?.activity !== currentActivity) {
+            this.updateAgentStatus(agentId, { connection: 'connected', activity: currentActivity });
+        }
+
         this.callbacks.onPacket?.(agentId, packet);
       } catch (error) {
         console.error(`[Agent: ${agentId}] Failed to parse WebSocket packet:`, error);
+        this.updateAgentStatus(agentId, { connection: 'connected', activity: 'error' }); // Mark as error on parse fail
         // Optionally notify client of format error
         // this.callbacks.onError?.(agentId, { code: 400, message: 'Invalid packet format' });
       }
@@ -121,31 +173,40 @@ class WebSocketService {
 
     socket.onerror = (event) => {
       console.error(`[Agent: ${agentId}] WebSocket error event:`, event);
-      connection.isConnecting = false; // Ensure connection flag is reset
+      connection.isConnecting = false;
+      // Update status on WebSocket error event
+      this.updateAgentStatus(agentId, { ...this.agentStatuses.get(agentId) ?? { connection: 'error', activity: 'idle' }, connection: 'error' });
       // Don't trigger reconnect here, onclose will handle it
     };
 
     socket.onclose = (event) => {
       console.log(`[Agent: ${agentId}] WebSocket disconnected: code=${event.code}, reason=${event.reason}, wasClean=${event.wasClean}`);
       connection.isConnecting = false;
-      const wasConnected = this.connections.has(agentId); // Check if it was in our map
-      
+      const wasConnectionManaged = this.connections.has(agentId); // Check if it was in our map
+
+      // Determine final connection status based on close code
+      const finalConnectionStatus: ConnectionStatus = event.code === 1000 ? 'disconnected' : 'error';
+      // Keep last known activity status unless connection is now an error
+      const finalActivityStatus = finalConnectionStatus === 'error' ? 'error' : (this.agentStatuses.get(agentId)?.activity ?? 'idle');
+
+      // Update the persistent status map
+      this.updateAgentStatus(agentId, { connection: finalConnectionStatus, activity: finalActivityStatus });
+
       // Clean up the connection state *before* attempting reconnect
       this.clearReconnectTimeout(agentId); // Clear any existing timer
-      this.connections.delete(agentId); // Remove from active connections
-      
-      this.callbacks.onDisconnect?.(agentId);
-      
-      // Only attempt reconnect if it was previously connected or failed initially (tracked by reconnectAttempts > 0)
+      this.connections.delete(agentId); // Remove from active connections map
+
+      this.callbacks.onDisconnect?.(agentId); // Notify client of disconnect
+
+      // Only attempt reconnect if it was previously managed by us
       // And if the disconnect wasn't clean (or based on specific codes)
       // Let's simplify: always attempt reconnect if it was in the map, unless explicitly disconnected
-      if (wasConnected && event.code !== 1000) { // Don't reconnect on normal closure (code 1000)
-          this.attemptReconnect(connection); // Pass the old connection state
+      if (wasConnectionManaged && event.code !== 1000) { // Don't reconnect on normal closure (code 1000)
+          this.attemptReconnect(connection); // Pass the old connection state (includes attempt count)
       }
     };
   }
 
-  /**
   /**
    * Disconnect a specific agent's WebSocket connection.
    * @param agentId - The ID of the agent to disconnect.
@@ -221,8 +282,38 @@ class WebSocketService {
   }
 
   // Updated internal error handling to include agentId
+  // Centralized status update method
+  private updateAgentStatus(agentId: string, newStatus: Partial<AgentStatus>) {
+      const currentStatus = this.agentStatuses.get(agentId) ?? { connection: 'disconnected', activity: 'idle' };
+      const updatedStatus = { ...currentStatus, ...newStatus };
+
+      // Only update and notify if the status actually changed
+      if (JSON.stringify(currentStatus) !== JSON.stringify(updatedStatus)) {
+          this.agentStatuses.set(agentId, updatedStatus);
+          // Update status on the active connection object if it exists
+          const connection = this.connections.get(agentId);
+          if (connection) {
+              connection.status = updatedStatus;
+          }
+          console.log(`[Agent: ${agentId}] Status changed:`, updatedStatus);
+          this.callbacks.onStatusChange?.(agentId, updatedStatus); // Notify listeners
+      }
+  }
+
+  /** Get the current status for a specific agent */
+  getAgentStatus(agentId: string): AgentStatus {
+    return this.agentStatuses.get(agentId) ?? { connection: 'disconnected', activity: 'idle' };
+  }
+
+  /** Get statuses for all known agents */
+  getAllAgentStatuses(): Map<string, AgentStatus> {
+    return new Map(this.agentStatuses); // Return a copy
+  }
+
+
   private handleError(agentId: string, error: { code: number; message: string }): void {
     console.error(`[Agent: ${agentId}] WebSocket error:`, error);
+    this.updateAgentStatus(agentId, { connection: 'error', activity: 'error' }); // Update status on error
     this.callbacks.onError?.(agentId, error);
   }
 
@@ -244,43 +335,49 @@ class WebSocketService {
      const attempts = closedConnection.reconnectAttempts + 1;
      const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1); // Exponential backoff
      console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${delay / 1000}s (${attempts}/${this.maxReconnectAttempts})...`);
-     
-     // Store the timeout *on the closed connection object* temporarily, 
-     // or manage timeouts centrally if preferred. Let's store it here for simplicity.
-     closedConnection.reconnectTimeout = setTimeout(() => {
-       this.callbacks.onReconnect?.(closedConnection.agentId);
-       // Reconnect using the stored session and agent IDs from the closed connection
-       this.connect(closedConnection.sessionId, closedConnection.agentId); 
-       // When connect runs, it will create a *new* connection object in the map.
-       // The reconnectAttempts from the *new* connection object will be used next time.
-       // We need to ensure the attempt count carries over. Let's modify connect:
-       // TODO: Modify connect to accept optional initial reconnectAttempts count.
-       // OR: Pass the attempt count directly here. Let's modify connect later if needed.
-       // For now, the new connection starts attempts at 0, which might not be ideal exponential backoff.
-       // --- Correction: Let's pass the attempt count ---
-       // Modify connect signature: connect(sessionId: string, agentId: string, initialAttempts: number = 0)
-       // Then call: this.connect(closedConnection.sessionId, closedConnection.agentId, attempts);
-       // --- Let's stick to the original plan for now and refine later if backoff is wrong ---
-       // this.connect(closedConnection.sessionId, closedConnection.agentId); 
 
+     // Update status before attempting reconnect
+     this.updateAgentStatus(closedConnection.agentId, { connection: 'reconnecting', activity: this.agentStatuses.get(closedConnection.agentId)?.activity ?? 'idle' });
+     this.callbacks.onReconnect?.(closedConnection.agentId); // Notify UI we are trying
+
+     // Store the timeout ID separately or manage centrally if needed
+     const timeoutId = setTimeout(() => {
+       // Remove the temporary timeout reference before connecting
+       this.clearReconnectTimeout(closedConnection.agentId);
+       // Pass the incremented attempt count to the connect method
+       this.connect(closedConnection.sessionId, closedConnection.agentId); // TODO: Modify connect to accept attempts
+       // --- Let's assume connect handles the attempt count internally for now ---
+       // OR: We need to modify connect signature: connect(..., initialAttempts = 0)
+       // And call: this.connect(closedConnection.sessionId, closedConnection.agentId, attempts);
      }, delay);
 
-     // Update the connection map with the timeout reference (even though it's technically disconnected)
-     // This allows clearReconnectTimeout to find it.
-     // This feels a bit messy. Maybe manage timeouts separately?
-     // Alternative: Store timeout ID directly in the map keyed by agentId?
-     // Let's keep it on the object for now.
-     this.connections.set(closedConnection.agentId, closedConnection); // Put it back temporarily with the timer
+     // Store the timeout ID for cancellation
+     // We need a way to associate this timeout with the agentId *without* putting the closedConnection back in the map
+     // Let's use a separate map for reconnect timeouts
+     this.reconnectTimeouts.set(closedConnection.agentId, timeoutId);
+
+     // --- Revert: Keep timeout on the object for simplicity for now ---
+     // closedConnection.reconnectTimeout = timeoutId;
+     // this.connections.set(closedConnection.agentId, closedConnection); // Put it back temporarily with the timer
+     // --- End Revert ---
+
+     // --- Let's use the separate map approach ---
+     // Need to declare: private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
+     // (Add this declaration to the class properties)
   }
+
+  // Add the reconnectTimeouts map declaration
+  // Map to store pending reconnect timeout IDs
+  private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   /**
    * Clear any pending reconnection timeout for a specific agent.
    */
   private clearReconnectTimeout(agentId: string) {
-    const connection = this.connections.get(agentId);
-    if (connection?.reconnectTimeout) {
-      clearTimeout(connection.reconnectTimeout);
-      connection.reconnectTimeout = null;
+    const timeoutId = this.reconnectTimeouts.get(agentId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.reconnectTimeouts.delete(agentId);
     }
   }
 }

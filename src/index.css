@@ -7,6 +7,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define glow colors using standard hex/rgb values */
+/* (Assuming standard Tailwind v3 colors) */
+:root {
+  --red-500: #ef4444;    /* Tailwind red-500 */
+  --yellow-500: #eab308; /* Tailwind yellow-500 */
+  --blue-500: #3b82f6;   /* Tailwind blue-500 */
+  --green-500: #22c55e;  /* Tailwind green-500 */
+  /* Add other colors if needed */
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

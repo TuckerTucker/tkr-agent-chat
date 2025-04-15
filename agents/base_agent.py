@@ -78,6 +78,7 @@ class BaseAgent(ADKAgentBase):
         self.system_prompt = system_prompt # Keep for potential direct use
         self.overview = overview
         # self.sub_agents is now inherited from ADKAgentBase
+        self.avatar = config.get("avatar")  # Add avatar attribute if present in config
 
     # Keep our helper methods if still needed, otherwise remove/adapt
     def get_system_prompt(self, **template_vars) -> str:

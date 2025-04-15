@@ -30,6 +30,7 @@ class AgentMetadata(BaseModel):
     name: str
     description: str
     color: str
+    avatar: Optional[str] = None  # Add avatar field (URL or relative path)
     # status: AgentStatus = AgentStatus.AVAILABLE # Remove status field
     capabilities: List[str]
     metadata: Optional[Dict[str, str]] = None # Keep optional metadata
@@ -62,6 +63,7 @@ async def list_agents():
                  name=getattr(agent, 'name', 'Unknown Agent'),
                  description=getattr(agent, 'description', ''),
                  color=getattr(agent, 'color', '#808080'), # Default color
+                 avatar=getattr(agent, 'avatar', None),  # Add avatar from agent config if present
                  capabilities=getattr(agent, 'capabilities', []),
                  # status=status, # Remove status assignment
              )

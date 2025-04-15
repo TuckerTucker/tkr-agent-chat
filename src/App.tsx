@@ -1,8 +1,6 @@
 // Removed unused React import
-import AppLayout from "@/components/app-layout"; // Use default import
-
 function App() {
-  return <AppLayout />;
+  return null; // UI components removed, placeholder
 }
 
 export default App;
