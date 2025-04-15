@@ -17,7 +17,8 @@ export const LibrarySection: React.FC = () => {
   return (
     // Updated className and added onClick based on .clinerules
     <div
-      className="p-2 border-t border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700/50 transition-colors"
+      // Added focus style
+      className="p-2 border-t border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700/50 focus:outline-none focus:bg-gray-700/75 transition-colors"
       onClick={handleClick}
       role="button" // Added role for accessibility
       tabIndex={0} // Make it focusable

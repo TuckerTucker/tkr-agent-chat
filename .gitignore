@@ -41,3 +41,5 @@ build/
 
 # Specific log files
 api_gateway.log
+
+*storybook.log

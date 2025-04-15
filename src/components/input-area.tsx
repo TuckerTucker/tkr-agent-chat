@@ -5,35 +5,38 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAgents } from '@/services/api'; // Import API function
 import webSocketService from '@/services/websocket'; // Import WebSocket service
 import { AgentInfo } from '@/types/api';
-import AgentSelectionIcons from './agent-selection-icons'; // Import the new component
+import AgentSelectionIcons from './agent-selection-icons';
 
 interface InputAreaProps {
-  activeSessionId: string | null; // Need session ID to know where to send messages
+  activeSessionId: string | null;
+  availableAgents: AgentInfo[]; // Add prop for all available agents
+  activeAgentIds: string[]; // Add prop for active agent IDs in this session
+  // Consider adding isLoadingAgents if needed from parent
 }
 
-export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
+export const InputArea: React.FC<InputAreaProps> = ({
+  activeSessionId,
+  availableAgents, // Use prop
+  activeAgentIds,
+}) => {
   const [text, setText] = useState('');
-  const [isUploading, setIsUploading] = useState(false); // Keep file upload state
+  // State for agents selected via icon clicks
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [isUploading, setIsUploading] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionDropdownIndex, setMentionDropdownIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch available agents for @mention feature
-  const { data: availableAgents = [], isLoading: isLoadingAgents } = useQuery<AgentInfo[]>({
-    queryKey: ['agents'],
-    queryFn: getAgents,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
+  // Removed internal agent fetching - availableAgents is now a prop
+  // const { data: availableAgents = [], isLoading: isLoadingAgents } = useQuery<AgentInfo[]>({ ... });
 
-  // Removed Zustand store state: sendTextMessage, agentConnectionStatus, agentErrors, clearAgentError
+  // Simplified check: Allow sending if agents are provided and a session is active
+  // Assuming isLoading is handled by the parent component passing the props
+  const canSendMessage = availableAgents.length > 0 && !!activeSessionId;
 
-  // Simplified check: Allow sending if agents are loaded and a session is active
-  const canSendMessage = !isLoadingAgents && availableAgents.length > 0 && !!activeSessionId;
-
-  // --- Mention logic (uses fetched availableAgents) ---
+  // --- Mention logic (uses availableAgents prop) ---
   const getMentionCandidates = () => {
     if (!mentionQuery) return availableAgents;
     return availableAgents.filter(agent =>
@@ -116,39 +119,59 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
     }
   };
 
+  // Handler for agent icon clicks
+  const handleAgentClick = (agentId: string) => {
+    setSelectedAgentIds((prevSelected) => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(agentId)) {
+        newSelected.delete(agentId);
+      } else {
+        newSelected.add(agentId);
+      }
+      console.log('Agents selected via icons:', Array.from(newSelected)); // For debugging
+      return newSelected;
+    });
+  };
+
   // --- Send logic (uses WebSocket service directly) ---
   const handleSend = () => {
     const trimmedText = text.trim();
     if (!trimmedText || !canSendMessage || !activeSessionId) return;
 
-    // --- Replicate @mention/broadcast logic ---
-    const mentionRegex = /@([a-zA-Z0-9_]+)/g;
-    const mentionedNames = Array.from(trimmedText.matchAll(mentionRegex)).map(m => m[1].toLowerCase());
-    const mentionedAgents = availableAgents.filter(agent =>
-      mentionedNames.includes(agent.name.toLowerCase())
-    );
+    let targetAgentIds = new Set<string>();
 
-    // TODO: Need connection status to send only to connected agents.
-    // For now, sending based only on mention or broadcast to all available.
-    // This requires the parent component/context to provide connection status.
-    // --- TEMPORARY: Send to all mentioned or all available ---
-    const targetAgentIds = new Set<string>();
-    if (mentionedAgents.length > 0) {
+    // 1. Prioritize agents selected via icons
+    if (selectedAgentIds.size > 0) {
+      targetAgentIds = new Set(selectedAgentIds);
+      console.log(`Sending message to agents selected via icons: ${Array.from(targetAgentIds).join(', ')}`);
+    } else {
+      // 2. Fallback: Check for @mentions
+      const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+      const mentionedNames = Array.from(trimmedText.matchAll(mentionRegex)).map(m => m[1].toLowerCase());
+      const mentionedAgents = availableAgents.filter(agent =>
+        mentionedNames.includes(agent.name.toLowerCase())
+      );
+
+      if (mentionedAgents.length > 0) {
         mentionedAgents.forEach(agent => targetAgentIds.add(agent.id));
         console.log(`Sending message to mentioned agents: ${mentionedAgents.map(a => a.name).join(', ')}`);
-    } else {
-        availableAgents.forEach(agent => targetAgentIds.add(agent.id));
-        console.log(`Broadcasting message to all available agents for session ${activeSessionId}`);
-    }
+      } else {
+        // 3. Fallback: Broadcast to all *active* agents in the session
+        // Use the activeAgentIds prop passed down from ChatArea
+        activeAgentIds.forEach(id => targetAgentIds.add(id));
+        console.log(`Broadcasting message to all active agents in session ${activeSessionId}: ${activeAgentIds.join(', ')}`);
+      } // Closing brace for the inner else (broadcast)
+    } // Add missing closing brace for the outer else (mention/broadcast fallback)
 
+    // Send the message via WebSocket to each target agent
+    // TODO: Check connection status for each agent before sending if possible
     targetAgentIds.forEach(agentId => {
-        // Note: WebSocketService handles the check if the socket for agentId is actually open
-        webSocketService.sendTextMessage(agentId, trimmedText);
+      webSocketService.sendTextMessage(agentId, trimmedText);
     });
-    // --- End Temporary Logic ---
 
-
+    // Clear input and icon selection state after sending
     setText('');
+    setSelectedAgentIds(new Set()); // Clear icon selections
     setShowMentionDropdown(false);
     setMentionQuery('');
     setMentionDropdownIndex(0);
@@ -210,8 +233,15 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
   return (
     <section className="p-4 border-t border-gray-700 relative">
       {/* Removed error display */}
-      <AgentSelectionIcons /> {/* Render the agent icons */}
-      <form className="flex items-center mt-2" onSubmit={e => { e.preventDefault(); handleSend(); }}> {/* Added mt-2 */}
+      {/* Pass agent lists, selected state, and handler down */}
+      <AgentSelectionIcons
+        availableAgents={availableAgents}
+        activeAgentIds={activeAgentIds}
+        selectedAgentIds={selectedAgentIds} // Pass state down
+        onAgentClick={handleAgentClick} // Pass handler down
+      />
+      {/* Use gap-2 for consistent spacing between form elements */}
+      <form className="flex items-center mt-2 gap-2" onSubmit={e => { e.preventDefault(); handleSend(); }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -222,7 +252,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
         <Button
           type="button"
           variant="ghost"
-          className="mr-2"
+          // className="mr-2" // Removed margin, handled by gap
           disabled={isUploading || !canSendMessage} // Simplified disabled logic
           onClick={() => fileInputRef.current?.click()}
           title="Upload file (not implemented)"
@@ -238,7 +268,8 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
                 : "Type a message... (Shift+Enter for new line, @ to mention)"
             }
             rows={1}
-            className="flex-grow resize-none mr-2 bg-gray-800 border border-gray-600 rounded pr-10" // Added padding for send button overlap
+            // Removed mr-2, handled by gap. Keep pr-10 if needed for visual overlap with send button, or adjust send button positioning.
+            className="flex-grow resize-none bg-gray-800 border border-gray-600 rounded pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
@@ -265,7 +296,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ activeSessionId }) => {
           type="submit"
           variant="default"
           disabled={!text.trim() || !canSendMessage || isUploading} // Simplified disabled logic
-          className="ml-2" // Ensure space between textarea and button
+          // className="ml-2" // Removed margin, handled by gap
         >
           Send
         </Button>

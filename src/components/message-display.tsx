@@ -16,6 +16,18 @@ import { Check, CheckCheck, AlertCircle, Loader2 } from 'lucide-react'; // Remov
 
 // --- Helper Components ---
 
+// Function to get initials from name (copied from agent-selection-icon)
+const getInitials = (name: string): string => {
+  if (!name) return '?'; // Handle undefined/empty name
+  const words = name.split(/[\s-]+/); // Split by space or hyphen
+  if (words.length === 1) {
+    // Take first two letters if single word
+    return words[0].substring(0, 2).toUpperCase();
+  }
+  // Take first letter of first two words
+  return words.map(word => word[0]).slice(0, 2).join('').toUpperCase();
+};
+
 // Helper to determine if a hex color is light or dark
 const isLightColor = (color?: string): boolean => {
   if (!color) return false; // Default to dark if no color provided
@@ -159,8 +171,9 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message, agent, onCopy, onD
   const isStreaming = message.metadata?.streaming === true;
   // Removed messageContent variable as it's not needed here
   const messageKey = ('message_uuid' in message ? message.message_uuid : message.id);
+  const initials = getInitials(agent?.name || '??'); // Calculate initials
 
-  // Determine avatar content: SVG, Image URL, or Color fallback
+  // Determine avatar content: SVG, Image URL, or Initials fallback
   let avatarContent: React.ReactNode = null;
   const avatarClasses = "w-full h-full object-cover"; // Common classes for img/svg
 
@@ -188,11 +201,18 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message, agent, onCopy, onD
        </div>
        {/* Avatar Container */}
        <div
-         className="w-6 h-6 rounded-full mr-2 flex-shrink-0 order-2 overflow-hidden" // Added overflow-hidden
-         style={{ backgroundColor: !avatarContent ? (agent?.color || 'rgb(34 197 94)') : undefined }} // Apply bg color only if no avatar content
+         className={cn(
+           "w-6 h-6 rounded-full mr-2 flex-shrink-0 order-2 overflow-hidden",
+           "flex items-center justify-center text-xs font-semibold" // Center content, style initials
+         )}
+         style={{
+           backgroundColor: !avatarContent ? (agent?.color || 'rgb(34 197 94)') : undefined, // Apply bg color only if no avatar
+           color: !avatarContent && agent?.color && isLightColor(agent.color) ? '#000000' : '#FFFFFF' // Set text color for initials based on bg contrast
+         }}
          title={agent?.name}
        >
-         {avatarContent} {/* Render img/svg if available */}
+         {avatarContent /* Render img/svg if available */}
+         {!avatarContent && initials /* Render initials if no avatar */}
        </div>
        {/* Bubble Content */}
        <div className={cn(
@@ -205,7 +225,12 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message, agent, onCopy, onD
        >
          <div className={cn(isCollapsed ? "line-clamp-3" : "")}>
            {message.parts.map((part, index) => (<MessageContent key={index} part={part} />))}
-           <div className="text-xs text-gray-400 mt-1">
+           {/* Apply contrast logic to agent name/timestamp */}
+           <div className={cn(
+               "text-xs mt-1",
+               isLightColor(agent?.color) ? 'text-gray-700' : 'text-gray-300' // Adjusted contrast
+             )}
+           >
              {agent?.name || message.agent_id || 'Unknown Agent'}
              {(message.metadata?.timestamp || ('created_at' in message && message.created_at)) && (
                <> • {new Date('created_at' in message ? message.created_at! : message.metadata!.timestamp!).toLocaleTimeString()}</>
@@ -218,16 +243,18 @@ const AgentMessage: React.FC<AgentMessageProps> = ({ message, agent, onCopy, onD
   );
 };
 
-// --- System/Error Messages (Unchanged) ---
+// --- System/Error Messages ---
 interface SystemMessageProps { message: MessageRead | Message; }
 const SystemMessage: React.FC<SystemMessageProps> = ({ message }) => (
-    <div key={('message_uuid' in message ? message.message_uuid : message.id)} className="bg-gray-800 p-2 rounded-lg mb-2 mx-auto max-w-xs md:max-w-md text-gray-400 text-center italic">
+    // Use mb-4 for consistent spacing
+    <div key={('message_uuid' in message ? message.message_uuid : message.id)} className="bg-gray-800 p-2 rounded-lg mb-4 mx-auto max-w-xs md:max-w-md text-gray-400 text-center italic">
         {message.parts.map((part, index) => (<MessageContent key={index} part={part} />))}
     </div>
 );
 interface ErrorMessageProps { message: MessageRead | Message; }
 const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => (
-    <div key={('message_uuid' in message ? message.message_uuid : message.id)} className="bg-red-900/50 p-2 rounded-lg mb-2 mx-auto max-w-xs md:max-w-md text-red-400 text-center">
+    // Use mb-4 for consistent spacing
+    <div key={('message_uuid' in message ? message.message_uuid : message.id)} className="bg-red-900/50 p-2 rounded-lg mb-4 mx-auto max-w-xs md:max-w-md text-red-400 text-center">
         {message.parts.map((part, index) => (<MessageContent key={index} part={part} />))}
     </div>
 );
@@ -300,7 +327,13 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({ activeSessionId 
   const handleDelete = (messageId: string) => { console.log('Delete requested:', messageId); };
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="flex-grow p-4 overflow-y-auto" aria-live="polite" aria-label="Chat messages">
+    // Add scrollbar styling classes
+    <ScrollArea
+      ref={scrollAreaRef}
+      className="flex-grow p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 scrollbar-track-transparent"
+      aria-live="polite"
+      aria-label="Chat messages"
+    >
       {isLoadingMessages && (<div className="text-gray-500 text-center mt-8">Loading messages...</div>)}
       {messagesError && (<div className="text-red-500 text-center mt-8">Error loading messages: {messagesError.message}</div>)}
       {agentsError && (<div className="text-red-500 text-center mt-2">Error loading agent info: {agentsError.message}</div>)}
