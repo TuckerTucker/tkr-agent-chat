@@ -6,7 +6,7 @@
 
 import { ChatSessionRead, MessageRead, AgentInfo } from '@/types/api'; // Assuming types are defined here
 
-const API_BASE_URL = '/api/v1'; // Assuming API is served from the same origin
+const API_BASE_URL = 'http://localhost:8000/api/v1'; // API Gateway server URL
 
 // Helper function for making API requests
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

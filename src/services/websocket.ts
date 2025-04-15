@@ -11,7 +11,7 @@
 // import { WebSocketMessage, ErrorResponse } from '../types/api';
 
 // API Gateway WebSocket URL (Now includes /v1)
-const WS_BASE_URL = 'ws://localhost:8000/ws/v1'; // TODO: Make configurable
+const WS_BASE_URL = 'ws://localhost:8000/ws/v1'; // API Gateway WebSocket URL
 const RECONNECT_DELAY = 3000; // Increased delay
 
 // Define the structure of messages received from the backend ADK stream
@@ -253,19 +253,54 @@ class WebSocketService {
    * @param agentId - The target agent ID.
    * @param text - The message content.
    */
-  sendTextMessage(agentId: string, text: string) {
+  async sendTextMessage(agentId: string, text: string) {
     const connection = this.connections.get(agentId);
 
+    // If no connection exists or it's not in OPEN state, attempt to wait for connection
     if (!connection || connection.socket.readyState !== WebSocket.OPEN) {
-       console.error(`[Agent: ${agentId}] WebSocket not connected. Cannot send message.`);
-       // Notify specific agent error
-       this.callbacks.onError?.(agentId, { code: 400, message: 'WebSocket not connected' }); 
-       return;
+      if (!connection) {
+        console.error(`[Agent: ${agentId}] No connection found. Cannot send message.`);
+        this.callbacks.onError?.(agentId, { code: 400, message: 'No WebSocket connection found' });
+        return;
+      }
+
+      // If connection exists but not ready, wait for a short time
+      if (connection.socket.readyState === WebSocket.CONNECTING) {
+        console.log(`[Agent: ${agentId}] WebSocket still connecting, waiting...`);
+        try {
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Connection timeout'));
+            }, 5000); // 5 second timeout
+
+            connection.socket.addEventListener('open', () => {
+              clearTimeout(timeout);
+              resolve(true);
+            }, { once: true });
+
+            connection.socket.addEventListener('error', () => {
+              clearTimeout(timeout);
+              reject(new Error('Connection failed'));
+            }, { once: true });
+          });
+        } catch (error) {
+          console.error(`[Agent: ${agentId}] Failed to establish connection:`, error);
+          this.callbacks.onError?.(agentId, { code: 408, message: 'Connection timeout or failed' });
+          return;
+        }
+      }
+    }
+
+    // Recheck connection state after waiting
+    if (!connection || connection.socket.readyState !== WebSocket.OPEN) {
+      console.error(`[Agent: ${agentId}] WebSocket not ready after waiting. Cannot send message.`);
+      this.callbacks.onError?.(agentId, { code: 400, message: 'WebSocket not connected' });
+      return;
     }
 
     try {
       console.log(`[Agent: ${agentId}] Sending text message:`, text);
-      connection.socket.send(text); // Send plain text via the specific agent's socket
+      connection.socket.send(text);
     } catch (error) {
       console.error(`[Agent: ${agentId}] Failed to send message:`, error);
       this.handleError(agentId, { code: 500, message: `Failed to send message: ${error}` });

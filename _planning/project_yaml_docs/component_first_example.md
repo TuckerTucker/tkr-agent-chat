@@ -8,13 +8,15 @@ This document provides guidelines for structuring YAML descriptions of web appli
 ## 1. Component Encapsulation
 Each component should be self-contained, including:
 
-- **Metadata**: Purpose and dependencies
+- **Metadata**: Purpose and unique dependencies (avoid repeating global dependencies)
 - **Properties**: Visual and structural attributes
 - **State**: Component-specific state management
 - **Interactions**: User events and behaviors
 - **Accessibility**: ARIA labels and keyboard navigation
 - **Validation**: Rules and constraints
 - **Responsive**: Screen-size adaptations
+
+> **Best Practice:** Reference global dependencies or documentation links at the top level of your YAML. Only specify unique or component-specific dependencies within each component.
 
 Example of an encapsulated component:
 ```yaml
@@ -49,6 +51,54 @@ button:
     desktop:
       width: "auto"
 ```
+
+---
+
+## 1.1 Documentation and Reference Links
+
+- **Consolidate all documentation, onboarding, and reference links into a single section** (e.g., `documentation_links`) at the top level of your YAML. This reduces redundancy and makes onboarding easier.
+
+Example:
+```yaml
+documentation_links:
+  onboarding: "README.md"
+  api_reference: "api_docs.md"
+  design_system: "https://ui.shadcn.com"
+  storybook: "https://storybook.js.org/"
+```
+
+---
+
+## 1.2 Example Configs and Reusability
+
+- **Reference example configs (such as agent metadata) directly within relevant sections** or as comments/examples, rather than duplicating information in multiple places.
+
+Example:
+```yaml
+# Example agent config for reference (see agents/ directory for real configs)
+agent_metadata_example:
+  id: "chloe"
+  name: "Chloe"
+  color: "rgb(34 197 94)"
+  description: "Git operations and general help"
+  capabilities: ["git", "search", "explain"]
+  icon_path: "agents/chloe/src/assets/chloe.svg"
+  version: "1.0.0"
+```
+
+---
+
+## 1.3 Minimize Repetition
+
+- **Avoid repeating metadata (such as dependencies) in every component.** Use global references or only specify unique values per component.
+- **Testing and onboarding documentation** should be explicit but not redundant—reference global sections where possible.
+
+---
+
+## 1.4 Balance Detail and Maintainability
+
+- **Be explicit with context and requirements, but avoid unnecessary repetition.**
+- **Use comments and references** to maintain clarity without duplicating information.
 
 ---
 

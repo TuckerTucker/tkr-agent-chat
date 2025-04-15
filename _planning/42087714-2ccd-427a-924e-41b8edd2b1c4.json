@@ -1,0 +1,149 @@
+{
+  "projectName": "UI Component Integration",
+  "id": "42087714-2ccd-427a-924e-41b8edd2b1c4",
+  "columns": [
+    { "id": "to-do", "name": "To Do" },
+    { "id": "in-progress", "name": "In Progress" },
+    { "id": "done", "name": "Done" },
+    { "id": "blocked", "name": "Blocked" }
+  ],
+  "cards": [
+    {
+      "id": "copy-import-ui-theme",
+      "title": "Copy/import UI and theme components/utilities",
+      "content": "Copy the ui/ and theme/ directories (and required lib/ utilities) into src/components/. Ensure all dependencies are included.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 0,
+      "subtasks": [],
+      "tags": ["setup", "frontend"],
+      "dependencies": [],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:41:43.000Z"
+    },
+    {
+      "id": "setup-theme-provider",
+      "title": "Set up ThemeProvider at app root",
+      "content": "Add ThemeProvider to App.tsx, enabling light/dark mode and agent-specific theming.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 1,
+      "subtasks": [],
+      "tags": ["theme", "frontend"],
+      "dependencies": ["copy-import-ui-theme"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:41:43.000Z"
+    },
+    {
+      "id": "integrate-app-layout",
+      "title": "Integrate AppLayout as main wrapper",
+      "content": "Use AppLayout as the main wrapper for the chat UI. Place sidebar, chat area, and navigation inside.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 2,
+      "subtasks": [],
+      "tags": ["layout", "frontend"],
+      "dependencies": ["setup-theme-provider"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:44:21.000Z"
+    },
+    {
+      "id": "implement-error-boundary",
+      "title": "Implement ErrorBoundary and ErrorMessage",
+      "content": "Wrap major UI sections with ErrorBoundary and use ErrorMessage for user-friendly errors.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 3,
+      "subtasks": [],
+      "tags": ["error-handling", "frontend"],
+      "dependencies": ["integrate-app-layout"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:44:21.000Z"
+    },
+    {
+      "id": "wire-message-list",
+      "title": "Wire up MessageList with AgentMessage/UserMessage",
+      "content": "Use MessageList to render conversations, passing messages from state. Ensure correct message bubble components are used.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 4,
+      "subtasks": [],
+      "tags": ["chat", "frontend"],
+      "dependencies": ["implement-error-boundary"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:44:21.000Z"
+    },
+    {
+      "id": "integrate-chat-input",
+      "title": "Integrate ChatInput with @mention and markdown",
+      "content": "Place ChatInput at the bottom of the chat area. Connect onSend, availableAgents, and agentMetadata props.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 5,
+      "subtasks": [],
+      "tags": ["chat", "frontend"],
+      "dependencies": ["wire-message-list"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:45:40.000Z"
+    },
+    {
+      "id": "connect-websocket-query",
+      "title": "Connect WebSocket and TanStack Query state",
+      "content": "Wire up message sending, receiving, and typing indicators to WebSocket and TanStack Query logic.",
+      "columnId": "done",
+      "collapsed": false,
+      "position": 6,
+      "subtasks": [],
+      "tags": ["state", "websocket", "frontend"],
+      "dependencies": ["integrate-chat-input"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:47:47.000Z"
+    },
+    {
+      "id": "enable-tooloutput-markdown",
+      "title": "Enable ToolOutput and MarkdownRenderer in messages",
+      "content": "Use ToolOutput and MarkdownRenderer in message components to display rich content and agent tool results.",
+      "columnId": "in-progress",
+      "collapsed": false,
+      "position": 7,
+      "subtasks": [],
+      "tags": ["chat", "frontend"],
+      "dependencies": ["connect-websocket-query"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:47:47.000Z"
+    },
+    {
+      "id": "replace-ui-primitives",
+      "title": "Replace/integrate Button, Input, Card, Dialog primitives",
+      "content": "Use these primitives throughout the app for consistent UI. Replace or wrap shadcn/ui components if needed.",
+      "columnId": "to-do",
+      "collapsed": false,
+      "position": 8,
+      "subtasks": [],
+      "tags": ["ui", "frontend"],
+      "dependencies": ["enable-tooloutput-markdown"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:17:41.000Z"
+    },
+    {
+      "id": "test-theme-accessibility",
+      "title": "Test theme switching, responsiveness, accessibility",
+      "content": "Verify theme switching, agent theming, responsiveness, and accessibility. Adjust styles as needed.",
+      "columnId": "to-do",
+      "collapsed": false,
+      "position": 9,
+      "subtasks": [],
+      "tags": ["testing", "frontend"],
+      "dependencies": ["replace-ui-primitives"],
+      "created_at": "2025-04-15T10:17:41.000Z",
+      "updated_at": "2025-04-15T10:17:41.000Z"
+    }
+  ],
+  "next-steps": [
+    "Enable ToolOutput and MarkdownRenderer in messages (in progress).",
+    "Finish with UI primitives and thorough testing."
+  ],
+  "last_updated": "2025-04-15T10:47:47.000Z",
+  "isDragging": false,
+  "scrollToColumn": null
+}

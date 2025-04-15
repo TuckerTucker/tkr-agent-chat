@@ -50,7 +50,8 @@ class BaseAgent(ADKAgentBase):
     def __init__(self, config: Dict[str, Any], tool_registry: Dict[str, Any], system_prompt: str, overview: str):
         
         # Extract required fields for ADKAgentBase.__init__ from config
-        agent_name = config["name"]
+        agent_id = config["id"]  # Use ID for ADK agent name (valid identifier)
+        agent_display_name = config["name"]  # Keep display name separately
         model_name = config.get("model", "gemini-2.0-flash-exp") # Default model from quickstart
         agent_description = config["description"]
         agent_instruction = system_prompt # Use system_prompt as instruction
@@ -61,7 +62,7 @@ class BaseAgent(ADKAgentBase):
 
         # Call the parent ADKAgentBase initializer
         super().__init__(
-            name=agent_name,
+            name=agent_id,  # Use ID as the ADK agent name
             model=model_name,
             description=agent_description,
             instruction=agent_instruction,

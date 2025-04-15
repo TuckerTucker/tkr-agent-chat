@@ -1,26 +1,408 @@
 # Project Definition for the Multi-Agent Chat System
+# 
+# Additional project context for maintainability, onboarding, and implementation:
+# - See 'data_sources', 'performance', 'accessibility', 'error_handling', 'agent_metadata_example', 'extensibility', 'testing', and 'documentation_links' sections below for further clarity.
+
 app:
   name: "Tucker's Team - Multi-Agent Chat"
   author: "Tucker" # Assuming based on chat title
   role: "Developer" # Assuming
   description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK)."
   taskboard:
-    Board: TKR Multi-Agent Chat Implementation Plan
-    ID: b829b5e1-d533-4ebb-81de-7b3336fc00ef
+    Board: UI Component Integration
+    ID: 42087714-2ccd-427a-924e-41b8edd2b1c4
   github:
     user:"tuckertucker"
     repo:"tkr-agent-chat"
+
+  components: 
+    goal: "These are the components we are integrating into the project"
+    dir: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agents/packages/ui/src"
   version: "0.1.0"
   metadata:
     project_type: "multi_agent_chat_application"
     framework: "react"
     language: "typescript"
     last_updated: "2025-04-12" # Updated date
-  documentation:
-    ui_overview: "multiagent_chat_ui.md" # Link to the UI documentation
+  documentation_links:
+    ui_overview: "multiagent_chat_ui.md"
     adk_docs: "adk_overview.md"
-    component_library: "https://storybook.js.org/" # Assuming Storybook usage
-    api_docs: "agent_development_kit_documentation.md" # Link to ADK docs
+    component_library: "https://storybook.js.org/"
+    api_docs: "agent_development_kit_documentation.md"
+    onboarding: "README.md"
+    design_system: "https://ui.shadcn.com"
+    architecture: "_planning/tkr-project.yaml"
+
+data_sources:
+  rest_endpoints:
+    agents: "/api/v1/agents"
+    chats: "/api/v1/chats"
+    library: "/api/v1/library"
+  websocket_endpoints:
+    chat: "/ws/v1/chat/{session_id}/{agent_id}"
+  contracts:
+    message_send:
+      request: 
+        - session_id: string
+        - agent_id: string
+        - content: string
+      response:
+        - message_id: string
+        - status: "sent" | "error"
+    agent_list:
+      response:
+        - id: string
+        - name: string
+        - color: string
+        - capabilities: list
+  code_references:
+    backend: "api_gateway/src/routes/"
+    frontend: "src/services/api.ts, src/services/websocket.ts"
+
+performance:
+  message_virtualization: "Use react-window or similar for long chat lists"
+  caching:
+    agent_metadata: "TanStack Query with background refresh"
+    chat_history: "TanStack Query, cache per session"
+  image_optimization: "Planned for future Library uploads"
+  static_assets: "Served via Vite, consider CDN for production"
+
+accessibility:
+  requirements: "WCAG 2.2 AA compliance"
+  tools: ["storybook a11y addon"]
+  checklist:
+    - "Keyboard navigation for all controls"
+    - "Screen reader support for all interactive elements"
+    - "Sufficient color contrast"
+    - "ARIA roles and labels in src/components/"
+  manual_testing: true
+
+error_handling:
+  scenarios:
+    - "Network failure: show toast, allow retry"
+    - "Agent timeout: show warning, allow resend"
+    - "Invalid input: show inline error"
+    - "WebSocket disconnect: auto-reconnect, show status"
+  fallback_behaviors:
+    - "Error boundaries in src/App.tsx"
+    - "Toast notifications for transient errors"
+    - "Retry logic in src/services/api.ts"
+
+agent_metadata_example:
+  id: "chloe"
+  name: "Chloe"
+  color: "rgb(34 197 94)"
+  description: "Git operations and general help"
+  capabilities: ["git", "search", "explain"]
+  icon_path: "agents/chloe/src/assets/chloe.svg"
+  version: "1.0.0"
+
+extensibility:
+  add_agent:
+    steps:
+      - "Create new agent directory in agents/"
+      - "Implement config.py, agent.py, prompt.py, tools/, tests/"
+      - "Register agent in API Gateway if needed"
+      - "Add agent color and icon to theme/colors"
+  add_message_type:
+    steps:
+      - "Define new type in src/types/api.ts"
+      - "Update message_item component"
+      - "Add tests and stories"
+  add_theme:
+    steps:
+      - "Extend theme section in YAML"
+      - "Add Tailwind config and CSS variables"
+      - "Update Storybook stories"
+
+testing:
+  coverage_threshold: 80
+  critical_flows:
+    - "Agent switching"
+    - "Markdown rendering"
+    - "Message send/receive"
+    - "Error states"
+    - "Accessibility (keyboard, screen reader)"
+  locations:
+    frontend: "src/stories/, src/hooks/, src/services/"
+    agents: "agents/*/src/tests/"
+    backend: "api_gateway/src/"
+
+documentation_links:
+  onboarding: "README.md"
+  api_reference: "agent_development_kit_documentation.md"
+  design_system: "https://ui.shadcn.com"
+  storybook: "https://storybook.js.org/"
+  architecture: "_planning/tkr-project.yaml"
+
+components:
+
+  sidebar:
+    metadata:
+      purpose: "Navigation between chat conversations and access to library"
+      dependencies: ["theme", "shadcn/ui/navigation"]
+      required: true
+    type: "section"
+    properties:
+      background_color: "sidebar_background"
+      width: "320px"
+      resizable: true
+      collapsible: true
+      padding: "medium"
+    accessibility:
+      role: "navigation"
+      aria_label: "Chat conversations"
+      keyboard_shortcuts:
+        "Ctrl+N": "new_chat"
+        "Ctrl+1": "focus_first_chat"
+    state:
+      store: "sidebar"
+      initial:
+        collapsed: false
+        selected_chat: null
+    interactions:
+      on_new_chat:
+        action: "create_new_chat"
+        behavior:
+          focus: "chat_input"
+      on_select_chat:
+        action: "switch_chat"
+        behavior:
+          update: "selected_chat"
+      on_resize:
+        action: "resize_sidebar"
+    children:
+      - type: "header"
+        properties:
+          text: "Conversations"
+          className: "text-white text-lg"
+      - type: "button"
+        component: "shadcn/ui/button"
+        properties:
+          text: "New Chat"
+          variant: "primary"
+          className: "mb-2"
+        interactions:
+          on_click:
+            action: "create_new_chat"
+      - type: "list"
+        component: "shadcn/ui/list"
+        properties:
+          items: "{conversations}"
+          className: "overflow-y-auto"
+        children:
+          - type: "conversation_item"
+      - type: "footer"
+        properties:
+          text: "Library"
+          className: "text-secondary"
+          icon: "library"
+          disabled: true
+
+  conversation_item:
+    metadata:
+      purpose: "Represents a single chat session in the sidebar"
+      dependencies: ["theme", "shadcn/ui/button"]
+      required: true
+    type: "list_item"
+    properties:
+      text: "{chat_title}"
+      selected: "{is_selected}"
+      controls: ["delete", "download", "copy", "collapse"]
+    accessibility:
+      role: "listitem"
+      aria_label: "Chat {chat_title}"
+    interactions:
+      on_click:
+        action: "select_chat"
+      on_delete:
+        action: "delete_chat"
+        confirmation: true
+      on_download:
+        action: "download_chat"
+        format: "markdown"
+      on_copy:
+        action: "copy_chat"
+      on_collapse:
+        action: "toggle_collapse"
+    validation:
+      required_fields: ["chat_title"]
+
+  chat_area:
+    metadata:
+      purpose: "Main chat panel for displaying messages and composing new ones"
+      dependencies: ["theme", "shadcn/ui"]
+      required: true
+    type: "section"
+    properties:
+      background_color: "background"
+      padding: "large"
+      min_height: "100vh"
+    accessibility:
+      role: "main"
+      aria_label: "Chat area"
+    children:
+      - type: "header"
+        properties:
+          text: "Tucker's Team"
+          className: "text-white text-xl"
+          controls: ["dark_mode_toggle"]
+      - type: "message_list"
+      - type: "message_input"
+
+  message_list:
+    metadata:
+      purpose: "Displays the sequence of chat messages"
+      dependencies: ["theme", "shadcn/ui"]
+      required: true
+    type: "list"
+    properties:
+      className: "overflow-y-auto flex-1"
+      items: "{messages}"
+    accessibility:
+      role: "log"
+      aria_label: "Chat messages"
+      live_region: true
+    children:
+      - type: "message_item"
+
+  message_item:
+    metadata:
+      purpose: "Displays a single chat message (user or agent)"
+      dependencies: ["theme", "marked", "prismjs", "shadcn/ui"]
+      required: true
+    type: "list_item"
+    properties:
+      sender: "{sender}"
+      content: "{content}"
+      timestamp: "{timestamp}"
+      variant: "{user|agent}"
+      border_left:
+        width: "2px"
+        color: "{agent_color|user_color}"
+      markdown: true
+      code_highlighting: ["python", "javascript", "html", "css"]
+      collapsible: true
+      controls: ["copy", "download", "collapse", "delete"]
+      controls_position: "floating-left"
+      controls_visibility: "hover"
+    accessibility:
+      role: "article"
+      aria_label: "Message from {sender}"
+    interactions:
+      on_copy:
+        action: "copy_message"
+      on_download:
+        action: "download_message"
+        format: "markdown"
+      on_collapse:
+        action: "toggle_collapse"
+      on_delete:
+        action: "delete_message"
+        confirmation: true
+    validation:
+      required_fields: ["content", "sender"]
+
+  message_input:
+    metadata:
+      purpose: "Compose and send new chat messages"
+      dependencies: ["theme", "shadcn/ui"]
+      required: true
+    type: "form"
+    properties:
+      placeholder: "Type a message... (Shift+Enter for new line)"
+      send_button_text: "Send"
+      agent_selector: true
+      disabled: false
+    accessibility:
+      role: "form"
+      aria_label: "Send a message"
+      keyboard_shortcuts:
+        "Enter": "send_message"
+        "Shift+Enter": "new_line"
+    state:
+      store: "message_input"
+      initial:
+        value: ""
+        selected_agent: "{default_agent}"
+    interactions:
+      on_send:
+        action: "send_message"
+        validation:
+          required: true
+          min_length: 1
+      on_select_agent:
+        action: "set_default_agent"
+      on_input:
+        action: "update_value"
+    children:
+      - type: "agent_selector"
+      - type: "text_input"
+      - type: "send_button"
+
+  agent_selector:
+    metadata:
+      purpose: "Select the default agent for the conversation"
+      dependencies: ["theme", "shadcn/ui/avatar"]
+      required: true
+    type: "selector"
+    properties:
+      agents: "{available_agents}"
+      selected: "{selected_agent}"
+      highlight: "glow"
+      tooltip: "agent_name_and_tools"
+    accessibility:
+      role: "listbox"
+      aria_label: "Select agent"
+    interactions:
+      on_select:
+        action: "set_default_agent"
+
+  text_input:
+    metadata:
+      purpose: "Text area for composing chat messages"
+      dependencies: ["theme", "shadcn/ui/textarea"]
+      required: true
+    type: "textarea"
+    properties:
+      value: "{input_value}"
+      placeholder: "Type a message... (Shift+Enter for new line)"
+      rows: 2
+      auto_resize: true
+    accessibility:
+      role: "textbox"
+      aria_label: "Message input"
+    interactions:
+      on_input:
+        action: "update_value"
+
+  send_button:
+    metadata:
+      purpose: "Button to send the composed message"
+      dependencies: ["theme", "shadcn/ui/button"]
+      required: true
+    type: "button"
+    properties:
+      text: "Send"
+      variant: "primary"
+      disabled: "{input_value.length == 0}"
+    accessibility:
+      role: "button"
+      aria_label: "Send message"
+      keyboard_shortcut: "Enter"
+    interactions:
+      on_click:
+        action: "send_message"
+
+  common_ui_elements:
+    metadata:
+      purpose: "Reusable UI elements for feedback and dialogs"
+      dependencies: ["shadcn/ui"]
+      required: false
+    children:
+      - type: "tooltip"
+      - type: "confirmation_dialog"
+      - type: "toast_notification"
 
 architecture:
   server-client: "strict server/client architecture"
