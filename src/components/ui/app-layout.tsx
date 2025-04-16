@@ -154,15 +154,19 @@ export function AppLayout({
           aria-label="Chat area"
         >
           {/* Mobile menu button */}
-          <button
-            onClick={toggleSidebar}
-            className="sm:hidden fixed top-4 left-4 p-2 rounded-md bg-sidebar/90 backdrop-blur-sm hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-primary/50 z-50 shadow-lg border border-border/50"
-            aria-label="Toggle sidebar menu"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
+          <div className="sm:hidden fixed top-4 left-4 z-50">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+              aria-label="Toggle sidebar menu"
+            >
+              <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </Button>
+          </div>
           {/* Chat content */}
           <div className="flex-1 min-h-0 overflow-hidden pt-16 sm:pt-0">
             {currentConversation && (
