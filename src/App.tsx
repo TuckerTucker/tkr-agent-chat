@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { ThemeProvider } from "./components/ui/components/theme/theme-provider";
-import { AppLayout } from "./components/ui/components/ui/app-layout";
-import { ErrorBoundary, ErrorMessage } from "./components/ui/components/ui/error-boundary";
+import { ThemeProvider } from "./components/theme/theme-provider";
+import { AppLayout } from "./components/ui/app-layout";
+import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
 import { useQuery } from "@tanstack/react-query";
 import { getSessions, getAgents, getMessages, createSession } from "./services/api";
 import webSocketService from "./services/websocket";
 import { AgentInfo, ChatSessionRead, MessageRead } from "./types/api";
 import chloeAvatar from "../agents/chloe/src/assets/chloe.svg";
 import philConnorsAvatar from "../agents/phil_connors/src/assets/phil-connors.svg";
-
-import type { APIMessage } from "./components/ui/components/ui/message-list.d";
+import userAvatar from "./assets/user-avatar.svg";
+import type { APIMessage } from "./components/ui/message-list.d";
 
 // Helper function to create UI messages with type safety
 const createUIMessage = (params: APIMessage): APIMessage => params;
@@ -37,7 +37,10 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   // Track agent connection statuses
-  const [agentStatuses, setAgentStatuses] = useState<Record<string, { connection: string; activity: string }>>({});
+  const [agentStatuses, setAgentStatuses] = useState<Record<string, { 
+    connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
+    activity: 'idle' | 'thinking' | 'responding' | 'error';
+  }>>({});
 
   // Keep local state for messages
   const [localMessages, setLocalMessages] = useState<APIMessage[]>([]);
@@ -60,46 +63,69 @@ function App() {
     }
   }, [sessions, selectedSessionId]);
 
-  // Set up WebSocket callbacks
+  // Set up WebSocket callbacks with proper cleanup and reconnection handling
   React.useEffect(() => {
-    webSocketService.setCallbacks({
-      onPacket: (agentId, packet) => {
-        if (packet.message) {
-          const agentMeta = agentMetadata[agentId];
-          const newMessage = createUIMessage({
-            id: crypto.randomUUID(),
-            role: 'agent',
-            content: packet.message,
-            agentId: agentId,
-            agentName: agentMeta?.name || agentId,
-            timestamp: new Date().toISOString(),
-            metadata: {
-              agentColor: agentMeta?.color,
-              avatar: agentMeta?.avatar
-            },
-            deliveryStatus: 'sent'
-          });
+    let isSubscribed = true;
 
-          setLocalMessages(prev => [...prev, newMessage]);
-        }
+    const callbacks = {
+      onPacket: (agentId: string, packet: { message?: string; turn_complete?: boolean; interrupted?: boolean; error?: string }) => {
+        if (!isSubscribed || !packet.message) return;
+        
+        const agentMeta = agentMetadata[agentId];
+        const newMessage = createUIMessage({
+          id: crypto.randomUUID(),
+          role: 'agent',
+          content: packet.message,
+          agentId: agentId,
+          agentName: agentMeta?.name || agentId,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            agentColor: agentMeta?.color,
+            avatar: agentMeta?.avatar
+          },
+          deliveryStatus: 'sent'
+        });
+
+        setLocalMessages(prev => [...prev, newMessage]);
       },
-      onError: (agentId, error) => {
+      onError: (agentId: string, error: { code: number; message: string }) => {
+        if (!isSubscribed) return;
+        
         console.error(`[${agentId}] WebSocket error:`, error);
         setAgentStatuses(prev => ({
           ...prev,
           [agentId]: { connection: 'error', activity: 'error' }
         }));
+
+        // Attempt reconnection after error
+        setTimeout(() => {
+          if (isSubscribed && selectedSessionId) {
+            webSocketService.connect(selectedSessionId, agentId);
+          }
+        }, 3000);
       },
-      onStatusChange: (agentId, status) => {
+      onStatusChange: (agentId: string, status: { connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error'; activity: 'idle' | 'thinking' | 'responding' | 'error' }) => {
+        if (!isSubscribed) return;
+        
         console.log(`[${agentId}] Status changed:`, status);
         setAgentStatuses(prev => ({
           ...prev,
           [agentId]: status
         }));
       }
-    });
+    };
 
-  }, [agentMetadata]);
+    webSocketService.setCallbacks(callbacks);
+
+    return () => {
+      isSubscribed = false;
+      webSocketService.setCallbacks({
+        onPacket: () => {},
+        onError: () => {},
+        onStatusChange: () => {}
+      });
+    };
+  }, [agentMetadata, selectedSessionId]);
 
   // Manage WebSocket connections
   React.useEffect(() => {
@@ -128,7 +154,10 @@ function App() {
       agentId: msg.agent_id,
       agentName: msg.agent_id ? (agentMetadata[msg.agent_id]?.name || msg.agent_id) : undefined,
       timestamp: msg.created_at,
-      metadata: {
+      metadata: msg.type === 'user' ? {
+        avatar: userAvatar,
+        name: 'You'
+      } : {
         ...msg.metadata,
         agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
         avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined
@@ -166,14 +195,17 @@ function App() {
       return;
     }
     try {
-      const userMessage = createUIMessage({
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: message,
-        timestamp: new Date().toISOString(),
-        metadata: {},
-        deliveryStatus: 'sent'
-      });
+  const userMessage = createUIMessage({
+    id: crypto.randomUUID(),
+    role: 'user',
+    content: message,
+    timestamp: new Date().toISOString(),
+    metadata: {
+      avatar: userAvatar,
+      name: 'You'
+    },
+    deliveryStatus: 'sent'
+  });
 
       setLocalMessages(prev => [...prev, userMessage]);
       await webSocketService.sendTextMessage(agentId, message);

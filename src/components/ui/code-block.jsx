@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { cn, copyToClipboard as copyTextToClipboard } from "../../lib/utils";
+import { cn, copyToClipboard as copyTextToClipboard } from "../lib/utils";
 import { Button } from "./button";
 
 /**

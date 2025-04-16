@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from "react";
 import { cn } from "../../lib/utils";
 import { Message } from "./message";
-import { AGENT_THEMES } from "../../lib/agent-themes";
-import { formatMessageWithMentions } from "../../lib/message-processor";
+import { AGENT_THEMES } from "../lib/agent-themes";
+import { formatMessageWithMentions } from "../lib/message-processor";
 
 /**
  * MessageList component for displaying a list of chat messages
@@ -53,20 +53,22 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     };
   }, [onScrollTop, loading]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive, with debounce
   useEffect(() => {
-    if (listRef.current && messages.length > 0) {
-      // Only auto-scroll if already at or near the bottom
-      const { scrollHeight, clientHeight, scrollTop } = listRef.current;
-      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
-      
-      if (isNearBottom) {
-        setTimeout(() => {
-          if (listRef.current) {
-            listRef.current.scrollTop = listRef.current.scrollHeight;
-          }
-        }, 100);
-      }
+    if (!listRef.current || messages.length === 0) return;
+
+    // Only auto-scroll if already at or near the bottom
+    const { scrollHeight, clientHeight, scrollTop } = listRef.current;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+    
+    if (isNearBottom) {
+      const timeoutId = setTimeout(() => {
+        if (listRef.current) {
+          listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [messages]);
 
@@ -195,7 +197,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
         listRef.current = node;
       }}
       className={cn(
-        "flex flex-col overflow-y-auto h-full px-6 py-6",
+        "message-list flex flex-col overflow-y-auto h-full w-full min-h-0 px-4 sm:px-6 py-6 gap-8 bg-background",
         className
       )}
       role="log"
@@ -206,38 +208,44 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     >
       {/* Loading indicator */}
       {loading && (
-        <div className="flex justify-center py-4" aria-live="polite" aria-busy="true">
-          <div className="flex items-center space-x-2">
-            <div className="h-4 w-4 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-            <div className="h-4 w-4 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-            <div className="h-4 w-4 bg-primary/60 rounded-full animate-bounce"></div>
+        <div className="flex justify-center py-6" aria-live="polite" aria-busy="true">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <div className="h-3 w-3 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="h-3 w-3 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="h-3 w-3 bg-primary/60 rounded-full animate-bounce"></div>
+            </div>
+            <span className="text-sm text-muted-foreground">Loading messages...</span>
           </div>
         </div>
       )}
       
       {/* Empty state */}
       {messages.length === 0 && !loading ? (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          {emptyState}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="text-4xl">💬</div>
+            <div className="text-muted-foreground">{emptyState}</div>
+          </div>
         </div>
       ) : (
         /* Message list */
-        <div className="space-y-6 mb-6">
+        <div className="flex flex-col space-y-6">
           {messages.map((message, index) => {
-    const messageProps = mapMessageToProps(message);
-    const { id, sender, status, ...rest } = messageProps;
-    return (
-      <Message
-        key={id || index}
-        sender={sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : 'system'}
-        status={status === 'sending' ? 'sending' 
-          : status === 'error' ? 'error'
-          : status === 'delivered' ? 'delivered'
-          : status === 'read' ? 'read'
-          : 'sent'}
-        {...rest}
-      />
-    );
+            const messageProps = mapMessageToProps(message);
+            const { id, sender, status, ...rest } = messageProps;
+            return (
+              <Message
+                key={id || index}
+                sender={sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : 'system'}
+                status={status === 'sending' ? 'sending' 
+                  : status === 'error' ? 'error'
+                  : status === 'delivered' ? 'delivered'
+                  : status === 'read' ? 'read'
+                  : 'sent'}
+                {...rest}
+              />
+            );
           })}
         </div>
       )}

@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../lib/utils";
 import { Button } from "./button";
 import { MentionSuggestion } from "./mention-suggestion";
 import type { 
   MentionMatch,
   MentionSegment
-} from "../../lib/mention-highlighter";
+  } from "../lib/mention-highlighter";
 import { 
   findMentionAtCursor, 
   getAgentSuggestions, 
   replaceMention, 
   highlightMentions,
   detectMarkdown
-} from "../../lib/mention-highlighter";
+} from "../lib/mention-highlighter";
 import type { ChatInputProps } from './chat-input.d';
 
 export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(({
@@ -219,29 +219,38 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
     setActiveMention(null);
   };
   
-  // Trigger typing indicator
+  // Trigger typing indicator with debounce and cleanup
   useEffect(() => {
     if (!onTyping) return;
     
+    const trimmedMessage = message.trim();
+    const isTyping = trimmedMessage.length > 0;
+    
+    // Clear any existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
     }
     
-    if (message.trim()) {
-      onTyping(true);
-      
-      // Set typing to false after 1.5 seconds of inactivity
+    // Update typing state
+    onTyping(isTyping);
+    
+    // Set up new timeout only if typing
+    if (isTyping) {
       typingTimeoutRef.current = setTimeout(() => {
         onTyping(false);
+        typingTimeoutRef.current = null;
       }, 1500);
-    } else {
-      onTyping(false);
     }
     
+    // Cleanup on unmount or deps change
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
       }
+      // Ensure typing is set to false when component unmounts
+      onTyping(false);
     };
   }, [message, onTyping]);
   
@@ -355,12 +364,12 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
       aria-label="Message input form"
     >      
       {/* Input area */}
-      <div className="flex items-end gap-2 bg-background border border-input rounded-md p-2 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50">
-        <div className="flex-1 relative min-h-[40px] max-h-[200px]">
+      <div className="flex items-center gap-3 bg-background border border-input rounded-lg px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50 transition-shadow hover:shadow">
+        <div className="flex-1 relative min-h-[44px] max-h-[200px]">
           {/* Hidden textarea for actual input */}
           <textarea
             ref={handleRef}
-            className="absolute inset-0 resize-none bg-transparent outline-none p-2 w-full overflow-hidden"
+            className="absolute inset-0 resize-none bg-transparent outline-none px-0 py-1 w-full overflow-hidden"
             placeholder={placeholder}
             value={message}
             onChange={handleInputChange}
@@ -377,7 +386,7 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
           {/* Visible div for syntax highlighting */}
           <div 
             ref={visibleInputRef}
-            className="whitespace-pre-wrap break-words overflow-hidden invisible p-2 min-h-[40px]"
+            className="whitespace-pre-wrap break-words overflow-hidden invisible px-0 py-1 min-h-[40px]"
             aria-hidden="true"
           >
             {message}
@@ -389,28 +398,32 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
           size="icon"
           disabled={disabled || !message.trim() || isSending}
           onClick={handleSend}
-          className="h-10 w-10 shrink-0 rounded-full"
+          className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary hover:bg-primary/90 text-white shadow-sm"
           aria-label="Send message"
         >
-          <svg 
-            className="h-5 w-5" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
             />
           </svg>
         </Button>
       </div>
       
       {/* Markdown hint - show either when explicitly enabled or when markdown is detected */}
-      {(allowMarkdown && (showMarkdownHint || message.length === 0)) && getMarkdownHint()}
+      {(allowMarkdown && (showMarkdownHint || message.length === 0)) && (
+        <div className="px-1">
+          {getMarkdownHint()}
+        </div>
+      )}
       
       {/* Mention suggestions */}
       {suggestions.length > 0 && activeMention && (

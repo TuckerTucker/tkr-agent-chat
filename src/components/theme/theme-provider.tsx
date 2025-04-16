@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { AGENT_THEMES, applyAgentTheme, AgentTheme } from "../../lib/agent-themes";
+import { AGENT_THEMES, applyAgentTheme, AgentTheme } from "../lib/agent-themes";
 
 // Theme context value type
 interface ThemeContextType {
@@ -53,58 +53,64 @@ export function ThemeProvider({
     return savedAgent || defaultAgent;
   });
 
-  // Apply theme classes when theme changes with transition
+  // Apply theme and agent theme changes with proper transition handling
   useEffect(() => {
     const root = window.document.documentElement;
+    let transitionTimeout: NodeJS.Timeout | null = null;
+    let transitionHandler: (() => void) | null = null;
 
-    // Start transition
-    root.classList.add('theme-transition');
+    const startTransition = () => {
+      root.classList.add('theme-transition');
+    };
 
-    // Apply theme change
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-
-    // Remove transition class after transition completes
-    const transitionEndHandler = () => {
+    const endTransition = () => {
       root.classList.remove('theme-transition');
     };
 
-    // Add event listener
-    root.addEventListener('transitionend', transitionEndHandler, { once: true });
+    // Apply theme changes
+    startTransition();
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
 
-    // Cleanup 
-    return () => {
-      root.removeEventListener('transitionend', transitionEndHandler);
-    };
-  }, [theme]);
+    // Set avatar filter based on theme
+    root.style.setProperty(
+      '--avatar-filter',
+      theme === 'dark' ? 'invert(1) brightness(2)' : 'none'
+    );
 
-  // Apply agent theme variables when agent or theme changes
-  useEffect(() => {
+    // Apply agent theme if available
     if (agent) {
-      const root = window.document.documentElement;
-
-      // Start transition
-      root.classList.add('theme-transition');
-
-      // Apply theme changes
       const isDarkMode = theme === 'dark';
       applyAgentTheme(root, agent, isDarkMode);
-
-      // Set a data attribute for current agent to enable agent-specific CSS
       root.dataset.agent = agent.id || 'system';
-
-      // Remove transition class after completion
-      const transitionEndHandler = () => {
-        root.classList.remove('theme-transition');
-      };
-
-      const transitionTimeout = setTimeout(transitionEndHandler, 300);
-
-      return () => {
-        clearTimeout(transitionTimeout);
-      };
     }
-  }, [agent, theme]);
+
+    // Set up transition end handling
+    transitionHandler = () => {
+      endTransition();
+      if (transitionTimeout) {
+        clearTimeout(transitionTimeout);
+        transitionTimeout = null;
+      }
+    };
+
+    // Add event listener for transition end
+    root.addEventListener('transitionend', transitionHandler, { once: true });
+
+    // Fallback timeout in case transition event doesn't fire
+    transitionTimeout = setTimeout(transitionHandler, 300);
+
+    // Cleanup
+    return () => {
+      if (transitionHandler) {
+        root.removeEventListener('transitionend', transitionHandler);
+      }
+      if (transitionTimeout) {
+        clearTimeout(transitionTimeout);
+      }
+      endTransition();
+    };
+  }, [theme, agent]);
 
   // Theme value with setters that update localStorage
   const value: ThemeContextType = {

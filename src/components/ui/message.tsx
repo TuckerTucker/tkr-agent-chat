@@ -1,5 +1,5 @@
 import React, { useRef, forwardRef, useState } from "react";
-import { cn, formatMessageTime, copyToClipboard as copyTextToClipboard } from "../../lib/utils";
+import { cn, formatMessageTime, copyToClipboard } from "../lib/utils";
 import { Button } from "./button";
 import { MarkdownRenderer } from "./markdown-renderer";
 import type { MessageControlsProps, MessageProps } from './message.d';
@@ -25,8 +25,7 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
     <div 
       ref={ref}
       className={cn(
-        "message-functions flex flex-row sm:flex-col items-center gap-2 py-2 px-2", 
-        "sm:mx-2 mb-2 sm:mb-0 w-full sm:w-auto justify-center sm:justify-start",
+        "message-functions flex flex-row sm:flex-col items-center", 
         "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-md",
         "opacity-0 group-hover:focus-within:opacity-100 transition-opacity duration-200",
         "border border-slate-300 dark:border-slate-600 rounded-md",
@@ -42,18 +41,18 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label="Copy message"
         aria-pressed={isCopied}
         onClick={onCopy}
         onKeyDown={(e) => handleKeyDown(e, onCopy)}
       >
         {isCopied ? (
-          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 text-green-500 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
           </svg>
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
           </svg>
         )}
@@ -62,12 +61,12 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label="Download message"
         onClick={onDownload}
         onKeyDown={(e) => handleKeyDown(e, onDownload)}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
         </svg>
       </Button>
@@ -75,18 +74,18 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label={isCollapsed ? "Expand message" : "Collapse message"}
         aria-expanded={!isCollapsed}
         onClick={onToggleCollapse}
         onKeyDown={(e) => handleKeyDown(e, onToggleCollapse)}
       >
         {isCollapsed ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
           </svg>
         )}
@@ -96,12 +95,12 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-red-500 hover:text-red-600 dark:hover:text-red-500 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none"
+          className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-red-500 dark:text-red-400 transition-colors relative min-w-[40px] min-h-[40px]"
           aria-label="Delete message"
           onClick={onDelete}
           onKeyDown={(e) => handleKeyDown(e, onDelete)}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
           </svg>
         </Button>
@@ -132,9 +131,9 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
   const messageRef = useRef<HTMLDivElement>(null);
   const isUser = sender === "user";
 
-  const copyToClipboard = async () => {
+  const handleCopyToClipboard = async () => {
     try {
-      await copyTextToClipboard(Array.isArray(content) ? content.join('\n') : String(content));
+      await copyToClipboard(Array.isArray(content) ? content.join('\n') : String(content));
       setIsCopied(true);
       if (onCopy) onCopy();
       
@@ -180,7 +179,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
       case "sending":
         return (
           <div className="flex items-center text-xs text-gray-400" aria-label="Message sending">
-            <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -190,10 +189,10 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
       case "sent":
         return (
           <div className="flex items-center text-xs text-gray-400" aria-label="Message sent">
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
-            <span>Sent</span>
+            <span></span>
           </div>
         );
       case "delivered":
@@ -229,7 +228,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
-            <span>Sent</span>
+            <span></span>
           </div>
         );
     }
@@ -239,7 +238,8 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
     <div 
       ref={ref} 
       className={cn(
-        "message group relative mb-6",
+        "message-row flex group relative",
+        isUser ? "justify-end items-end" : "justify-start items-start",
         {
           'is-typing': isTyping,
           'is-error': isError,
@@ -255,33 +255,30 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
     >
       <div 
         className={cn(
-          "message-container flex relative",
-          isUser ? "justify-end" : "justify-start"
+          "message-container flex relative max-w-[85%] md:max-w-[70%]",
+          isUser ? "flex-row-reverse items-end" : "flex-row items-start",
+          "gap-3"
         )} 
         ref={messageRef}
       >
+        {/* Avatar: left for agent, right for user */}
         {!isUser && (
-          <div className="message-agent-indicator flex items-start">
-            <div 
-              className="agent-bar w-2 self-stretch rounded-l-md mr-2"
-              style={{
-                backgroundColor: metadata.agentColor ? `hsl(${metadata.agentColor})` : 'var(--agent-message-border)'
-              }}
-            ></div>
-            
-            <div 
-              className="message-avatar w-6 h-6 rounded-full flex-shrink-0 mr-2 overflow-hidden border flex items-center justify-center" 
-              style={{
-                backgroundColor: metadata.agentColor ? `hsl(${metadata.agentColor})` : 'var(--agent-avatar-bg)',
-                borderColor: 'white'
-              }}
-              aria-label={`${metadata.agentName || 'Agent'} avatar`}
-            >
+          <div className="flex items-start mr-3">
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow bg-gray-100 flex items-center justify-center overflow-hidden">
               {metadata.avatar ? (
                 typeof metadata.avatar === 'string' && (metadata.avatar.startsWith('<svg') || metadata.avatar.includes('<?xml')) ? (
-                  <div dangerouslySetInnerHTML={{ __html: metadata.avatar }} className="w-full h-full" />
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: metadata.avatar }} 
+                    className="w-full h-full" 
+                    style={{ filter: 'var(--avatar-filter)' }}
+                  />
                 ) : (
-                  <img src={metadata.avatar} alt={metadata.agentName || "Agent"} className="w-full h-full object-cover" />
+                  <img 
+                    src={metadata.avatar} 
+                    alt={metadata.agentName || 'Agent'} 
+                    className="w-[50%] h-[50%] object-cover"
+                    style={{ filter: 'var(--avatar-filter)' }}
+                  />
                 )
               ) : (
                 metadata.agentName ? (
@@ -297,36 +294,52 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
             </div>
           </div>
         )}
-        
-        <div className="message-content-wrapper flex flex-col max-w-[85%] w-full">
-          {!isUser && metadata.agentName && (
-            <div 
-              className="agent-name text-sm font-semibold mb-2"
-              style={{
-                color: metadata.agentColor ? `hsl(${metadata.agentColor})` : 'var(--agent-message-border)'
-              }}
-            >
-              {metadata.agentName}
+        {isUser && (
+          <div className="flex items-end ml-3">
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow bg-white dark:bg-slate-800 text-blue-500 dark:text-white flex items-center justify-center overflow-hidden" aria-label="User avatar">
+              {metadata.avatar ? (
+                typeof metadata.avatar === 'string' && (metadata.avatar.startsWith('<svg') || metadata.avatar.includes('<?xml')) ? (
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: metadata.avatar }} 
+                    className="w-full h-full" 
+                    style={{ filter: 'var(--avatar-filter)' }}
+                  />
+                ) : (
+                  <img 
+                    src={metadata.avatar} 
+                    alt="User" 
+                    className="w-[50%] h-[50%] object-cover"
+                    style={{ filter: 'var(--avatar-filter)' }}
+                  />
+                )
+              ) : (
+                <span className="text-white font-bold text-lg">U</span>
+              )}
             </div>
-          )}
-          
-          <div 
+          </div>
+        )}
+        {/* Message Content Bubble */}
+        <div className={cn("flex flex-col max-w-xl w-full", isUser ? 'items-end' : 'items-start')}> 
+          {/* Bubble */}
+          <div
             className={cn(
-              "px-4 py-3 rounded-lg shadow-sm relative",
-              isCollapsed ? "min-h-[3rem]" : "min-h-[3rem]",
-              isUser 
-                ? "bg-blue-500 text-white rounded-tr-none shadow-md" 
-                : "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-gray-100 shadow-md",
-              !isUser && metadata.agentId && "border-l-4",
-              !isUser && metadata.agentId && `agent-${metadata.agentId}-message`
+              "px-4 py-3 rounded-lg shadow relative max-w-xl transition-colors border border-border/5",
+              isUser
+                ? "bg-primary text-primary-foreground rounded-tr-none ml-3"
+                : "bg-card dark:bg-card/80 text-card-foreground rounded-tl-none mr-3",
+              isUser ? "self-end" : "self-start"
             )}
-            style={!isUser && metadata?.agentColor ? {
-              borderLeftColor: `hsl(${metadata.agentColor})`,
-              backgroundColor: metadata.agentId ? 'var(--agent-message-bg)' : undefined
-            } as React.CSSProperties : undefined}
+            style={
+              !isUser && metadata?.agentColor
+                ? {
+                    borderLeft: `4px solid hsl(${metadata.agentColor})`,
+                    background: `linear-gradient(90deg, hsl(${metadata.agentColor} / 0.10) 0%, transparent 100%)`
+                  }
+                : undefined
+            }
           >
             {isCollapsed ? (
-              <div className="message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed">
+              <div className="message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed space-y-2">
                 {markdown ? (
                   <MarkdownRenderer 
                     content={typeof content === 'string' 
@@ -349,8 +362,20 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
                 )}
               </div>
             ) : (
-              <div className="message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed">
-                {markdown ? (
+              <div className={cn(
+                "message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed",
+                isTyping && "typing-indicator"
+              )}>
+                {isTyping ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
+                      <span className="w-2 h-2 bg-current rounded-full animate-pulse [animation-delay:0.2s]"></span>
+                      <span className="w-2 h-2 bg-current rounded-full animate-pulse [animation-delay:0.4s]"></span>
+                    </div>
+                    <span className="text-sm opacity-70">Typing...</span>
+                  </div>
+                ) : markdown ? (
                   <MarkdownRenderer 
                     content={content} 
                     agentColors={metadata.mentions?.reduce((acc: Record<string, string>, mention: { agentName: string; color: string }) => {
@@ -367,84 +392,89 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
             )}
           </div>
           
-          <div className={`message-footer flex items-center justify-between mt-2 text-xs ${isUser ? "text-right" : "text-left"} text-gray-400`}>
-            <div className="message-time ml-1">
+          <div className={cn(
+            "message-footer flex items-center gap-1.5 mt-1.5 text-xs text-gray-500 dark:text-gray-400",
+            isUser ? "flex-row-reverse" : "flex-row"
+          )}>
+            <span className="timestamp opacity-70" aria-label={`Sent at ${formatMessageTime(timestamp)}`}>
               {formatMessageTime(timestamp)}
-            </div>
-            
+            </span>
             {isUser && (
-              <div className="message-status flex items-center mr-1">
+              <div className="message-status flex items-center">
                 {renderStatus()}
               </div>
             )}
           </div>
         </div>
         
-        {isUser && (
-          <div className="message-avatar w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 ml-2 overflow-hidden border border-white flex items-center justify-center" aria-label="User avatar">
-            <span className="text-white font-bold text-xs">U</span>
-          </div>
-        )}
         
         <div 
           className={cn(
             "message-functions opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 absolute",
-            isUser ? "-right-8 top-1" : "-left-8 top-1"
+            isUser ? "-left-14 top-0" : "-left-14 top-0"
           )}
         >
-          <div className="bg-white/90 dark:bg-slate-800/90 rounded-lg shadow-sm p-1.5 flex flex-col gap-1.5">
-            <button
-              onClick={copyToClipboard}
-              className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"
+          <div className="bg-white/95 dark:bg-slate-800/95 rounded-lg shadow flex flex-col gap-2 p-0.5 border border-border/5 min-w-[40px]">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopyToClipboard}
+              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label="Copy message"
             >
               {isCopied ? (
-                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5 text-green-500 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                 </svg>
               )}
-            </button>
+            </Button>
             
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={downloadMessage}
-              className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"
+              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label="Download message"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
               </svg>
-            </button>
+            </Button>
             
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"
+              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label={isCollapsed ? "Expand message" : "Collapse message"}
             >
               {isCollapsed ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
                 </svg>
               )}
-            </button>
+            </Button>
             
             {onDelete && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onDelete}
-                className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-red-500 dark:text-red-400 transition-colors"
+                className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-red-500 dark:text-red-400 transition-colors relative min-w-[40px] min-h-[40px]"
                 aria-label="Delete message"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
-              </button>
+              </Button>
             )}
           </div>
         </div>
