@@ -159,7 +159,7 @@ export function AppLayout({
             {/* Agent selector and chat input area */}
             <div className="sticky bottom-0 border-t border-border/50 px-8 py-6 flex-shrink-0 bg-background/95 backdrop-blur-sm shadow-2xl z-10">
               <div className="max-w-screen-xl mx-auto">
-                <div className="flex flex-row items-end gap-4">
+                <div className="flex flex-col gap-3">
                   {/* Agent selection buttons */}
                   <div 
                     className="flex flex-wrap gap-3"

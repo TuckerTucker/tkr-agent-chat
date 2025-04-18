@@ -327,8 +327,8 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
               "px-4 py-3 rounded-lg shadow-md relative max-w-xl w-full transition-all duration-theme",
               "backdrop-blur-sm break-words overflow-x-auto",
               isUser
-                ? "bg-primary/95 text-primary-foreground rounded-tr-none ml-3 border-primary/20"
-                : "bg-agent-message-bg/95 text-foreground rounded-tl-none mr-3 border-agent-message-border",
+                ? "bg-card text-card-foreground rounded-tr-none ml-3 border border-primary/20"
+                : "bg-card text-foreground rounded-tl-none mr-3 border border-agent-message-border",
               isUser ? "self-end" : "self-start"
             )}
             style={
@@ -414,8 +414,8 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
           className={cn(
             "message-functions opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-theme z-message-actions sticky top-0",
             isUser
-              ? "-translate-x-[calc(100%+1rem)] left-0"
-              : "translate-x-[calc(100%+1rem)] right-0"
+              ? "-translate-x"
+              : "translate-x"
           )}
         >
           <div className="bg-card/95 rounded-lg shadow flex flex-col gap-2 p-0.5 border border-border min-w-[40px]">
