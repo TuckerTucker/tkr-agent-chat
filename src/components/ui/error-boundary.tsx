@@ -64,7 +64,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="p-4 border border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-900/20 my-4 max-w-full overflow-hidden">
+        <div className="p-4 border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-900/20 my-4 max-w-full overflow-hidden">
           <div className="flex items-center mb-2">
             <svg 
               className="h-5 w-5 text-red-500 mr-2" 
@@ -127,7 +127,7 @@ export function ErrorMessage({
 }: ErrorMessageProps): React.ReactElement {
   return (
     <div 
-      className={`p-4 border border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-900/20 my-2 max-w-full overflow-hidden ${className}`}
+      className={`p-4 border-red-300 dark:border-red-800 rounded-md bg-red-50 dark:bg-red-900/20 my-2 max-w-full overflow-hidden ${className}`}
       role="alert"
       aria-live="assertive"
       {...props}

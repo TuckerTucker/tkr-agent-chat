@@ -341,18 +341,7 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
     
     return (
       <div className="text-xs text-muted-foreground mt-1 flex gap-2">
-        <span className="inline-flex items-center">
-          <kbd className="px-1 bg-muted rounded text-[10px] mr-1">**bold**</kbd>
-        </span>
-        <span className="inline-flex items-center">
-          <kbd className="px-1 bg-muted rounded text-[10px] mr-1">*italic*</kbd>
-        </span>
-        <span className="inline-flex items-center">
-          <kbd className="px-1 bg-muted rounded text-[10px] mr-1">`code`</kbd>
-        </span>
-        <span className="inline-flex items-center">
-          <kbd className="px-1 bg-muted rounded text-[10px] mr-1">@mention</kbd>
-        </span>
+        
       </div>
     );
   };
@@ -364,7 +353,7 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
       aria-label="Message input form"
     >      
       {/* Input area */}
-      <div className="flex items-center gap-3 bg-background border border-input rounded-lg px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50 transition-shadow hover:shadow">
+      <div className="flex items-center gap-3 bg-background border-input rounded-lg px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50 transition-shadow hover:shadow">
         <div className="flex-1 relative min-h-[44px] max-h-[200px]">
           {/* Hidden textarea for actual input */}
           <textarea

@@ -14,7 +14,7 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
     <div
       ref={ref}
       className={cn(
-        "absolute z-50 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden",
+        "absolute z-50 bg-white dark:bg-slate-800 rounded-md shadow-lg border-slate-200 dark:border-slate-700 overflow-hidden",
         className
       )}
       style={{

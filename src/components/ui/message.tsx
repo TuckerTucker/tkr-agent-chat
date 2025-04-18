@@ -26,10 +26,11 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       ref={ref}
       className={cn(
         "message-functions flex flex-row sm:flex-col items-center", 
-        "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-md",
-        "opacity-0 group-hover:focus-within:opacity-100 transition-opacity duration-200",
-        "border border-slate-300 dark:border-slate-600 rounded-md",
-        "h-fit z-10",
+        "bg-card/95 backdrop-blur-sm shadow-md", 
+        "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
+        "transition-opacity duration-theme",
+        "border border-border rounded-lg",
+        "h-fit z-message-actions overflow-hidden",
         className
       )}
       aria-label="Message actions"
@@ -41,7 +42,7 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-          className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+          className="hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label="Copy message"
         aria-pressed={isCopied}
         onClick={onCopy}
@@ -61,7 +62,7 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-        className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+        className="hover:bg-accent text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label="Download message"
         onClick={onDownload}
         onKeyDown={(e) => handleKeyDown(e, onDownload)}
@@ -74,7 +75,7 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       <Button
         variant="ghost"
         size="icon"
-        className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+        className="hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
         aria-label={isCollapsed ? "Expand message" : "Collapse message"}
         aria-expanded={!isCollapsed}
         onClick={onToggleCollapse}
@@ -95,7 +96,7 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
         <Button
           variant="ghost"
           size="icon"
-          className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-red-500 dark:text-red-400 transition-colors relative min-w-[40px] min-h-[40px]"
+          className="hover:bg-destructive/10 text-destructive transition-colors relative min-w-[40px] min-h-[40px]"
           aria-label="Delete message"
           onClick={onDelete}
           onKeyDown={(e) => handleKeyDown(e, onDelete)}
@@ -178,7 +179,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
     switch (status) {
       case "sending":
         return (
-          <div className="flex items-center text-xs text-gray-400" aria-label="Message sending">
+          <div className="flex items-center text-xs text-muted-foreground" aria-label="Message sending">
             <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -188,7 +189,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       case "sent":
         return (
-          <div className="flex items-center text-xs text-gray-400" aria-label="Message sent">
+          <div className="flex items-center text-xs text-muted-foreground" aria-label="Message sent">
             <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -197,7 +198,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       case "delivered":
         return (
-          <div className="flex items-center text-xs text-blue-500" aria-label="Message delivered">
+          <div className="flex items-center text-xs text-primary" aria-label="Message delivered">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -206,7 +207,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       case "read":
         return (
-          <div className="flex items-center text-xs text-blue-600" aria-label="Message read">
+          <div className="flex items-center text-xs text-primary" aria-label="Message read">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -215,7 +216,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       case "error":
         return (
-          <div className="flex items-center text-xs text-red-500" aria-label="Message failed">
+          <div className="flex items-center text-xs text-destructive" aria-label="Message failed">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -224,7 +225,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       default:
         return (
-          <div className="flex items-center text-xs text-gray-400" aria-label="Message sent">
+          <div className="flex items-center text-xs text-muted-foreground" aria-label="Message sent">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -264,7 +265,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         {/* Avatar: left for agent, right for user */}
         {!isUser && (
           <div className="flex items-start mr-3">
-            <div className="w-10 h-10 rounded-full border-2 border-white shadow bg-gray-100 flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-full border-2 border-background/20 shadow-lg bg-agent-avatar-bg text-agent-avatar-text flex items-center justify-center overflow-hidden ring-2 ring-agent-primary/20">
               {metadata.avatar ? (
                 typeof metadata.avatar === 'string' && (metadata.avatar.startsWith('<svg') || metadata.avatar.includes('<?xml')) ? (
                   <div 
@@ -296,7 +297,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         )}
         {isUser && (
           <div className="flex items-end ml-3">
-            <div className="w-10 h-10 rounded-full border-2 border-white shadow bg-white dark:bg-slate-800 text-blue-500 dark:text-white flex items-center justify-center overflow-hidden" aria-label="User avatar">
+            <div className="w-10 h-10 rounded-full border-2 border-background/20 shadow-lg bg-primary text-primary-foreground flex items-center justify-center overflow-hidden ring-2 ring-primary/20" aria-label="User avatar">
               {metadata.avatar ? (
                 typeof metadata.avatar === 'string' && (metadata.avatar.startsWith('<svg') || metadata.avatar.includes('<?xml')) ? (
                   <div 
@@ -323,10 +324,11 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
           {/* Bubble */}
           <div
             className={cn(
-              "px-4 py-3 rounded-lg shadow relative max-w-xl transition-colors border border-border/5",
+              "px-4 py-3 rounded-lg shadow-md relative max-w-xl w-full transition-all duration-theme",
+              "backdrop-blur-sm break-words overflow-x-auto",
               isUser
-                ? "bg-primary text-primary-foreground rounded-tr-none ml-3"
-                : "bg-card dark:bg-card/80 text-card-foreground rounded-tl-none mr-3",
+                ? "bg-primary/95 text-primary-foreground rounded-tr-none ml-3 border-primary/20"
+                : "bg-agent-message-bg/95 text-foreground rounded-tl-none mr-3 border-agent-message-border",
               isUser ? "self-end" : "self-start"
             )}
             style={
@@ -339,7 +341,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
             }
           >
             {isCollapsed ? (
-              <div className="message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed space-y-2">
+              <div className="message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed space-y-2 prose-p:my-2 prose-pre:my-2">
                 {markdown ? (
                   <MarkdownRenderer 
                     content={typeof content === 'string' 
@@ -363,7 +365,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
               </div>
             ) : (
               <div className={cn(
-                "message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed",
+                "message-text prose prose-sm dark:prose-invert max-w-none min-h-[1.5rem] leading-relaxed prose-p:my-2 prose-pre:my-2",
                 isTyping && "typing-indicator"
               )}>
                 {isTyping ? (
@@ -393,7 +395,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
           </div>
           
           <div className={cn(
-            "message-footer flex items-center gap-1.5 mt-1.5 text-xs text-gray-500 dark:text-gray-400",
+            "message-footer flex items-center gap-1.5 mt-2 text-xs text-muted-foreground",
             isUser ? "flex-row-reverse" : "flex-row"
           )}>
             <span className="timestamp opacity-70" aria-label={`Sent at ${formatMessageTime(timestamp)}`}>
@@ -410,16 +412,16 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         
         <div 
           className={cn(
-            "message-functions opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 absolute",
-            isUser ? "-left-14 top-0" : "-left-14 top-0"
+            "message-functions opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-theme z-message-actions absolute",
+            isUser ? "-right-12 top--12" : "-left-1 top-12"
           )}
         >
-          <div className="bg-white/95 dark:bg-slate-800/95 rounded-lg shadow flex flex-col gap-2 p-0.5 border border-border/5 min-w-[40px]">
+          <div className="bg-card/95 rounded-lg shadow flex flex-col gap-2 p-0.5 border border-border min-w-[40px]">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleCopyToClipboard}
-              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+              className="hover:bg-accent text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label="Copy message"
             >
               {isCopied ? (
@@ -437,7 +439,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
               variant="ghost"
               size="icon"
               onClick={downloadMessage}
-              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+              className="hover:bg-accent text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label="Download message"
             >
               <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -449,7 +451,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
               variant="ghost"
               size="icon"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
+              className="hover:bg-accent text-muted-foreground transition-colors relative min-w-[40px] min-h-[40px]"
               aria-label={isCollapsed ? "Expand message" : "Collapse message"}
             >
               {isCollapsed ? (
@@ -468,7 +470,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
                 variant="ghost"
                 size="icon"
                 onClick={onDelete}
-                className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-red-500 dark:text-red-400 transition-colors relative min-w-[40px] min-h-[40px]"
+                className="hover:bg-accent text-destructive transition-colors relative min-w-[40px] min-h-[40px]"
                 aria-label="Delete message"
               >
                 <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

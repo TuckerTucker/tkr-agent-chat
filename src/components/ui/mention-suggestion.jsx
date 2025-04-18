@@ -37,7 +37,7 @@ export const MentionSuggestion = React.forwardRef(({
     <div
       ref={ref}
       className={cn(
-        "mention-suggestion absolute z-50 bg-background border border-input rounded-md shadow-md",
+        "mention-suggestion absolute z-50 bg-background border-input rounded-md shadow-md",
         "max-h-60 overflow-y-auto w-64",
         className
       )}

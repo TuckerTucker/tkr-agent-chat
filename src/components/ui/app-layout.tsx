@@ -6,6 +6,7 @@ import { Button } from './button';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
+import { cn } from '../lib/utils';
 
 /**
  * Main application layout component following the design in _planning/interface.png
@@ -52,53 +53,58 @@ export function AppLayout({
     return `${status.connection.charAt(0).toUpperCase() + status.connection.slice(1)} - ${status.activity}`;
   };
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
   return (
     <ThemeProvider defaultTheme="dark" defaultAgent={AGENT_THEMES[currentAgentId]}>
-      <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden">
-        {/* Backdrop overlay for mobile */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm sm:hidden z-40"
-            onClick={toggleSidebar}
-            aria-hidden="true"
-          />
-        )}
-        {/* Sidebar */}
-        <aside 
-          className={`w-[320px] h-full min-h-0 border-r border-border/50 bg-sidebar flex flex-col flex-shrink-0 fixed sm:relative inset-y-0 left-0 z-50 transition-transform duration-200 shadow-lg ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
-          }`}
-          role="navigation" 
-          aria-label="Chat conversations"
-          tabIndex={0}
-        >
+      <div className="fixed inset-0 flex flex-col min-h-screen bg-background text-foreground antialiased">
+        {/* Unified chat container */}
+        <div className="flex h-screen overflow-hidden">
+          {/* Sidebar */}
+          <aside 
+            className={cn(
+              "w-[380px] h-full min-h-0 border-r border-sidebar-border flex-shrink-0",
+              "bg-sidebar-background/95 backdrop-blur-sm flex flex-col",
+              "shadow-lg"
+            )}
+            role="navigation" 
+            aria-label="Chat conversations"
+            tabIndex={0}
+          >
           {/* Sidebar header */}
-          <div className="border-b border-border px-6 py-4 flex justify-between items-center h-16 bg-card/70">
-            <div className="text-xl font-bold text-primary tracking-wide"><em>TKR Agents</em></div>
+          <div className="border-b border-sidebar-border/50 px-8 py-5 flex justify-between items-center h-20 bg-sidebar-background/95 backdrop-blur-sm">
+            <div className="text-2xl font-bold text-sidebar-foreground tracking-wide"><em>TKR Agents</em></div>
             <div className="flex items-center gap-2">
               <ThemeSwitch showAgentIndicator={false} />
             </div>
           </div>
-          {/* Sidebar content: conversations and new chat */}
+          {/* New Chat button */}
+          <div className="px-8 py-4 border-b border-sidebar-border/50">
+            <Button 
+              onClick={onCreateConversation}
+              className="w-full justify-center font-medium text-base py-2.5"
+              variant="outline"
+            >
+              New Chat
+            </Button>
+          </div>
+          
+          {/* Sidebar content: conversations */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto py-1">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">
               {conversations.map((conversation: Conversation) => (
                 <div 
                   key={conversation.id}
-                  onClick={() => {
-                    onSelectConversation(conversation);
-                    setIsSidebarOpen(false);
-                  }}
-                  className={`px-6 py-2.5 cursor-pointer transition-colors hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                    currentConversation?.id === conversation.id 
-                      ? 'bg-accent/20 border-l-2 border-primary' 
-                      : 'border-l-2 border-transparent'
-                  }`}
+                  onClick={() => onSelectConversation(conversation)}
+                  className={cn(
+                    "px-8 py-3.5 cursor-pointer",
+                    "transition-all duration-theme",
+                    "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:pl-10",
+                    "focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:bg-sidebar-accent/80",
+                    "border-l-2",
+                    "group relative",
+                    currentConversation?.id === conversation.id
+                      ? "bg-sidebar-accent/90 border-sidebar-primary text-sidebar-accent-foreground shadow-sm pl-10"
+                      : "border-transparent hover:shadow-sm"
+                  )}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -108,151 +114,121 @@ export function AppLayout({
                     }
                   }}
                 >
-                  <h3 className="font-medium text-sm truncate text-foreground/80">{conversation.title || 'Untitled Chat'}</h3>
+                  <h3 className={cn(
+                    "font-medium text-sm truncate transition-all duration-theme",
+                    currentConversation?.id === conversation.id
+                      ? "text-foreground"
+                      : "text-foreground/70"
+                  )}>
+                    {conversation.title || new Date(conversation.id).toLocaleString('en-US', { 
+                      month: 'numeric',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: 'numeric',
+                      hour12: true 
+                    })}
+                  </h3>
                 </div>
               ))}
             </div>
-            <div className="px-6 py-3">
-              <Button 
-                onClick={onCreateConversation}
-                className="w-full justify-center font-medium text-sm"
-                variant="outline"
-              >
-                New Chat
-              </Button>
+          </div>
+          </aside>
+
+          {/* Main chat area */}
+          <main 
+            className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden relative" 
+            role="main" 
+            aria-label="Chat area"
+          >
+            {/* Chat messages */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border/50 scrollbar-track-transparent">
+              {currentConversation && (
+                <MessageList 
+                  messages={currentConversation.messages || []}
+                  loading={false}
+                  onScrollTop={() => {}}
+                  getAgentMetadata={(id: string) => ({ 
+                    id, 
+                    name: agentMetadata[id]?.name || id,
+                    avatar: agentMetadata[id]?.avatar
+                  })}
+                />
+              )}
             </div>
-          </div>
-          {/* Sidebar footer menu docked to bottom */}
-          <div className="px-6 py-4 border-t border-border space-y-1 bg-sidebar-accent/5">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start font-medium text-sm"
-            >
-              Chat
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start font-medium text-sm text-muted-foreground"
-              disabled
-            >
-              Library
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start font-medium text-sm text-muted-foreground"
-              disabled
-            >
-              Settings
-            </Button>
-          </div>
-        </aside>
-        
-        {/* Main content */}
-        <main 
-          className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden relative w-full" 
-          role="main" 
-          aria-label="Chat area"
-        >
-          {/* Mobile menu button */}
-          <div className="sm:hidden fixed top-4 left-4 z-50">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-500 dark:text-gray-400 transition-colors relative min-w-[40px] min-h-[40px]"
-              aria-label="Toggle sidebar menu"
-            >
-              <svg className="w-5 h-5 absolute inset-0 m-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-            </Button>
-          </div>
-          {/* Chat content */}
-          <div className="flex-1 min-h-0 overflow-hidden pt-16 sm:pt-0">
-            {currentConversation && (
-              <MessageList 
-                messages={currentConversation.messages || []}
-                loading={false}
-                onScrollTop={() => {}}
-                getAgentMetadata={(id: string) => ({ 
-                  id, 
-                  name: agentMetadata[id]?.name || id,
-                  avatar: agentMetadata[id]?.avatar
-                })}
-              />
-            )}
-          </div>
-          
-          {/* Agent selector and input */}
-          <div className="border-t border-border px-6 py-4 flex-shrink-0 flex flex-col gap-3 bg-card/50 backdrop-blur-sm">
-            {/* Agent selection buttons */}
-            <div 
-              className="flex flex-wrap gap-2" 
-              role="radiogroup" 
-              aria-label="Select agent"
-              onKeyDown={(e) => {
-                const currentIndex = availableAgents.indexOf(currentAgentId);
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  const nextIndex = (currentIndex + 1) % availableAgents.length;
-                  onSelectAgent(availableAgents[nextIndex]);
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  const prevIndex = (currentIndex - 1 + availableAgents.length) % availableAgents.length;
-                  onSelectAgent(availableAgents[prevIndex]);
-                }
-              }}
-            >
-              {availableAgents.map((agentId) => (
-                <Button
-                  key={agentId}
-                  variant={agentId === currentAgentId ? "default" : "secondary"}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                    agentId === currentAgentId ? "ring-2 ring-primary" : ""
-                  }`}
-                  role="radio"
-                  aria-checked={agentId === currentAgentId}
-                  style={{
-                    backgroundColor: agentMetadata[agentId]?.color || undefined,
-                    color: agentId === currentAgentId ? "#fff" : undefined,
-                  }}
-                  onClick={() => onSelectAgent(agentId)}
-                  aria-pressed={agentId === currentAgentId}
-                >
-                  {/* Icons temporarily disabled
-                  {agentMetadata[agentId]?.avatar ? (
-                    <img
-                      src={agentMetadata[agentId].avatar}
-                      alt={agentMetadata[agentId].name}
-                      className="w-4 h-4 rounded-full mr-1"
-                    />
-                  ) : (
-                    <span className="w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center text-[10px] font-bold mr-1">
-                      {agentMetadata[agentId]?.name?.[0] || agentId[0]}
-                    </span>
-                  )} */}
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className={`w-2 h-2 rounded-full ${getStatusColor(agentId)}`} 
-                      title={getStatusText(agentId)}
-                    />
-                    {agentMetadata[agentId]?.name || agentId}
+
+            {/* Agent selector and chat input area */}
+            <div className="sticky bottom-0 border-t border-border/50 px-8 py-6 flex-shrink-0 bg-background/95 backdrop-blur-sm shadow-2xl z-10">
+              <div className="max-w-screen-xl mx-auto">
+                <div className="flex flex-row items-end gap-4">
+                  {/* Agent selection buttons */}
+                  <div 
+                    className="flex flex-wrap gap-3"
+                    role="radiogroup" 
+                    aria-label="Select agent"
+                    onKeyDown={(e) => {
+                      const currentIndex = availableAgents.indexOf(currentAgentId);
+                      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const nextIndex = (currentIndex + 1) % availableAgents.length;
+                        onSelectAgent(availableAgents[nextIndex]);
+                      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prevIndex = (currentIndex - 1 + availableAgents.length) % availableAgents.length;
+                        onSelectAgent(availableAgents[prevIndex]);
+                      }
+                    }}
+                  >
+                    {availableAgents.map((agentId) => (
+                      <Button
+                        key={agentId}
+                        variant={agentId === currentAgentId ? "default" : "secondary"}
+                        className={cn(
+                          "flex items-center gap-2 px-4 py-2",
+                          "rounded-full text-base font-medium",
+                          "transition-all duration-theme",
+                          "focus:outline-none focus:ring-2 focus:ring-agent-primary",
+                          "hover:bg-accent/80 hover:text-accent-foreground hover:shadow-md",
+                          agentId === currentAgentId && "ring-2 ring-agent-primary shadow-md"
+                        )}
+                        role="radio"
+                        aria-checked={agentId === currentAgentId}
+                        style={{
+                          backgroundColor: agentId === currentAgentId ? `var(--${agentId}-color)` : undefined,
+                          color: agentId === currentAgentId ? "var(--agent-button-text)" : undefined,
+                        }}
+                        onClick={() => onSelectAgent(agentId)}
+                        aria-pressed={agentId === currentAgentId}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full transition-colors duration-theme",
+                              getStatusColor(agentId)
+                            )}
+                            title={getStatusText(agentId)}
+                          />
+                          {agentMetadata[agentId]?.name || agentId}
+                        </div>
+                      </Button>
+                    ))}
                   </div>
-                </Button>
-              ))}
+                  <div className="flex-1">
+                    <ChatInput
+                      onSend={onSendMessage}
+                      availableAgents={availableAgents}
+                      agentMetadata={agentMetadata}
+                      currentAgentId={currentAgentId}
+                      allowMarkdown={true}
+                      placeholder="Type a message..."
+                      disabled={!agentStatuses[currentAgentId] || agentStatuses[currentAgentId].connection !== 'connected'}
+                      onTyping={() => {}}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <ChatInput
-              onSend={onSendMessage}
-              availableAgents={availableAgents}
-              agentMetadata={agentMetadata}
-              currentAgentId={currentAgentId}
-              allowMarkdown={true}
-              placeholder="Type a message..."
-              disabled={!agentStatuses[currentAgentId] || agentStatuses[currentAgentId].connection !== 'connected'}
-              onTyping={() => {}}
-            />
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </ThemeProvider>
   );

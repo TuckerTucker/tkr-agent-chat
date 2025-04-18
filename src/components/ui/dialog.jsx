@@ -190,7 +190,7 @@ const DialogContent = ({
       aria-labelledby={ariaLabelledby}
       aria-describedby={ariaDescribedby}
       className={cn(
-        "fixed z-50 grid w-full max-w-lg scale-100 gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+        "fixed z-50 grid w-full max-w-lg scale-100 gap-4 bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
         className
       )}
       onClick={handleContentClick}

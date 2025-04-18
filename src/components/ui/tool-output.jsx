@@ -64,7 +64,7 @@ export const ToolOutput = ({
   // Function to render error state
   const renderError = () => {
     return (
-      <div className="text-red-600 dark:text-red-400 p-2 border border-red-200 dark:border-red-800 rounded bg-red-50 dark:bg-red-900/20">
+      <div className="text-red-600 dark:text-red-400 p-2 border-red-200 dark:border-red-800 rounded bg-red-50 dark:bg-red-900/20">
         <p className="font-medium">Error: {error}</p>
         {result.details && (
           <pre className="mt-2 text-xs overflow-x-auto">
@@ -175,7 +175,7 @@ export const ToolOutput = ({
   
   return (
     <div 
-      className={cn("tool-output border rounded-md p-3", 
+      className={cn("tool-output rounded-md p-3", 
         success ? "border-muted bg-background" : "border-red-200 dark:border-red-800",
         className
       )}

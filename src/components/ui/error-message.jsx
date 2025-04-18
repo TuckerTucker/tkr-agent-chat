@@ -81,7 +81,7 @@ export function ErrorMessage({
   
   return (
     <div 
-      className={cn(`p-3 border rounded-md ${styles} my-2 max-w-full overflow-hidden`, className)}
+      className={cn(`p-3 rounded-md ${styles} my-2 max-w-full overflow-hidden`, className)}
       role="alert"
       aria-live="assertive"
       {...props}

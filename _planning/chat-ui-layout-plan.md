@@ -65,7 +65,7 @@ This plan outlines the step-by-step process for implementing the chat UI layout 
   - **Header** at the top (app/section title, theme switch)
   - **Conversation List** in the middle (scrollable)
   - **Footer/Menu** docked at the bottom (navigation)
-- Apply background color and border styles as needed.
+- Apply background color and styles as needed.
 
 ---
 
@@ -88,7 +88,7 @@ This plan outlines the step-by-step process for implementing the chat UI layout 
 ## 5. Message Bubble Layout
 
 - Align user messages to the right, agent messages to the left.
-- Add padding, border radius, and background color to message bubbles.
+- Add padding, radius, and background color to message bubbles.
 - Add avatars and timestamps as needed.
 
 ---

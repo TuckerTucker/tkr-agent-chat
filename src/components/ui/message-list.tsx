@@ -230,21 +230,23 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
         </div>
       ) : (
         /* Message list */
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-8">
           {messages.map((message, index) => {
             const messageProps = mapMessageToProps(message);
             const { id, sender, status, ...rest } = messageProps;
             return (
-              <Message
-                key={id || index}
-                sender={sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : 'system'}
-                status={status === 'sending' ? 'sending' 
-                  : status === 'error' ? 'error'
-                  : status === 'delivered' ? 'delivered'
-                  : status === 'read' ? 'read'
-                  : 'sent'}
-                {...rest}
-              />
+              <div className="mb-2">
+                <Message
+                  key={id || index}
+                  sender={sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : 'system'}
+                  status={status === 'sending' ? 'sending' 
+                    : status === 'error' ? 'error'
+                    : status === 'delivered' ? 'delivered'
+                    : status === 'read' ? 'read'
+                    : 'sent'}
+                  {...rest}
+                />
+              </div>
             );
           })}
         </div>

@@ -147,7 +147,7 @@ export const CodeBlock = React.forwardRef(({
     <div
       ref={ref}
       className={cn(
-        "code-block relative rounded-md overflow-hidden border border-border mb-4",
+        "code-block relative rounded-md overflow-hidden border-border mb-4",
         "light-theme-container",
         className
       )}
@@ -235,7 +235,7 @@ export const CodeBlock = React.forwardRef(({
           overflowX: 'auto'
         }}
       >
-        <pre className={cn("p-2 sm:p-4 m-0 overflow-auto text-xs sm:text-sm light-theme-code", 
+        <pre className={cn("p-2 sm:p-4 m-2 overflow-auto text-xs sm:text-sm light-theme-code", 
           showLineNumbers ? 'line-numbers' : ''
         )}>
           <code 

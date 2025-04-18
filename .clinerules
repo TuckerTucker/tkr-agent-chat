@@ -475,18 +475,52 @@ development:
       critical_flows: ["sending/receiving messages", "switching chats", "agent interaction"]
 
 theme: 
-  screenshot: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/_planning/Screenshot 2025-04-11 at 12.28.06 PM.png" # Based on the dark mode screenshot
+  screenshot: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/_planning/Screenshot 2025-04-11 at 12.28.06 PM.png" # Based on the dark mode screenshot
   colors:
-    primary: "blue-600" # Send button, user message
-    secondary: "gray-700" # Agent message background
-    accent: "emerald-500" # Example from template, maybe agent color?
-    background: "gray-900" # Main chat area background
-    sidebar_background: "gray-800"
-    text_primary: "white"
-    text_secondary: "gray-400"
-    border: "gray-700"
-    agent_chloe: "rgb(34 197 94)" # Green icon approx
-    agent_Phil_Connors: "rgb(249 115 22)" # Orange icon approx (Renamed key)
+    # Light Theme Colors
+    light:
+      background: "hsl(0 0% 100%)" # White
+      foreground: "hsl(0 0% 3.9%)" # Near Black
+      primary: "hsl(0 0% 9%)" # Near Black
+      secondary: "hsl(0 0% 96.1%)" # Light Gray
+      accent: "hsl(0 0% 96.1%)" # Light Gray
+      muted: "hsl(0 0% 96.1%)" # Light Gray
+      muted_foreground: "hsl(0 0% 45.1%)" # Darker Gray
+      border: "hsl(0 0% 89.8%)" # Light Gray
+      sidebar_background: "hsl(0 0% 98%)" # Very Light Gray
+      destructive: "hsl(0 84.2% 60.2%)" # Error Red
+    
+    # Dark Theme Colors
+    dark:
+      background: "hsl(0 0% 3.9%)" # Near Black
+      foreground: "hsl(0 0% 98%)" # Off White
+      primary: "hsl(0 0% 98%)" # Off White
+      secondary: "hsl(0 0% 14.9%)" # Dark Gray
+      accent: "hsl(0 0% 14.9%)" # Dark Gray
+      muted: "hsl(0 0% 14.9%)" # Dark Gray
+      muted_foreground: "hsl(0 0% 63.9%)" # Lighter Gray
+      border: "hsl(0 0% 14.9%)" # Dark Gray
+      sidebar_background: "hsl(240 5.9% 10%)" # Very Dark Gray
+      destructive: "hsl(0 62.8% 30.6%)" # Dark Red
+    
+    # Chart Colors (Data Visualization)
+    charts:
+      light:
+        - "hsl(12 76% 61%)"
+        - "hsl(173 58% 39%)"
+        - "hsl(197 37% 24%)"
+        - "hsl(43 74% 66%)"
+        - "hsl(27 87% 67%)"
+      dark:
+        - "hsl(220 70% 50%)"
+        - "hsl(160 60% 45%)"
+        - "hsl(30 80% 55%)"
+        - "hsl(280 65% 60%)"
+        - "hsl(340 75% 55%)"
+    
+    # Agent Colors
+    agent_chloe: "rgb(34 197 94)" # Green icon
+    agent_Phil_Connors: "rgb(249 115 22)" # Orange icon
   typography:
     font_family: "sans-serif" # Default system font
     base_size: "14px" # Typical for chat interfaces

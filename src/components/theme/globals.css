@@ -4,178 +4,205 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
+    /* Base Colors - HSL values for consistent manipulation */
+    --color-white: 0 0% 100%;
+    --color-black: 0 0% 3.9%;
+    --color-gray-50: 0 0% 98%;
+    --color-gray-100: 0 0% 96.1%;
+    --color-gray-200: 0 0% 89.8%;
+    --color-gray-300: 0 0% 83.1%;
+    --color-gray-400: 0 0% 63.9%;
+    --color-gray-500: 0 0% 45.1%;
+    --color-gray-600: 0 0% 32%;
+    --color-gray-700: 0 0% 14.9%;
+    --color-gray-800: 0 0% 9%;
+    --color-gray-900: 0 0% 3.9%;
+    
+    /* Semantic Colors - Light Theme */
+    --background: var(--color-white);
+    --foreground: var(--color-black);
+    --card: var(--color-white);
+    --card-foreground: var(--color-black);
+    --popover: var(--color-white);
+    --popover-foreground: var(--color-black);
+    --primary: var(--color-gray-800);
+    --primary-foreground: var(--color-gray-50);
+    --secondary: var(--color-gray-100);
+    --secondary-foreground: var(--color-gray-800);
+    --muted: var(--color-gray-100);
+    --muted-foreground: var(--color-gray-500);
+    --accent: var(--color-gray-100);
+    --accent-foreground: var(--color-gray-800);
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
+    --destructive-foreground: var(--color-gray-50);
+    
+    /* and Input Colors */
+    --border: var(--color-gray-200);
+    --border-opacity: 0.5;
+    --input: var(--color-gray-200);
+    --ring: var(--color-black);
+    --ring-opacity: 0.2;
+    
+    /* Radius and Shadow */
     --radius: 0.5rem;
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    
+    --shadow-color: 220 3% 15%;
+    --shadow-strength: 1%;
+    --shadow-md: 0 2px 8px -2px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 2%)),
+                 0 4px 16px -4px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 4%));
+    --shadow-lg: 0 2px 10px -3px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 3%)),
+                 0 8px 24px -6px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 5%));
+    
+    /* Sidebar Colors */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: var(--color-gray-50);
+    --sidebar-accent: 220 13% 95%;
+    --sidebar-accent-foreground: var(--sidebar-primary);
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Animation */
+    --theme-transition-duration: 0.3s;
+    --theme-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Blur Effects */
+    --blur-sm: 8px;
+    --blur-md: 12px;
+    --blur-lg: 16px;
+    
+    /* Agent Colors */
+    --chloe-color: 142 71% 45%;
+    --phil-connors-color: 35 97% 50%;
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
- 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
- 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
- 
+    /* Semantic Colors - Dark Theme */
+    --background: var(--color-gray-900);
+    --foreground: var(--color-gray-50);
+    --card: var(--color-gray-900);
+    --card-foreground: var(--color-gray-50);
+    --popover: var(--color-gray-900);
+    --popover-foreground: var(--color-gray-50);
+    --primary: var(--color-gray-50);
+    --primary-foreground: var(--color-gray-800);
+    --secondary: var(--color-gray-700);
+    --secondary-foreground: var(--color-gray-50);
+    --muted: var(--color-gray-700);
+    --muted-foreground: var(--color-gray-400);
+    --accent: var(--color-gray-700);
+    --accent-foreground: var(--color-gray-50);
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive-foreground: var(--color-gray-50);
+    
+    /* and Input Colors */
+    --border: var(--color-gray-700);
+    --border-opacity: 0.3;
+    --input: var(--color-gray-700);
+    --ring: var(--color-gray-300);
+    --ring-opacity: 0.3;
+    
+    /* Shadow Adjustments */
+    --shadow-color: 220 40% 2%;
+    --shadow-strength: 25%;
+    
+    /* Sidebar Colors */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: var(--color-white);
+    --sidebar-accent: 240 5.9% 13%;
+    --sidebar-accent-foreground: var(--sidebar-foreground);
+    --sidebar-border: 240 3.7% 15.9%;
+    
+    /* Agent Colors */
+    --chloe-color: 142 71% 55%;
+    --phil-connors-color: 35 97% 60%;
   }
-}
- 
-@layer base {
+
+  /* Base Styles */
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+  
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
   }
+
+  /* Agent Theme System */
   :root {
-    --theme-transition-duration: 0.3s;
-    
-    /* Agent theme colors */
-    --chloe-color: hsl(142 71% 45%);
-    --parker-color: hsl(35 97% 50%);
-    --librarian-color: hsl(262 83% 58%);
-    --scientist-color: hsl(187 100% 42%);
-    --writer-color: hsl(327 87% 62%);
-    --system-color: hsl(222 47% 11%);
-    
-    /* Agent theme variables - will be set dynamically */
+    /* Default agent theme variables */
     --agent-primary: 222 47% 11%;
     --agent-secondary: 215 25% 27%;
     --agent-accent: 221 83% 53%;
     --agent-foreground: 210 40% 98%;
     
-    /* Component-specific agent theme variables */
+    /* Component-specific agent variables */
     --agent-message-border: hsl(var(--agent-primary));
     --agent-message-bg: hsl(var(--agent-primary) / 0.05);
     --agent-avatar-bg: hsl(var(--agent-primary));
-    --agent-avatar-text: hsl(0 0% 100%);
+    --agent-avatar-text: hsl(var(--color-white));
     --agent-button-hover: hsl(var(--agent-primary) / 0.8);
     --agent-button-active: hsl(var(--agent-primary) / 0.9);
     --agent-button-text: hsl(var(--agent-foreground));
     --agent-link: hsl(var(--agent-accent));
     --agent-link-hover: hsl(var(--agent-accent) / 0.8);
+    
+    /* Agent Component Shadows */
+    --agent-shadow-sm: 0 1px 2px hsl(var(--agent-primary) / 0.1),
+                      0 1px 1px hsl(var(--agent-primary) / 0.06);
+    --agent-shadow-md: 0 4px 6px -1px hsl(var(--agent-primary) / 0.1),
+                      0 2px 4px -1px hsl(var(--agent-primary) / 0.06);
+    --agent-shadow-lg: 0 10px 15px -3px hsl(var(--agent-primary) / 0.1),
+                      0 4px 6px -2px hsl(var(--agent-primary) / 0.05);
   }
   
   .dark {
-    --chloe-color: hsl(142 71% 55%);
-    --parker-color: hsl(35 97% 60%);
-    --librarian-color: hsl(262 83% 70%);
-    --scientist-color: hsl(187 100% 55%);
-    --writer-color: hsl(327 87% 70%);
-    
-    /* Darker mode adjustments */
-    --agent-message-bg: hsl(var(--agent-primary) / 0.2);
-    --agent-button-hover: hsl(var(--agent-primary) / 0.3);
-    --agent-button-active: hsl(var(--agent-primary) / 0.4);
+    /* Dark mode adjustments for agent theme */
+    --agent-message-bg: hsl(var(--agent-primary) / 0.15);
+    --agent-button-hover: hsl(var(--agent-primary) / 0.25);
+    --agent-button-active: hsl(var(--agent-primary) / 0.3);
+    --agent-shadow-strength: 0.3;
   }
   
-  /* Agent-specific theme classes */
+  /* Agent-specific themes */
   [data-agent="chloe"] {
-    --agent-primary: 142 71% 45%;
+    --agent-primary: var(--chloe-color);
     --agent-secondary: 142 68% 35%;
     --agent-accent: 140 44% 67%;
   }
   
-  [data-agent="parker"] {
-    --agent-primary: 35 97% 50%;
+  [data-agent="phil_connors"] {
+    --agent-primary: var(--phil-connors-color);
     --agent-secondary: 35 84% 44%; 
     --agent-accent: 43 96% 55%;
   }
   
-  [data-agent="librarian"] {
-    --agent-primary: 262 83% 58%;
-    --agent-secondary: 263 70% 50%;
-    --agent-accent: 259 94% 76%;
-  }
-  
-  [data-agent="scientist"] {
-    --agent-primary: 187 100% 42%;
-    --agent-secondary: 192 91% 36%;
-    --agent-accent: 186 96% 69%;
-  }
-  
-  [data-agent="writer"] {
-    --agent-primary: 327 87% 62%;
-    --agent-secondary: 325 77% 51%;
-    --agent-accent: 326 85% 73%;
-  }
-  
-  .dark [data-agent="chloe"] {
-    --agent-primary: 142 71% 55%;
-  }
-  
-  .dark [data-agent="parker"] {
-    --agent-primary: 35 97% 60%;
-  }
-  
-  .dark [data-agent="librarian"] {
-    --agent-primary: 262 83% 70%;
-  }
-  
-  .dark [data-agent="scientist"] {
-    --agent-primary: 187 100% 55%;
-  }
-  
-  .dark [data-agent="writer"] {
-    --agent-primary: 327 87% 70%;
-  }
-  
+  /* Theme transition handling */
   .theme-transition, 
   .theme-transition *, 
   .theme-transition *::before, 
   .theme-transition *::after {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: var(--theme-transition-timing);
     transition-duration: var(--theme-transition-duration);
   }
-  
-  /* Always use light theme for code blocks */
+}
+
+/* Code block theming */
+@layer utilities {
+  /* Light theme code blocks */
   .light-theme-code,
   .light-theme-code code,
   .dark .light-theme-code,
@@ -184,132 +211,111 @@
   .dark .light-theme-container,
   code[data-theme="light"],
   .dark code[data-theme="light"] {
-    background-color: #f5f5f5 !important;
-    color: #333 !important;
-    text-shadow: 0 1px #fff !important;
+    background-color: hsl(var(--color-gray-100));
+    color: hsl(var(--color-gray-900));
+    text-shadow: 0 1px white;
   }
-  
-  /* Style tokens for light theme */
-  .dark code[data-theme="light"] .token.comment,
-  .dark code[data-theme="light"] .token.prolog,
-  .dark code[data-theme="light"] .token.doctype,
-  .dark code[data-theme="light"] .token.cdata {
-    color: slategray !important;
+
+  /* Code syntax highlighting - Light theme */
+  .token {
+    &.comment,
+    &.prolog,
+    &.doctype,
+    &.cdata {
+      color: hsl(var(--color-gray-500));
+    }
+
+    &.punctuation {
+      color: hsl(var(--color-gray-400));
+    }
+
+    &.property,
+    &.tag,
+    &.boolean,
+    &.number,
+    &.constant,
+    &.symbol,
+    &.deleted {
+      color: #db2777; /* pink-600 */
+    }
+
+    &.selector,
+    &.attr-name,
+    &.string,
+    &.char,
+    &.builtin,
+    &.inserted {
+      color: #059669; /* green-600 */
+    }
+
+    &.operator,
+    &.entity,
+    &.url,
+    &.variable {
+      color: #854d0e; /* yellow-800 */
+    }
+
+    &.atrule,
+    &.attr-value,
+    &.keyword {
+      color: #2563eb; /* blue-600 */
+    }
+
+    &.function,
+    &.class-name {
+      color: #be185d; /* pink-700 */
+    }
   }
-  
-  .dark code[data-theme="light"] .token.punctuation {
-    color: #999 !important;
-  }
-  
-  .dark code[data-theme="light"] .token.namespace {
-    opacity: 0.7 !important;
-  }
-  
-  .dark code[data-theme="light"] .token.property,
-  .dark code[data-theme="light"] .token.tag,
-  .dark code[data-theme="light"] .token.boolean,
-  .dark code[data-theme="light"] .token.number,
-  .dark code[data-theme="light"] .token.constant,
-  .dark code[data-theme="light"] .token.symbol,
-  .dark code[data-theme="light"] .token.deleted {
-    color: #905 !important;
-  }
-  
-  .dark code[data-theme="light"] .token.selector,
-  .dark code[data-theme="light"] .token.attr-name,
-  .dark code[data-theme="light"] .token.string,
-  .dark code[data-theme="light"] .token.char,
-  .dark code[data-theme="light"] .token.builtin,
-  .dark code[data-theme="light"] .token.inserted {
-    color: #690 !important;
-  }
-  
-  .dark code[data-theme="light"] .token.operator,
-  .dark code[data-theme="light"] .token.entity,
-  .dark code[data-theme="light"] .token.url,
-  .dark code[data-theme="light"] .token.variable {
-    color: #9a6e3a !important;
-  }
-  
-  .dark code[data-theme="light"] .token.atrule,
-  .dark code[data-theme="light"] .token.attr-value,
-  .dark code[data-theme="light"] .token.keyword {
-    color: #07a !important;
-  }
-  
-  .dark code[data-theme="light"] .token.function,
-  .dark code[data-theme="light"] .token.class-name {
-    color: #DD4A68 !important;
-  }
-  
-  .dark-theme .token.comment,
-  .dark-theme .token.prolog,
-  .dark-theme .token.doctype,
-  .dark-theme .token.cdata,
-  .dark [data-theme="dark"] .token.comment,
-  .dark [data-theme="dark"] .token.prolog,
-  .dark [data-theme="dark"] .token.doctype,
-  .dark [data-theme="dark"] .token.cdata {
-    color: #999 !important;
-  }
-  
-  .dark-theme .token.punctuation,
-  .dark [data-theme="dark"] .token.punctuation {
-    color: #ccc !important;
-  }
-  
-  .dark-theme .token.property,
-  .dark-theme .token.tag,
-  .dark-theme .token.boolean,
-  .dark-theme .token.number,
-  .dark-theme .token.constant,
-  .dark-theme .token.symbol,
-  .dark [data-theme="dark"] .token.property,
-  .dark [data-theme="dark"] .token.tag,
-  .dark [data-theme="dark"] .token.boolean,
-  .dark [data-theme="dark"] .token.number,
-  .dark [data-theme="dark"] .token.constant,
-  .dark [data-theme="dark"] .token.symbol {
-    color: #f92672 !important;
-  }
-  
-  .dark-theme .token.selector,
-  .dark-theme .token.attr-name,
-  .dark-theme .token.string,
-  .dark-theme .token.char,
-  .dark-theme .token.builtin,
-  .dark [data-theme="dark"] .token.selector,
-  .dark [data-theme="dark"] .token.attr-name,
-  .dark [data-theme="dark"] .token.string,
-  .dark [data-theme="dark"] .token.char,
-  .dark [data-theme="dark"] .token.builtin {
-    color: #a6e22e !important;
-  }
-  
-  .dark-theme .token.operator,
-  .dark-theme .token.entity,
-  .dark-theme .token.url,
-  .dark-theme .token.variable,
-  .dark [data-theme="dark"] .token.operator,
-  .dark [data-theme="dark"] .token.entity,
-  .dark [data-theme="dark"] .token.url,
-  .dark [data-theme="dark"] .token.variable {
-    color: #66d9ef !important;
-  }
-  
-  .dark-theme .token.atrule,
-  .dark-theme .token.attr-value,
-  .dark-theme .token.function,
-  .dark-theme .token.class-name,
-  .dark [data-theme="dark"] .token.atrule,
-  .dark [data-theme="dark"] .token.attr-value,
-  .dark [data-theme="dark"] .token.function,
-  .dark [data-theme="dark"] .token.class-name {
-    color: #e6db74 !important;
-  }
-  
-  .dark-theme .token.keyword,
-  .dark [data-theme="dark"] .token.keyword {
-    color: #66d9ef !important;
+
+  /* Dark theme syntax highlighting */
+  .dark-theme,
+  .dark [data-theme="dark"] {
+    .token {
+      &.comment,
+      &.prolog,
+      &.doctype,
+      &.cdata {
+        color: hsl(var(--color-gray-400));
+      }
+
+      &.punctuation {
+        color: hsl(var(--color-gray-300));
+      }
+
+      &.property,
+      &.tag,
+      &.boolean,
+      &.number,
+      &.constant,
+      &.symbol {
+        color: #f472b6; /* pink-400 */
+      }
+
+      &.selector,
+      &.attr-name,
+      &.string,
+      &.char,
+      &.builtin {
+        color: #4ade80; /* green-400 */
+      }
+
+      &.operator,
+      &.entity,
+      &.url,
+      &.variable {
+        color: #93c5fd; /* blue-300 */
+      }
+
+      &.atrule,
+      &.attr-value,
+      &.function,
+      &.class-name {
+        color: #fde047; /* yellow-300 */
+      }
+
+      &.keyword {
+        color: #93c5fd; /* blue-300 */
+      }
+    }
   }
 }
