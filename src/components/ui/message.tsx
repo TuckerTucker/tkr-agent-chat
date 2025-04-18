@@ -412,8 +412,10 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         
         <div 
           className={cn(
-            "message-functions opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-theme z-message-actions absolute",
-            isUser ? "-right-12 top--12" : "-left-1 top-12"
+            "message-functions opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-theme z-message-actions sticky top-0",
+            isUser
+              ? "-translate-x-[calc(100%+1rem)] left-0"
+              : "translate-x-[calc(100%+1rem)] right-0"
           )}
         >
           <div className="bg-card/95 rounded-lg shadow flex flex-col gap-2 p-0.5 border border-border min-w-[40px]">
