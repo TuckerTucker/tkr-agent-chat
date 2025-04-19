@@ -13,6 +13,8 @@ export interface MessageProps {
     agentSecondary?: string;
     avatar?: string | null;
     isPrimary?: boolean;
+    description?: string;
+    capabilities?: string[];
     mentions?: Array<{ agentName: string; color: string }>;
     hasMentions?: boolean;
     formattedContent?: string;

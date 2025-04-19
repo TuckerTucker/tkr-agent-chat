@@ -2,6 +2,8 @@ import React, { useRef, forwardRef, useState } from "react";
 import { cn, formatMessageTime, copyToClipboard } from "../lib/utils";
 import { Button } from "./button";
 import { MarkdownRenderer } from "./markdown-renderer";
+import { AgentTooltip } from "./agent-tooltip";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { MessageControlsProps, MessageProps } from './message.d';
 
 const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
@@ -264,8 +266,38 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
       >
         {/* Avatar: left for agent, right for user */}
         {!isUser && (
-          <div className="flex items-start mr-3">
-            <div className="w-10 h-10 rounded-full border-2 border-background/20 shadow-lg bg-agent-avatar-bg text-agent-avatar-text flex items-center justify-center overflow-hidden ring-2 ring-agent-primary/20">
+            <AgentTooltip
+              key={metadata.agentId || 'agent'}
+            content={
+              <div className="flex flex-col gap-2">
+                <div className="font-medium text-base">{metadata.agentName || 'Agent'}</div>
+                {metadata.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{metadata.description}</p>
+                )}
+                {metadata.capabilities && metadata.capabilities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {metadata.capabilities.map((capability: string) => (
+                      <span 
+                        key={capability} 
+                        className="px-2 py-0.5 bg-muted/50 rounded-full text-xs font-medium"
+                        style={metadata.agentColor ? {
+                          backgroundColor: `${metadata.agentColor.replace('rgb', 'rgba').replace(')', ', 0.1)')}`,
+                          color: metadata.agentColor
+                        } : undefined}
+                      >
+                        {capability}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            }
+            agentColor={metadata.agentColor || undefined}
+            side="right"
+            align="start"
+          >
+            <div className="flex items-start mr-3">
+              <div className="w-10 h-10 rounded-full border-2 border-background/20 shadow-lg bg-agent-avatar-bg text-agent-avatar-text flex items-center justify-center overflow-hidden ring-2 ring-agent-primary/20 hover:opacity-80 transition-opacity cursor-pointer">
               {metadata.avatar ? (
                 typeof metadata.avatar === 'string' && (metadata.avatar.startsWith('<svg') || metadata.avatar.includes('<?xml')) ? (
                   <div 
@@ -292,8 +324,9 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
                   </svg>
                 )
               )}
+              </div>
             </div>
-          </div>
+          </AgentTooltip>
         )}
         {isUser && (
           <div className="flex items-end ml-3">
@@ -334,8 +367,8 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
             style={
               !isUser && metadata?.agentColor
                 ? {
-                    borderLeft: `4px solid hsl(${metadata.agentColor})`,
-                    background: `linear-gradient(90deg, hsl(${metadata.agentColor} / 0.10) 0%, transparent 100%)`
+                    borderLeft: `4px solid ${metadata.agentColor}`,
+                    background: `linear-gradient(90deg, ${metadata.agentColor.replace('rgb', 'rgba').replace(')', ', 0.1)')} 0%, transparent 100%)`
                   }
                 : undefined
             }

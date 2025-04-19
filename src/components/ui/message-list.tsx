@@ -111,9 +111,9 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
       agentData = {
         agentId: message.agentId,
         agentName: message.agentName || agentMeta.name,
-        agentColor: agentTheme.primary,
-        agentAccentColor: agentTheme.accent,
-        agentSecondary: agentTheme.secondary,
+        agentColor: agentTheme.color,
+        agentAccentColor: agentTheme.accentColor,
+        agentSecondary: agentTheme.secondaryColor,
         avatar: agentMeta.avatar || null,
         isPrimary: message.isPrimary === true
       };
@@ -127,7 +127,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
         const agentTheme = AGENT_THEMES[mention] || AGENT_THEMES.default;
         return {
           agentName: mention,
-          color: agentTheme.primary
+          color: agentTheme.color
         };
       });
       

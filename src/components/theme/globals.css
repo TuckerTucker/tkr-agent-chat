@@ -213,7 +213,7 @@
   .dark code[data-theme="light"] {
     background-color: hsl(var(--color-gray-100));
     color: hsl(var(--color-gray-900));
-    text-shadow: 0 1px white;
+    text-shadow: 0 1px hsl(var(--color-white));
   }
 
   /* Code syntax highlighting - Light theme */

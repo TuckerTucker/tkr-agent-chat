@@ -12,7 +12,8 @@
 
 // API Gateway WebSocket URL (Now includes /v1)
 const WS_BASE_URL = 'ws://localhost:8000/ws/v1'; // API Gateway WebSocket URL
-const RECONNECT_DELAY = 3000; // Increased delay
+const RECONNECT_DELAY = 5000; // Increased initial delay
+const INITIAL_CONNECT_DELAY = 2000; // Delay before first connection attempt
 
 // Define the structure of messages received from the backend ADK stream
 interface AgentStreamingPacket {
@@ -76,6 +77,14 @@ class WebSocketService {
     this.updateAgentStatus(agentId, { ...initialStatus, connection: 'connecting' });
 
     const existingConnection = this.connections.get(agentId);
+
+    // Add delay before initial connection attempt
+    setTimeout(() => {
+      this.establishConnection(sessionId, agentId, existingConnection);
+    }, INITIAL_CONNECT_DELAY);
+  }
+
+  private establishConnection(sessionId: string, agentId: string, existingConnection: AgentConnection | undefined) {
 
     // Avoid reconnecting if already connected/connecting for this agent
     if (existingConnection && (existingConnection.socket.readyState === WebSocket.OPEN || existingConnection.socket.readyState === WebSocket.CONNECTING)) {
@@ -357,49 +366,48 @@ class WebSocketService {
    * Uses the state from the closed connection passed as an argument.
    */
    private attemptReconnect(closedConnection: AgentConnection) {
-     // Don't attempt if another connection process is marked as connecting for this agent
-     // (This check might be redundant if disconnect cleans up properly)
-     // if (this.connections.get(closedConnection.agentId)?.isConnecting) return; 
-     
+     // Check if we should attempt reconnection
      if (closedConnection.reconnectAttempts >= this.maxReconnectAttempts) {
        console.log(`[Agent: ${closedConnection.agentId}] Max reconnection attempts reached. Stopping.`);
        this.callbacks.onError?.(closedConnection.agentId, { code: 503, message: 'Connection failed after multiple attempts.' });
        return;
      }
- 
+
+     // Clear any existing reconnect timeout
+     this.clearReconnectTimeout(closedConnection.agentId);
+
+     // Calculate delay with exponential backoff
      const attempts = closedConnection.reconnectAttempts + 1;
-     const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1); // Exponential backoff
+     const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1);
      console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${delay / 1000}s (${attempts}/${this.maxReconnectAttempts})...`);
 
-     // Update status before attempting reconnect
-     this.updateAgentStatus(closedConnection.agentId, { connection: 'reconnecting', activity: this.agentStatuses.get(closedConnection.agentId)?.activity ?? 'idle' });
-     this.callbacks.onReconnect?.(closedConnection.agentId); // Notify UI we are trying
+     // Update status and notify UI
+     this.updateAgentStatus(closedConnection.agentId, { 
+       connection: 'reconnecting', 
+       activity: this.agentStatuses.get(closedConnection.agentId)?.activity ?? 'idle' 
+     });
+     this.callbacks.onReconnect?.(closedConnection.agentId);
 
-     // Store the timeout ID separately or manage centrally if needed
+     // Store reconnect timeout
      const timeoutId = setTimeout(() => {
-       // Remove the temporary timeout reference before connecting
-       this.clearReconnectTimeout(closedConnection.agentId);
-       // Pass the incremented attempt count to the connect method
-       this.connect(closedConnection.sessionId, closedConnection.agentId); // TODO: Modify connect to accept attempts
-       // --- Let's assume connect handles the attempt count internally for now ---
-       // OR: We need to modify connect signature: connect(..., initialAttempts = 0)
-       // And call: this.connect(closedConnection.sessionId, closedConnection.agentId, attempts);
+       // Create new connection with incremented attempt count
+       const newConnection: AgentConnection = {
+         ...closedConnection,
+         reconnectAttempts: attempts,
+         isConnecting: false,
+         socket: new WebSocket(closedConnection.connectionUrl)
+       };
+
+       // Establish the connection
+       this.establishConnection(
+         closedConnection.sessionId,
+         closedConnection.agentId,
+         newConnection
+       );
      }, delay);
 
-     // Store the timeout ID for cancellation
-     // We need a way to associate this timeout with the agentId *without* putting the closedConnection back in the map
-     // Let's use a separate map for reconnect timeouts
      this.reconnectTimeouts.set(closedConnection.agentId, timeoutId);
-
-     // --- Revert: Keep timeout on the object for simplicity for now ---
-     // closedConnection.reconnectTimeout = timeoutId;
-     // this.connections.set(closedConnection.agentId, closedConnection); // Put it back temporarily with the timer
-     // --- End Revert ---
-
-     // --- Let's use the separate map approach ---
-     // Need to declare: private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
-     // (Add this declaration to the class properties)
-  }
+   }
 
   // Add the reconnectTimeouts map declaration
   // Map to store pending reconnect timeout IDs

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ThemeProvider } from "./components/theme/theme-provider";
 import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { getSessions, getAgents, getMessages, createSession } from "./services/api";
 import webSocketService from "./services/websocket";
@@ -63,47 +64,44 @@ function App() {
     }
   }, [sessions, selectedSessionId]);
 
-  // Refs for tracking connection state and current values
+  // Ref to track if initial connection has been attempted
   const isInitialConnect = React.useRef(false);
-  const sessionRef = React.useRef<string | null>(null);
-  const agentsRef = React.useRef<string[]>([]);
-
-  // Keep refs updated with current values
-  React.useEffect(() => {
-    sessionRef.current = selectedSessionId;
-  }, [selectedSessionId]);
-
-  React.useEffect(() => {
-    agentsRef.current = availableAgents;
-  }, [availableAgents]);
 
   // Effect for managing all agent connections
   React.useEffect(() => {
-    // Function to connect all available agents
-    const connectAllAgents = () => {
-      const currentSession = sessionRef.current;
-      const currentAgents = agentsRef.current;
+    let mounted = true;
+    let connectTimeout: NodeJS.Timeout | null = null;
 
-      if (currentSession && currentAgents.length > 0 && !isInitialConnect.current) {
+    const attemptConnections = () => {
+      if (!mounted || !selectedSessionId || availableAgents.length === 0) return;
+
+      // Clear any pending connection attempts
+      if (connectTimeout) {
+        clearTimeout(connectTimeout);
+        connectTimeout = null;
+      }
+
+      if (!isInitialConnect.current) {
         console.log("Attempting initial connection for all agents...");
-        currentAgents.forEach(agentId => {
-          webSocketService.connect(currentSession, agentId);
+        availableAgents.forEach(agentId => {
+          webSocketService.connect(selectedSessionId, agentId);
         });
         isInitialConnect.current = true;
       }
     };
 
-    // Set up an interval to check for session and agents
-    const checkInterval = setInterval(() => {
-      connectAllAgents();
-    }, 1000);
+    // Attempt initial connections with a slight delay
+    connectTimeout = setTimeout(attemptConnections, 1000);
 
     // Cleanup function runs only on actual unmount
     return () => {
-      clearInterval(checkInterval);
+      mounted = false;
+      if (connectTimeout) {
+        clearTimeout(connectTimeout);
+      }
       if (isInitialConnect.current) {
         console.log("Disconnecting all agents on final unmount...");
-        agentsRef.current.forEach(agentId => {
+        availableAgents.forEach(agentId => {
           webSocketService.disconnect(agentId, false);
         });
         isInitialConnect.current = false;
@@ -129,7 +127,9 @@ function App() {
           timestamp: new Date().toISOString(),
           metadata: {
             agentColor: agentMeta?.color,
-            avatar: agentMeta?.avatar
+            avatar: agentMeta?.avatar,
+            description: agentMeta?.description,
+            capabilities: agentMeta?.capabilities
           },
           deliveryStatus: 'sent'
         });
@@ -186,14 +186,16 @@ function App() {
       agentId: msg.agent_id,
       agentName: msg.agent_id ? (agentMetadata[msg.agent_id]?.name || msg.agent_id) : undefined,
       timestamp: msg.created_at,
-      metadata: msg.type === 'user' ? {
-        avatar: userAvatar,
-        name: 'You'
-      } : {
-        ...msg.metadata,
-        agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
-        avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined
-      },
+          metadata: msg.type === 'user' ? {
+            avatar: userAvatar,
+            name: 'You'
+          } : {
+            ...msg.metadata,
+            agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
+            avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
+            description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
+            capabilities: msg.agent_id ? agentMetadata[msg.agent_id]?.capabilities : undefined
+          },
       deliveryStatus: 'sent'
     }));
     setLocalMessages(uiMessages);
@@ -227,17 +229,17 @@ function App() {
       return;
     }
     try {
-  const userMessage = createUIMessage({
-    id: crypto.randomUUID(),
-    role: 'user',
-    content: message,
-    timestamp: new Date().toISOString(),
-    metadata: {
-      avatar: userAvatar,
-      name: 'You'
-    },
-    deliveryStatus: 'sent'
-  });
+      const userMessage = createUIMessage({
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString(),
+          metadata: {
+            avatar: userAvatar,
+            name: 'You'
+          },
+        deliveryStatus: 'sent'
+      });
 
       setLocalMessages(prev => [...prev, userMessage]);
       await webSocketService.sendTextMessage(agentId, message);
@@ -268,8 +270,9 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <ErrorBoundary
+    <TooltipPrimitive.Provider>
+      <ThemeProvider>
+        <ErrorBoundary
         fallback={
           <ErrorMessage
             title="Application Error"
@@ -289,8 +292,9 @@ function App() {
           agentMetadata={agentMetadata}
           agentStatuses={agentStatuses}
         />
-      </ErrorBoundary>
-    </ThemeProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </TooltipPrimitive.Provider>
   );
 }
 

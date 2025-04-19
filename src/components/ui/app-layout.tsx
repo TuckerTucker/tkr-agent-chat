@@ -1,26 +1,16 @@
-import { useState } from 'react';
 import { AppLayoutProps, Conversation } from './app-layout.d';
 import { ThemeProvider } from '../theme/theme-provider';
-import { ThemeSwitch} from '../theme/theme-switch';
+import { ThemeSwitch} from '../theme/theme-switch'; 
 import { Button } from './button';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
 import { cn } from '../lib/utils';
+import '../theme/tooltip.css';
 
 /**
  * Main application layout component following the design in _planning/interface.png
- * 
- * @param {Object} props - Component props
- * @param {Array} props.conversations - Array of conversation objects
- * @param {Object} props.currentConversation - Current active conversation
- * @param {Function} props.onSendMessage - Function to handle sending messages
- * @param {Function} props.onCreateConversation - Function to create a new conversation
- * @param {Function} props.onSelectConversation - Function to select a conversation
- * @param {React.ReactNode} props.children - Optional children components
- * @returns {JSX.Element} The application layout
  */
-
 export function AppLayout({
   conversations = [],
   currentConversation = null,
@@ -34,27 +24,18 @@ export function AppLayout({
   agentStatuses = {},
 }: AppLayoutProps): React.ReactElement {
 
-  // Helper function to get status indicator color
-  const getStatusColor = (agentId: string) => {
-    const agentTheme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
-    const status = agentStatuses[agentId];
-
-    // Base style using agent's theme color
-    let style = agentId === currentAgentId ? agentTheme.primary : `${agentTheme.primary}/30`;
-
-    // Add animation for connecting state
-    if (status?.connection === 'connecting') {
-      return `${style} animate-pulse`;
-    }
-
-    return style;
-  };
-
   // Helper function to get status tooltip text
   const getStatusText = (agentId: string) => {
     const status = agentStatuses[agentId];
     if (!status) return 'Disconnected';
     return `${status.connection.charAt(0).toUpperCase() + status.connection.slice(1)} - ${status.activity}`;
+  };
+
+  // Helper function to format agent tooltip content
+  const getAgentTooltip = (agentId: string) => {
+    const agent = agentMetadata[agentId];
+    if (!agent) return '';
+    return `${agent.description}\n\nCapabilities: ${agent.capabilities?.join(', ')}`;
   };
 
   return (
@@ -73,69 +54,69 @@ export function AppLayout({
             aria-label="Chat conversations"
             tabIndex={0}
           >
-          {/* Sidebar header */}
-          <div className="border-b border-sidebar-border/50 px-8 py-5 flex justify-between items-center h-20 bg-sidebar-background/95 backdrop-blur-sm">
-            <div className="text-2xl font-bold text-sidebar-foreground tracking-wide"><em>TKR Agents</em></div>
-            <div className="flex items-center gap-2">
-              <ThemeSwitch showAgentIndicator={false} />
+            {/* Sidebar header */}
+            <div className="border-b border-sidebar-border/50 px-8 py-5 flex justify-between items-center h-20 bg-sidebar-background/95 backdrop-blur-sm">
+              <div className="text-2xl font-bold text-sidebar-foreground tracking-wide"><em>TKR Agents</em></div>
+              <div className="flex items-center gap-2">
+                <ThemeSwitch showAgentIndicator={false} />
+              </div>
             </div>
-          </div>
-          {/* New Chat button */}
-          <div className="px-8 py-4 border-b border-sidebar-border/50">
-            <Button 
-              onClick={onCreateConversation}
-              className="w-full justify-center font-medium text-base py-2.5"
-              variant="outline"
-            >
-              New Chat
-            </Button>
-          </div>
-          
-          {/* Sidebar content: conversations */}
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">
-              {conversations.map((conversation: Conversation) => (
-                <div 
-                  key={conversation.id}
-                  onClick={() => onSelectConversation(conversation)}
-                  className={cn(
-                    "px-8 py-3.5 cursor-pointer",
-                    "transition-all duration-theme",
-                    "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:pl-10",
-                    "focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:bg-sidebar-accent/80",
-                    "border-l-2",
-                    "group relative",
-                    currentConversation?.id === conversation.id
-                      ? "bg-sidebar-accent/90 border-sidebar-primary text-sidebar-accent-foreground shadow-sm pl-10"
-                      : "border-transparent hover:shadow-sm"
-                  )}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onSelectConversation(conversation);
-                    }
-                  }}
-                >
-                  <h3 className={cn(
-                    "font-medium text-sm truncate transition-all duration-theme",
-                    currentConversation?.id === conversation.id
-                      ? "text-foreground"
-                      : "text-foreground/70"
-                  )}>
-                    {conversation.title || new Date(conversation.id).toLocaleString('en-US', { 
-                      month: 'numeric',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: 'numeric',
-                      hour12: true 
-                    })}
-                  </h3>
-                </div>
-              ))}
+            {/* New Chat button */}
+            <div className="px-8 py-4 border-b border-sidebar-border/50">
+              <Button 
+                onClick={onCreateConversation}
+                className="w-full justify-center font-medium text-base py-2.5"
+                variant="outline"
+              >
+                New Chat
+              </Button>
             </div>
-          </div>
+            
+            {/* Sidebar content: conversations */}
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">
+                {conversations.map((conversation: Conversation) => (
+                  <div 
+                    key={conversation.id}
+                    onClick={() => onSelectConversation(conversation)}
+                    className={cn(
+                      "px-8 py-3.5 cursor-pointer",
+                      "transition-all duration-theme",
+                      "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:pl-10",
+                      "focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:bg-sidebar-accent/80",
+                      "border-l-2",
+                      "group relative",
+                      currentConversation?.id === conversation.id
+                        ? "bg-sidebar-accent/90 border-sidebar-primary text-sidebar-accent-foreground shadow-sm pl-10"
+                        : "border-transparent hover:shadow-sm"
+                    )}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectConversation(conversation);
+                      }
+                    }}
+                  >
+                    <h3 className={cn(
+                      "font-medium text-sm truncate transition-all duration-theme",
+                      currentConversation?.id === conversation.id
+                        ? "text-foreground"
+                        : "text-foreground/70"
+                    )}>
+                      {conversation.title || new Date(conversation.id).toLocaleString('en-US', { 
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        hour12: true 
+                      })}
+                    </h3>
+                  </div>
+                ))}
+              </div>
+            </div>
           </aside>
 
           {/* Main chat area */}
@@ -196,10 +177,11 @@ export function AppLayout({
                         )}
                         role="radio"
                         aria-checked={agentId === currentAgentId}
+                        title={getAgentTooltip(agentId)}
                         style={{
                           backgroundColor: agentId === currentAgentId ? (() => {
                             const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
-                            const color = theme.primaryColor;
+                            const color = theme.color;
                             // If RGB format, make it brighter
                             if (color.startsWith('rgb')) {
                               const matches = color.match(/\d+/g);
@@ -217,7 +199,7 @@ export function AppLayout({
                           color: agentId === currentAgentId ? "#ffffff" : undefined,
                           boxShadow: agentId === currentAgentId ? (() => {
                             const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
-                            const color = theme.primaryColor;
+                            const color = theme.color;
                             // If RGB format, extract values for rgba
                             if (color.startsWith('rgb')) {
                               const matches = color.match(/\d+/g);
@@ -238,7 +220,7 @@ export function AppLayout({
                             style={{
                               backgroundColor: (() => {
                                 const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
-                                const color = theme.primaryColor;
+                                const color = theme.color;
                                 // For unselected state, create a semi-transparent version of the color
                                 if (agentId !== currentAgentId) {
                                   // If the color is rgb format

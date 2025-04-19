@@ -17,8 +17,8 @@ export function ThemeSwitch({ className, showAgentIndicator = false, ...props }:
   };
   
   // Get agent color for indicator
-  const agentColor = agent?.primaryColor ? 
-    `hsl(${agent.primaryColor})` : 
+  const agentColor = agent?.color ? 
+    agent.color : 
     'var(--agent-primary, hsl(222 47% 11%))';
   
   return (
@@ -75,9 +75,9 @@ export function AgentThemeSelector({ className, ...props }: AgentThemeSelectorPr
             `agent-${agentOption.id}-selector`
           )}
           style={{ 
-            backgroundColor: `hsl(${agentOption.primaryColor})`,
-            color: agentOption.primaryForeground ? 
-              `hsl(${agentOption.primaryForeground})` : 
+            backgroundColor: agentOption.color,
+            color: agentOption.secondaryColor ? 
+              agentOption.secondaryColor : 
               'hsl(0 0% 100%)'
           }}
           aria-label={`Switch to ${agentOption.name || agentOption.id} theme`}
