@@ -63,14 +63,62 @@ function App() {
     }
   }, [sessions, selectedSessionId]);
 
-  // Set up WebSocket callbacks with proper cleanup and reconnection handling
+  // Refs for tracking connection state and current values
+  const isInitialConnect = React.useRef(false);
+  const sessionRef = React.useRef<string | null>(null);
+  const agentsRef = React.useRef<string[]>([]);
+
+  // Keep refs updated with current values
+  React.useEffect(() => {
+    sessionRef.current = selectedSessionId;
+  }, [selectedSessionId]);
+
+  React.useEffect(() => {
+    agentsRef.current = availableAgents;
+  }, [availableAgents]);
+
+  // Effect for managing all agent connections
+  React.useEffect(() => {
+    // Function to connect all available agents
+    const connectAllAgents = () => {
+      const currentSession = sessionRef.current;
+      const currentAgents = agentsRef.current;
+
+      if (currentSession && currentAgents.length > 0 && !isInitialConnect.current) {
+        console.log("Attempting initial connection for all agents...");
+        currentAgents.forEach(agentId => {
+          webSocketService.connect(currentSession, agentId);
+        });
+        isInitialConnect.current = true;
+      }
+    };
+
+    // Set up an interval to check for session and agents
+    const checkInterval = setInterval(() => {
+      connectAllAgents();
+    }, 1000);
+
+    // Cleanup function runs only on actual unmount
+    return () => {
+      clearInterval(checkInterval);
+      if (isInitialConnect.current) {
+        console.log("Disconnecting all agents on final unmount...");
+        agentsRef.current.forEach(agentId => {
+          webSocketService.disconnect(agentId, false);
+        });
+        isInitialConnect.current = false;
+      }
+    };
+  }, []); // Empty dependency array - only run on mount/unmount
+
+  // Set up WebSocket callbacks
   React.useEffect(() => {
     let isSubscribed = true;
 
     const callbacks = {
       onPacket: (agentId: string, packet: { message?: string; turn_complete?: boolean; interrupted?: boolean; error?: string }) => {
         if (!isSubscribed || !packet.message) return;
-        
+
         const agentMeta = agentMetadata[agentId];
         const newMessage = createUIMessage({
           id: crypto.randomUUID(),
@@ -90,23 +138,17 @@ function App() {
       },
       onError: (agentId: string, error: { code: number; message: string }) => {
         if (!isSubscribed) return;
-        
+
         console.error(`[${agentId}] WebSocket error:`, error);
         setAgentStatuses(prev => ({
           ...prev,
           [agentId]: { connection: 'error', activity: 'error' }
         }));
-
-        // Attempt reconnection after error
-        setTimeout(() => {
-          if (isSubscribed && selectedSessionId) {
-            webSocketService.connect(selectedSessionId, agentId);
-          }
-        }, 3000);
+        // No manual reconnect - WebSocketService handles reconnection
       },
       onStatusChange: (agentId: string, status: { connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error'; activity: 'idle' | 'thinking' | 'responding' | 'error' }) => {
         if (!isSubscribed) return;
-        
+
         console.log(`[${agentId}] Status changed:`, status);
         setAgentStatuses(prev => ({
           ...prev,
@@ -125,17 +167,7 @@ function App() {
         onStatusChange: () => {}
       });
     };
-  }, [agentMetadata, selectedSessionId]);
-
-  // Manage WebSocket connections
-  React.useEffect(() => {
-    if (selectedSessionId && currentAgentId) {
-      webSocketService.connect(selectedSessionId, currentAgentId);
-      return () => {
-        webSocketService.disconnect(currentAgentId, false);
-      };
-    }
-  }, [selectedSessionId, currentAgentId]);
+  }, [agentMetadata]); // Only depends on agentMetadata for message creation
 
   // Fetch messages for the selected session
   const { data: messages = [] } = useQuery<MessageRead[]>({

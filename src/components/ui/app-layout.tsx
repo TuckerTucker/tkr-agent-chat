@@ -36,14 +36,18 @@ export function AppLayout({
 
   // Helper function to get status indicator color
   const getStatusColor = (agentId: string) => {
+    const agentTheme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
     const status = agentStatuses[agentId];
-    if (!status) return 'bg-gray-400';
-    switch (status.connection) {
-      case 'connected': return 'bg-green-500';
-      case 'connecting': return 'bg-yellow-500 animate-pulse';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-400';
+
+    // Base style using agent's theme color
+    let style = agentId === currentAgentId ? agentTheme.primary : `${agentTheme.primary}/30`;
+
+    // Add animation for connecting state
+    if (status?.connection === 'connecting') {
+      return `${style} animate-pulse`;
     }
+
+    return style;
   };
 
   // Helper function to get status tooltip text
@@ -193,18 +197,61 @@ export function AppLayout({
                         role="radio"
                         aria-checked={agentId === currentAgentId}
                         style={{
-                          backgroundColor: agentId === currentAgentId ? `var(--${agentId}-color)` : undefined,
-                          color: agentId === currentAgentId ? "var(--agent-button-text)" : undefined,
+                          backgroundColor: agentId === currentAgentId ? (() => {
+                            const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
+                            const color = theme.primaryColor;
+                            // If RGB format, make it brighter
+                            if (color.startsWith('rgb')) {
+                              const matches = color.match(/\d+/g);
+                              if (matches && matches.length >= 3) {
+                                // Increase brightness while keeping color identity
+                                const r = Math.min(255, parseInt(matches[0]) * 1.2);
+                                const g = Math.min(255, parseInt(matches[1]) * 1.2);
+                                const b = Math.min(255, parseInt(matches[2]) * 1.2);
+                                return `rgb(${r}, ${g}, ${b})`;
+                              }
+                            }
+                            // For hex format, brighten it
+                            return color;
+                          })() : undefined,
+                          color: agentId === currentAgentId ? "#ffffff" : undefined,
+                          boxShadow: agentId === currentAgentId ? (() => {
+                            const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
+                            const color = theme.primaryColor;
+                            // If RGB format, extract values for rgba
+                            if (color.startsWith('rgb')) {
+                              const matches = color.match(/\d+/g);
+                              if (matches && matches.length >= 3) {
+                                return `0 0 10px rgba(${matches[0]}, ${matches[1]}, ${matches[2]}, 0.5)`;
+                              }
+                            }
+                            // For hex format, use as is
+                            return `0 0 10px ${color}80`; // 80 = 50% opacity in hex
+                          })() : undefined,
                         }}
                         onClick={() => onSelectAgent(agentId)}
                         aria-pressed={agentId === currentAgentId}
                       >
                         <div className="flex items-center gap-2">
                           <div 
-                            className={cn(
-                              "w-2.5 h-2.5 rounded-full transition-colors duration-theme",
-                              getStatusColor(agentId)
-                            )}
+                            className="w-2.5 h-2.5 rounded-full transition-colors duration-theme"
+                            style={{
+                              backgroundColor: (() => {
+                                const theme = AGENT_THEMES[agentId] || AGENT_THEMES.default;
+                                const color = theme.primaryColor;
+                                // For unselected state, create a semi-transparent version of the color
+                                if (agentId !== currentAgentId) {
+                                  // If the color is rgb format
+                                  if (color.startsWith('rgb')) {
+                                    return color.replace(')', ', 0.3)');
+                                  }
+                                  // If the color is hex format
+                                  return color + '4D'; // 4D = 30% opacity in hex
+                                }
+                                return color;
+                              })(),
+                              animation: agentStatuses[agentId]?.connection === 'connecting' ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined
+                            }}
                             title={getStatusText(agentId)}
                           />
                           {agentMetadata[agentId]?.name || agentId}

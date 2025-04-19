@@ -235,9 +235,8 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
             const messageProps = mapMessageToProps(message);
             const { id, sender, status, ...rest } = messageProps;
             return (
-              <div className="mb-2">
+              <div key={id || `message-${index}`} className="mb-2">
                 <Message
-                  key={id || index}
                   sender={sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : 'system'}
                   status={status === 'sending' ? 'sending' 
                     : status === 'error' ? 'error'
