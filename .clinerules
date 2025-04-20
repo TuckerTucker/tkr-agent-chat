@@ -1,20 +1,16 @@
 # Project Definition for the Multi-Agent Chat System
-# 
-# Additional project context for maintainability, onboarding, and implementation:
-# - See 'data_sources', 'performance', 'accessibility', 'error_handling', 'agent_metadata_example', 'extensibility', 'testing', and 'documentation_links' sections below for further clarity.
 
 app:
   name: "Tucker's Team - Multi-Agent Chat"
-  author: "Tucker" # Assuming based on chat title
-  role: "Developer" # Assuming
-  description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK)."
+  author: "Tucker"
+  role: "Developer"
+  description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK) and A2A protocol"
   taskboard:
     Board: UI Component Integration
     ID: 42087714-2ccd-427a-924e-41b8edd2b1c4
   github:
     user:"tuckertucker"
     repo:"tkr-agent-chat"
-
   components: 
     goal: "These are the components we are integrating into the project"
     dir: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agents/packages/ui/src"
@@ -23,7 +19,7 @@ app:
     project_type: "multi_agent_chat_application"
     framework: "react"
     language: "typescript"
-    last_updated: "2025-04-12" # Updated date
+    last_updated: "2025-04-12"
   documentation_links:
     ui_overview: "multiagent_chat_ui.md"
     adk_docs: "adk_overview.md"
@@ -38,8 +34,11 @@ data_sources:
     agents: "/api/v1/agents"
     chats: "/api/v1/chats"
     library: "/api/v1/library"
+    sessions: "/api/v1/sessions"
+    metrics: "/api/v1/metrics"
   websocket_endpoints:
     chat: "/ws/v1/chat/{session_id}/{agent_id}"
+    status: "/ws/v1/status"
   contracts:
     message_send:
       request: 
@@ -60,7 +59,7 @@ data_sources:
     frontend: "src/services/api.ts, src/services/websocket.ts"
 
 performance:
-  message_virtualization: "Use react-window or similar for long chat lists"
+  message_virtualization: "Use react-window for long chat lists"
   caching:
     agent_metadata: "TanStack Query with background refresh"
     chat_history: "TanStack Query, cache per session"
@@ -102,7 +101,7 @@ extensibility:
     steps:
       - "Create new agent directory in agents/"
       - "Implement config.py, agent.py, prompt.py, tools/, tests/"
-      - "Register agent in API Gateway if needed"
+      - "Register agent in API Gateway"
       - "Add agent color and icon to theme/colors"
   add_message_type:
     steps:
@@ -128,15 +127,130 @@ testing:
     agents: "agents/*/src/tests/"
     backend: "api_gateway/src/"
 
-documentation_links:
-  onboarding: "README.md"
-  api_reference: "agent_development_kit_documentation.md"
-  design_system: "https://ui.shadcn.com"
-  storybook: "https://storybook.js.org/"
-  architecture: "_planning/tkr-project.yaml"
+architecture:
+  server-client: "strict server/client architecture"
+  patterns:
+    state: "TanStack Query for managing server state cache, React state/context for local UI state (e.g., active session ID, theme)."
+    data_flow: "UI Events -> API Call (React Query Mutation) / WebSocket -> API Gateway (DB Persistence, ADK Runner) -> WebSocket -> React Query Cache Invalidation -> UI Update"
+    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors, React Query error handling."
+    component_development: "Storybook stories with shadcn/ui components"
+  scalability:
+    real_time:
+      strategy: "WebSockets for message passing"
+      rationale: "Essential for real-time chat updates between user and agents."
+    state_management:
+      strategy: "TanStack Query caching and background updates. WebSocket invalidates relevant queries."
+      rationale: "Efficient server state management and synchronization."
+  security:
+    auth: # Assuming local development for now, placeholder
+      provider: "None (Local Development)"
+      strategy: "N/A"
+    input_sanitization:
+      strategy: "Sanitize user input on the client and server"
+      rationale: "Prevent XSS attacks via chat messages."
+  build:
+    bundler: "Vite"
+    optimization:
+      code_splitting: "Route-based and component-based"
+      tree_shaking: true
+    dependencies:
+      ui: "shadcn/ui"
+      state: "@tanstack/react-query"
+      websockets: "native WebSocket API"
+      forms: "React Hook Form"
+      component_library: "storybook"
+
+development:
+  framework: "React"
+  language: "TypeScript"
+  package_manager: "npm"
+  code_organization:
+    structure:
+      - "src/components/"
+      - "src/components/ui/"      # shadcn/ui components
+      - "src/stories/"           # Storybook stories
+      - "src/hooks/"
+      - "src/services/"          # WebSocket service, API calls
+      - "src/types/"
+      - "src/utils/"
+      - "src/assets/"
+    naming:
+      components: "PascalCase"
+      files: "kebab-case"
+      constants: "SCREAMING_SNAKE_CASE"
+      types: "PascalCase"
+  testing:
+    component:
+      framework: "storybook"
+      focus: ["component isolation", "visual regression", "interaction testing", "accessibility"]
+      stories:
+        structure: "src/**/*.stories.{ts,tsx}"
+    unit:
+      framework: "Vitest"
+      focus: ["store logic", "utility functions", "hook logic"]
+    integration:
+      framework: "React Testing Library"
+      focus: ["component interactions", "state updates", "WebSocket message handling"]
+    e2e:
+      framework: "Playwright"
+      critical_flows: ["sending/receiving messages", "switching chats", "agent interaction"]
+
+theme: 
+  colors:
+    # Light Theme Colors
+    light:
+      background: "hsl(0 0% 100%)"
+      foreground: "hsl(0 0% 3.9%)"
+      primary: "hsl(0 0% 9%)"
+      secondary: "hsl(0 0% 96.1%)"
+      accent: "hsl(0 0% 96.1%)"
+      muted: "hsl(0 0% 96.1%)"
+      muted_foreground: "hsl(0 0% 45.1%)"
+      border: "hsl(0 0% 89.8%)"
+      sidebar_background: "hsl(0 0% 98%)"
+      destructive: "hsl(0 84.2% 60.2%)"
+    
+    # Dark Theme Colors
+    dark:
+      background: "hsl(0 0% 3.9%)"
+      foreground: "hsl(0 0% 98%)"
+      primary: "hsl(0 0% 98%)"
+      secondary: "hsl(0 0% 14.9%)"
+      accent: "hsl(0 0% 14.9%)"
+      muted: "hsl(0 0% 14.9%)"
+      muted_foreground: "hsl(0 0% 63.9%)"
+      border: "hsl(0 0% 14.9%)"
+      sidebar_background: "hsl(240 5.9% 10%)"
+      destructive: "hsl(0 62.8% 30.6%)"
+    
+    # Chart Colors (Data Visualization)
+    charts:
+      light:
+        - "hsl(12 76% 61%)"
+        - "hsl(173 58% 39%)"
+        - "hsl(197 37% 24%)"
+        - "hsl(43 74% 66%)"
+        - "hsl(27 87% 67%)"
+      dark:
+        - "hsl(220 70% 50%)"
+        - "hsl(160 60% 45%)"
+        - "hsl(30 80% 55%)"
+        - "hsl(280 65% 60%)"
+        - "hsl(340 75% 55%)"
+    
+    # Agent Colors
+    agent_chloe: "rgb(34 197 94)"
+    agent_Phil_Connors: "rgb(249 115 22)"
+  typography:
+    font_family: "sans-serif"
+    base_size: "14px"
+  spacing:
+    small: "4px"
+    medium: "8px"
+    large: "16px"
+    xl: "24px"
 
 components:
-
   sidebar:
     metadata:
       purpose: "Navigation between chat conversations and access to library"
@@ -156,7 +270,10 @@ components:
         "Ctrl+N": "new_chat"
         "Ctrl+1": "focus_first_chat"
     state:
-      store: "sidebar"
+      store: "tanstack-query"
+      queries:
+        conversations: "useConversations"
+        activeChat: "useActiveChat"
       initial:
         collapsed: false
         selected_chat: null
@@ -321,7 +438,12 @@ components:
         "Enter": "send_message"
         "Shift+Enter": "new_line"
     state:
-      store: "message_input"
+      store: "tanstack-query"
+      queries:
+        agents: "useAvailableAgents"
+        selectedAgent: "useSelectedAgent"
+      mutations:
+        sendMessage: "useSendMessage"
       initial:
         value: ""
         selected_agent: "{default_agent}"
@@ -403,198 +525,5 @@ components:
       - type: "tooltip"
       - type: "confirmation_dialog"
       - type: "toast_notification"
-
-architecture:
-  server-client: "strict server/client architecture"
-  patterns:
-    state: "TanStack Query for managing server state cache, React state/context for local UI state (e.g., active session ID, theme)."
-    # Updated data flow for server-side persistence
-    data_flow: "UI Events -> API Call (React Query Mutation) / WebSocket -> API Gateway (DB Persistence, ADK Runner) -> WebSocket -> React Query Cache Invalidation -> UI Update"
-    error_handling: "Error Boundaries per major UI section, toast notifications for transient errors, React Query error handling."
-    component_development: "Storybook stories with shadcn/ui components"
-  scalability:
-    real_time:
-      strategy: "WebSockets for message passing"
-      rationale: "Essential for real-time chat updates between user and agents."
-    state_management:
-      strategy: "TanStack Query caching and background updates. WebSocket invalidates relevant queries."
-      rationale: "Efficient server state management and synchronization."
-  security:
-    auth: # Assuming local development for now, placeholder
-      provider: "None (Local Development)"
-      strategy: "N/A"
-    input_sanitization:
-      strategy: "Sanitize user input on the client and server"
-      rationale: "Prevent XSS attacks via chat messages."
-  build:
-    bundler: "Vite" # Modern alternative to Webpack/Next.js for SPAs
-    optimization:
-      code_splitting: "Route-based (if multiple pages) and component-based"
-      tree_shaking: true
-    dependencies:
-      ui: "shadcn/ui"
-      state: "@tanstack/react-query" # Changed from Zustand
-      websockets: "native WebSocket API" # Using native WebSocket API
-      forms: "React Hook Form (if complex forms needed)"
-      component_library: "storybook"
-
-development:
-  framework: "React"
-  language: "TypeScript"
-  package_manager: "npm" # Or yarn/pnpm
-  code_organization:
-    structure:
-      - "src/components/"
-      - "src/components/ui/"      # shadcn/ui components
-      - "src/stories/"           # Storybook stories
-      - "src/hooks/"
-      - "src/services/"          # WebSocket service, API calls
-      # Removed src/store/
-      - "src/types/"
-      - "src/utils/"
-      - "src/assets/"
-    naming:
-      components: "PascalCase"
-      files: "kebab-case"
-      constants: "SCREAMING_SNAKE_CASE"
-      types: "PascalCase"
-  testing:
-    component:
-      framework: "storybook"
-      focus: ["component isolation", "visual regression", "interaction testing", "accessibility"]
-      stories:
-        structure: "src/**/*.stories.{ts,tsx}"
-    unit:
-      framework: "Vitest" # Modern alternative to Jest
-      focus: ["store logic", "utility functions", "hook logic"]
-    integration:
-      framework: "React Testing Library"
-      focus: ["component interactions", "state updates", "WebSocket message handling"]
-    e2e:
-      framework: "Playwright" # Modern alternative to Cypress
-      critical_flows: ["sending/receiving messages", "switching chats", "agent interaction"]
-
-theme: 
-  screenshot: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/_planning/Screenshot 2025-04-11 at 12.28.06 PM.png" # Based on the dark mode screenshot
-  colors:
-    # Light Theme Colors
-    light:
-      background: "hsl(0 0% 100%)" # White
-      foreground: "hsl(0 0% 3.9%)" # Near Black
-      primary: "hsl(0 0% 9%)" # Near Black
-      secondary: "hsl(0 0% 96.1%)" # Light Gray
-      accent: "hsl(0 0% 96.1%)" # Light Gray
-      muted: "hsl(0 0% 96.1%)" # Light Gray
-      muted_foreground: "hsl(0 0% 45.1%)" # Darker Gray
-      border: "hsl(0 0% 89.8%)" # Light Gray
-      sidebar_background: "hsl(0 0% 98%)" # Very Light Gray
-      destructive: "hsl(0 84.2% 60.2%)" # Error Red
-    
-    # Dark Theme Colors
-    dark:
-      background: "hsl(0 0% 3.9%)" # Near Black
-      foreground: "hsl(0 0% 98%)" # Off White
-      primary: "hsl(0 0% 98%)" # Off White
-      secondary: "hsl(0 0% 14.9%)" # Dark Gray
-      accent: "hsl(0 0% 14.9%)" # Dark Gray
-      muted: "hsl(0 0% 14.9%)" # Dark Gray
-      muted_foreground: "hsl(0 0% 63.9%)" # Lighter Gray
-      border: "hsl(0 0% 14.9%)" # Dark Gray
-      sidebar_background: "hsl(240 5.9% 10%)" # Very Dark Gray
-      destructive: "hsl(0 62.8% 30.6%)" # Dark Red
-    
-    # Chart Colors (Data Visualization)
-    charts:
-      light:
-        - "hsl(12 76% 61%)"
-        - "hsl(173 58% 39%)"
-        - "hsl(197 37% 24%)"
-        - "hsl(43 74% 66%)"
-        - "hsl(27 87% 67%)"
-      dark:
-        - "hsl(220 70% 50%)"
-        - "hsl(160 60% 45%)"
-        - "hsl(30 80% 55%)"
-        - "hsl(280 65% 60%)"
-        - "hsl(340 75% 55%)"
-    
-    # Agent Colors
-    agent_chloe: "rgb(34 197 94)" # Green icon
-    agent_Phil_Connors: "rgb(249 115 22)" # Orange icon
-  typography:
-    font_family: "sans-serif" # Default system font
-    base_size: "14px" # Typical for chat interfaces
-  spacing:
-    small: "4px"
-    medium: "8px"
-    large: "16px"
-    xl: "24px"
-
-agents:
-  architecture: "Each agent is a self-contained Python module following ADK conventions, designed for modularity, testability, and easy integration."
-  directory_structure: |
-    agents/
-      base_agent.py            # Shared BaseAgent class for all agents
-      agent_name/
-        README.md                # Agent documentation and usage
-        pyproject.toml           # Python package metadata (or setup.py)
-        src/
-          agent.py               # Core agent logic (inherits from agents/base_agent.py)
-          config.py              # Agent config: id, name, description, color, capabilities, etc.
-          index.py               # Entry point/factory for agent instantiation
-          prompt.py              # Modular prompt templates and logic
-          tools/
-            __init__.py
-            ...                  # Individual tool implementations (Python modules/classes)
-          tests/
-            __init__.py
-            test_agent.py        # Unit tests for agent and tools
-          assets/                # Static assets (e.g., avatar image file)
-  config_and_metadata:
-    - id: "Unique agent identifier"
-    - name: "Display name"
-    - description: "Short description of the agent"
-    - color: "UI theming color (Hex format, e.g., #RRGGBB)"
-    - capabilities: "List of supported features/tools"
-    - optional: ["icon_path (path to avatar file in assets/)", "version"]
-  tools: "Each agent has its own tools/ directory for modular tool implementations. Tools are registered with the agent via the tools property."
-  prompts: "Prompt logic is modular and file-based (prompt.py), supporting easy customization and extension."
-  testing: "Unit tests are required for agent logic and tools, located in tests/."
-  integration: # Updated for ADK Streaming Model
-    runner: "Agents are loaded by the API Gateway and executed using the google-adk Runner."
-    ui: "Agent metadata is exposed via a REST endpoint (/api/v1/agents). Chat interaction occurs via a direct WebSocket connection per agent (/ws/v1/chat/{session_id}/{agent_id}) managed by the API Gateway, which uses the ADK Runner internally."
-    events: "Agent responses (text chunks, turn completion) are streamed directly to the UI via the WebSocket connection."
-  best_practices:
-    - "Keep each agent self-contained and modular."
-    - "Use clear, documented configuration for UI integration."
-    - "Write unit tests for all core logic and tools."
-    - "Document agent capabilities and usage in README.md."
-    - "Prefer composition (tools, prompts) over inheritance for extensibility."
-
-  mcp_tools:
-    architecture: |
-      MCP tools are implemented using the Python SDK and included in each agent's tools/ directory.
-      - Prefer an MCP server per agent for modularity and isolation.
-      - For lightweight or tightly-coupled agents, a shared server may be considered.
-    interface:
-      options:
-        - stateless_function: "Simple, easy to test, no side effects. Cannot maintain state between invocations."
-        - class: "Encapsulates logic, easy to extend, supports dependency injection. Still stateless unless state is persisted externally."
-        - persistent_object: "Maintains state across invocations (e.g., cache, session). Use only when necessary; harder to test."
-      recommendation: "Default to stateless functions or lightweight classes. Use persistent objects only if stateful behavior is required."
-    discovery: "Tools are auto-registered by scanning the tools/ directory at agent startup. Use naming conventions or decorators to mark tool entry points."
-    config: "Tools are configured per agent and do not support runtime configuration by default."
-    invocation: "Tools are invoked internally by the agent logic (e.g., via ADK's function calling or direct calls), not via MCP." # Updated invocation
-    error_handling: |
-      - Catch and handle all exceptions within tool logic.
-      - Return structured error responses via MCP protocol (error code, message).
-      - Avoid leaking stack traces or sensitive info to the client.
-    logging: |
-      - Log tool invocations, errors, and important events using Python's logging module.
-      - Use per-agent log files or structured logging for easier debugging.
-    testing: |
-      - Write unit tests for each tool in tools/tests/ or tests/.
-      - Test both normal and error cases.
-      - Use mocks for external dependencies.
 
 # End of project definition
