@@ -24,6 +24,9 @@ DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 # The f-string ensures the absolute path is correctly included after '///'
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DEFAULT_DB_PATH}")
 
+# For migrations, we need a synchronous URL
+SYNC_DATABASE_URL = DATABASE_URL.replace('sqlite+aiosqlite://', 'sqlite://')
+
 # --- End Modification ---
 
 # Create async engine

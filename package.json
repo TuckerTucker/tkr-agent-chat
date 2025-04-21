@@ -9,7 +9,9 @@
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:init": "source start_env && python -m api_gateway.scripts.init_db",
+    "db:reset": "rm -f api_gateway/chats/chat_database.db && npm run db:init"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.3",

@@ -46,7 +46,8 @@ except ImportError as e:
 # --- Local Imports ---
 from ..services.chat_service import chat_service # Import global instance
 from ..database import get_db # Database dependency injector
-from ..models.messages import Message, MessageType # Import Message model for type hinting
+from ..models.messages import Message, MessageType, MessageRole # Import Message model for type hinting
+from ..services.a2a_service import A2AService
 
 # --- Configuration ---
 router = APIRouter()
@@ -247,7 +248,7 @@ async def client_to_agent_messaging(
     live_request_queue: LiveRequestQueue,
     session_id: str,
     agent_id: str,
-    db: AsyncSession # Removed history_content parameter
+    db: AsyncSession
 ):
     """
     Receives messages from client, saves user message to DB,
@@ -258,35 +259,70 @@ async def client_to_agent_messaging(
     # Removed is_first_message flag
     try:
         while True:
-            text = await websocket.receive_text()
-            logger.info(f"[{agent_id}] Received text from client: '{text[:50]}...'")
+            data = await websocket.receive_json()
+            message_type = data.get("type", "text")
+            logger.info(f"[{agent_id}] Received {message_type} from client")
 
-            # --- Save user message to DB ---
-            try:
-                message_parts = [{"type": "text", "content": text.strip()}]
-                msg_metadata = {"timestamp": datetime.utcnow().isoformat()} # Renamed variable
-                 # Use global chat_service instance to save
-                await chat_service.save_message(
-                    db=db,
-                    session_id=session_id,
-                    msg_type=MessageType.USER,
-                    parts=message_parts,
-                    message_metadata=msg_metadata # Pass renamed argument
-                    # agent_id is None for user messages
-                )
-                logger.info(f"[{agent_id}] Saved user message to DB: '{text[:50]}...'")
-            except Exception as db_err:
-                 logger.error(f"[{agent_id}] Failed to save user message to DB: {db_err}", exc_info=True)
-                 # Decide if we should proceed to send to agent if DB save fails
-                 # For now, we'll proceed but log the error.
-            # --- End DB Save ---
+            if message_type == "task":
+                # Handle task-related message
+                task_action = data.get("action")
+                task_id = data.get("task_id")
+                a2a_service = A2AService(db)
 
-            # Construct ADK Content object for the new message
-            new_user_content = Content(role="user", parts=[Part.from_text(text=text)])
+                if task_action == "start":
+                    # Create new task
+                    task = await a2a_service.create_task(
+                        session_id=session_id,
+                        title=data.get("title"),
+                        description=data.get("description"),
+                        agent_ids=[agent_id],  # Current agent is the initiator
+                        context=data.get("context")
+                    )
+                    # Send task creation message
+                    new_user_content = Content(
+                        role="user",
+                        parts=[Part.from_text(text=f"Task created: {task.title}")]
+                    )
+                    live_request_queue.send_content(content=new_user_content)
 
-            # Send only the new user content to the queue
-            live_request_queue.send_content(content=new_user_content)
-            logger.debug(f"[{agent_id}] Sent new user content to agent's LiveRequestQueue.")
+                elif task_action == "update":
+                    # Update existing task
+                    task = await a2a_service.update_task_status(
+                        task_id=task_id,
+                        status=data.get("status"),
+                        result=data.get("result")
+                    )
+                    # Send task update message
+                    new_user_content = Content(
+                        role="user",
+                        parts=[Part.from_text(text=f"Task {task_id} updated: {task.status}")]
+                    )
+                    live_request_queue.send_content(content=new_user_content)
+
+            else:
+                # Handle regular text message
+                text = data.get("text", "")
+                logger.info(f"[{agent_id}] Received text from client: '{text[:50]}...'")
+
+                # --- Save user message to DB ---
+                try:
+                    message_parts = [{"type": "text", "content": text.strip()}]
+                    msg_metadata = {"timestamp": datetime.utcnow().isoformat()}
+                    await chat_service.save_message(
+                        db=db,
+                        session_id=session_id,
+                        msg_type=MessageType.USER,
+                        parts=message_parts,
+                        message_metadata=msg_metadata
+                    )
+                    logger.info(f"[{agent_id}] Saved user message to DB: '{text[:50]}...'")
+                except Exception as db_err:
+                    logger.error(f"[{agent_id}] Failed to save user message to DB: {db_err}", exc_info=True)
+
+                # Send message to agent
+                new_user_content = Content(role="user", parts=[Part.from_text(text=text)])
+                live_request_queue.send_content(content=new_user_content)
+                logger.debug(f"[{agent_id}] Sent new user content to agent's LiveRequestQueue.")
 
     except WebSocketDisconnect:
         logger.info(f"[{agent_id}] Client disconnected during client_to_agent messaging.")

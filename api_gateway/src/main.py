@@ -19,9 +19,10 @@ from agents.chloe.src.index import get_agent as get_chloe_agent
 from agents.phil_connors.src.index import get_agent as get_phil_connors_agent # Updated path
 
 # Import routes and services
-from .routes import api, ws, agents # Remove tasks import
-from .services.chat_service import chat_service # Import global instance
-from .database import init_db # Import DB init function
+from .routes import api, ws, agents, a2a, ws_a2a
+from .services.chat_service import chat_service
+from .services.a2a_service import A2AService
+from .database import init_db, get_db
 # from .services.adk_runner_service import adk_runner_service # Remove ADK runner service import
 from dotenv import load_dotenv # Import dotenv
 
@@ -117,7 +118,19 @@ app.include_router(
     tags=["websocket"]
 )
 
-# Removed A2A Task Routes
+# A2A Protocol Routes
+app.include_router(
+    a2a.router,
+    prefix="/api/v1",
+    tags=["a2a"]
+)
+
+# A2A WebSocket Routes
+app.include_router(
+    ws_a2a.router,
+    prefix="/ws/v1",
+    tags=["a2a", "websocket"]
+)
 
 # Health Check
 @app.get("/health")
@@ -126,7 +139,8 @@ async def health_check():
     return {
         "status": "healthy",
         "version": "0.1.0",
-        "agents": list(chat_service.agent_instances.keys())
+        "agents": list(chat_service.agent_instances.keys()),
+        "features": ["a2a", "websocket", "agents"]
     }
 
 if __name__ == "__main__":
