@@ -100,23 +100,36 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     
     // Get agent information if it's an agent message
     let agentData = {};
-    if (sender === 'agent' && message.agentId) {
-      // Get full agent metadata including avatar
-      const agentMeta = getAgentMetadata(message.agentId);
-      
-      // Get agent theme colors
-      const agentTheme = AGENT_THEMES[message.agentId] || AGENT_THEMES.default;
-      
-      // Build enhanced agent data
-      agentData = {
-        agentId: message.agentId,
-        agentName: message.agentName || agentMeta.name,
-        agentColor: agentTheme.color,
-        agentAccentColor: agentTheme.accentColor,
-        agentSecondary: agentTheme.secondaryColor,
-        avatar: agentMeta.avatar || null,
-        isPrimary: message.isPrimary === true
-      };
+    if (sender === 'agent') {
+      if (message.agentId) {
+        // Get full agent metadata including avatar
+        const agentMeta = getAgentMetadata(message.agentId);
+        
+        // Get agent theme colors
+        const agentTheme = AGENT_THEMES[message.agentId] || AGENT_THEMES.default;
+        
+        // Build enhanced agent data
+        agentData = {
+          agentId: message.agentId,
+          agentName: message.agentName || agentMeta.name,
+          agentColor: agentTheme.color,
+          agentAccentColor: agentTheme.accentColor,
+          agentSecondary: agentTheme.secondaryColor,
+          avatar: agentMeta.avatar || null,
+          isPrimary: message.isPrimary === true
+        };
+      } else {
+        // Use default theme for agent messages without an agentId
+        const defaultTheme = AGENT_THEMES.default;
+        agentData = {
+          agentName: "Agent",
+          agentColor: defaultTheme.color,
+          agentAccentColor: defaultTheme.accentColor,
+          agentSecondary: defaultTheme.secondaryColor,
+          avatar: null,
+          isPrimary: false
+        };
+      }
     }
     
     // Handle mentions in user messages

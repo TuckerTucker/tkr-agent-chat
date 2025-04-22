@@ -67,9 +67,9 @@ class ChatService:
         return self.agent_instances.get(agent_id)
 
     # --- Session Management (Database) ---
-    def create_session(self, title: Optional[str] = None) -> Dict:
+    def create_session(self, title: Optional[str] = None, session_id: Optional[str] = None) -> Dict:
         """Create a new chat session in the database."""
-        session = db_create_session(title)
+        session = db_create_session(title, session_id)
         logger.info(f"Created session {session['id']} in database.")
         return session
 
@@ -140,6 +140,13 @@ class ChatService:
         if not session:
              logger.error(f"{log_prefix} Error: Session not found.")
              raise ValueError(f"Session not found: {session_id}")
+
+        # For agent messages, verify the agent exists
+        if msg_type == MessageType.AGENT and agent_id:
+            agent_exists = agent_id in self.agent_instances
+            if not agent_exists:
+                logger.error(f"{log_prefix} Agent {agent_id} not found in agent_instances")
+                raise ValueError(f"Agent not found: {agent_id}")
 
         message_data = {
             'session_id': session_id,

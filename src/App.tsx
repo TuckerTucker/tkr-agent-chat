@@ -232,7 +232,7 @@ function App() {
           avatar: userAvatar,
           name: 'You'
         } : {
-          ...(msg.metadata || {}),
+          ...(msg.message_metadata || {}),
           agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
           avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
           description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
@@ -250,7 +250,7 @@ function App() {
   const currentMessages = React.useMemo(() => {
     if (!selectedSessionId) return [];
     return localMessages.filter(msg =>
-      msg.id && msg.content && (msg.role === 'user' || (msg.role === 'agent' && msg.agentName))
+      msg.id && msg.content && (msg.role === 'user' || msg.role === 'agent')
     );
   }, [localMessages, selectedSessionId]);
 

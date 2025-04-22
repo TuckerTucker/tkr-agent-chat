@@ -322,13 +322,11 @@ async def websocket_endpoint(
     live_request_queue = None
 
     try:
-        # Validate session exists in DB before starting ADK
+        # Get or create session in DB before starting ADK
         session = chat_service.get_session(session_id)
         if not session:
-            logger.error(f"WebSocket connection attempt for non-existent session: {session_id}")
-            await websocket.send_text(json.dumps({"error": "Session not found"}))
-            await websocket.close(code=1008)
-            return
+            logger.info(f"Creating new session for WebSocket connection: {session_id}")
+            session = chat_service.create_session(session_id=session_id)
 
         # Start the specific agent session using the shared ADK session
         live_events, live_request_queue = await start_agent_session(session_id, agent_id)

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Define the project root relative to this file's location
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_DB_PATH = PROJECT_ROOT / "chats" / "chat_database.db"
+DEFAULT_DB_PATH = PROJECT_ROOT / "api_gateway" / "chats" / "chat_database.db"
 
 # Ensure the 'chats' directory exists
 DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -35,9 +35,18 @@ def get_connection():
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=5000")  # Wait up to 5 seconds if database is locked
     
     try:
+        # Begin transaction
+        conn.execute("BEGIN")
         yield conn
+        # Commit transaction if no exception occurred
+        conn.commit()
+    except Exception:
+        # Rollback transaction on error
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -104,12 +113,11 @@ def update_agent_card(agent_id: str, data: Dict) -> Optional[Dict]:
 
 # --- Chat Session Operations ---
 
-def create_session(title: Optional[str] = None) -> Dict:
+def create_session(title: Optional[str] = None, session_id: Optional[str] = None) -> Dict:
     """Create a new chat session."""
-    session_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     data = {
-        'id': session_id,
+        'id': session_id or str(uuid.uuid4()),
         'title': title or f"Chat Session {now}",
         'created_at': now,
         'session_metadata': json.dumps({})
@@ -122,7 +130,7 @@ def create_session(title: Optional[str] = None) -> Dict:
             values
         )
         conn.commit()
-        return get_session(session_id)
+        return get_session(data['id'])
 
 def get_session(session_id: str) -> Optional[Dict]:
     """Get a chat session by ID."""

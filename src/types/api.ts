@@ -58,7 +58,7 @@ export interface MessageRead {
   type: MessageType;
   agent_id?: string;
   parts: MessagePart[]; // Keep using MessagePart for consistency
-  metadata?: Record<string, any>;
+  message_metadata?: Record<string, any>; // Changed from metadata to match backend
   created_at: string; // Keep as string
 }
 
