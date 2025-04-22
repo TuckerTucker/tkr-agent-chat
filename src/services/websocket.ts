@@ -25,14 +25,14 @@ interface AgentStreamingPacket {
 }
 
 // A2A Message Types
-interface A2AMessage {
+export interface A2AMessage {
   type: string;
   from_agent: string;
   task_id?: string;
   content: any;
 }
 
-interface TaskEvent {
+export interface TaskEvent {
   type: 'task_state' | 'task_update' | 'error';
   task_id: string;
   status?: string;
@@ -41,7 +41,7 @@ interface TaskEvent {
   message?: string;
 }
 
-interface WebSocketCallbacks {
+export interface WebSocketCallbacks {
   // Existing callbacks
   onPacket?: (agentId: string, packet: AgentStreamingPacket) => void;
   onError?: (agentId: string, error: { code: number; message: string }) => void;
