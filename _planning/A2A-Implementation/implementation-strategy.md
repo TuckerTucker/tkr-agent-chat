@@ -35,10 +35,11 @@ The implementation is divided into six feature slices, each building upon the pr
 - Error recovery and reconnection
 
 ### 3. Context Sharing (Feature Slice 3)
+- Direct SQLite schema management for context storage
 - Selective context sharing between agents
-- Context relevance filtering
-- Context expiration management
-- Client-side context visualization
+- Context relevance filtering with SQLite JSON1 extension
+- Context expiration management with SQLite datetime functions
+- Client-side context visualization with real-time updates
 
 ### 4. Conversation Checkpoints (Feature Slice 4)
 - Automatic and manual checkpoint creation
@@ -58,9 +59,19 @@ The implementation is divided into six feature slices, each building upon the pr
 - Usage analytics
 - Client-side dashboards
 
-## Data Flow
+## Database Management
 
-1. Message Flow
+1. Schema Management
+```mermaid
+graph TD
+    A[SQLAlchemy Models] --> B[SQLite Schema]
+    B --> C[Database Initialization]
+    C --> D[Table Creation]
+    D --> E[Index Creation]
+    E --> F[Constraint Setup]
+```
+
+2. Data Flow
 ```mermaid
 sequenceDiagram
     participant User
@@ -110,9 +121,12 @@ sequenceDiagram
 ## State Management
 
 1. Server-Side State
-- PostgreSQL for persistent storage
-- Redis for caching (future optimization)
+- SQLite for persistent storage
+  * JSON1 extension for complex data
+  * Built-in datetime functions
+  * Full-text search capabilities
 - In-memory state for active connections
+- Efficient indexing for performance
 
 2. Client-Side State
 - TanStack Query for server state
@@ -138,7 +152,13 @@ sequenceDiagram
 
 ## Performance Considerations
 
-1. Real-time Communication
+1. Database Performance
+- SQLite WAL mode for concurrent access
+- Strategic indexing for common queries
+- JSON1 optimization for context filtering
+- Efficient datetime comparisons
+
+2. Real-time Communication
 - WebSocket connection pooling
 - Message batching
 - Selective updates
@@ -184,7 +204,16 @@ sequenceDiagram
 
 ## Development Workflow
 
-1. Implementation Order
+1. Database Schema Management
+```mermaid
+graph TD
+    A[Define Models] --> B[Update Schema]
+    B --> C[Initialize Database]
+    C --> D[Validate Schema]
+    D --> E[Run Tests]
+```
+
+2. Implementation Order
 ```mermaid
 graph LR
     A[Core Infrastructure] --> B[Agent Communication]
@@ -208,6 +237,7 @@ graph LR
 ## Success Metrics
 
 1. Technical Metrics
+- Database operations < 50ms
 - Response time < 100ms
 - WebSocket latency < 50ms
 - Error rate < 1%

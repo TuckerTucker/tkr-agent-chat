@@ -33,7 +33,7 @@ export interface ChatSessionRead {
 }
 
 // Message Types
-export type MessageType = 'user' | 'agent' | 'system' | 'error';
+export type MessageType = 'user' | 'agent' | 'system' | 'error' | 'a2a';
 
 export interface MessagePart {
   type: string;
@@ -94,4 +94,40 @@ export interface AddAgentToSessionParams {
   agent_id: string;
 }
 
-// Removed AgentStatus and AgentUpdateEvent as they were A2A specific
+// A2A Protocol Types
+export interface A2AMessage extends WebSocketMessage {
+  type: 'a2a';
+  from_agent: string;
+  to_agent: string;
+  task_id?: string;
+  content: any;
+}
+
+export interface TaskEvent {
+  type: 'task_state' | 'task_update' | 'error';
+  task_id: string;
+  status?: string;
+  context?: any;
+  result?: any;
+  message?: string;
+}
+
+export interface TaskMetadata {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  agents: string[];
+  created_at: string;
+  updated_at?: string;
+  completed_at?: string;
+  context?: Record<string, any>;
+  result?: Record<string, any>;
+}
+
+export interface TaskUpdate {
+  task_id: string;
+  status?: string;
+  context?: Record<string, any>;
+  result?: Record<string, any>;
+}

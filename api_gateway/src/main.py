@@ -19,7 +19,7 @@ from agents.chloe.src.index import get_agent as get_chloe_agent
 from agents.phil_connors.src.index import get_agent as get_phil_connors_agent # Updated path
 
 # Import routes and services
-from .routes import api, ws, agents, a2a, ws_a2a
+from .routes import api, ws, agents, a2a, ws_a2a, context
 from .services.chat_service import chat_service
 from .services.a2a_service import A2AService
 from .database import init_db, get_db
@@ -130,6 +130,12 @@ app.include_router(
     ws_a2a.router,
     prefix="/ws/v1",
     tags=["a2a", "websocket"]
+)
+
+# Context Routes
+app.include_router(
+    context.router,
+    tags=["context"]
 )
 
 # Health Check

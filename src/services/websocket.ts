@@ -10,8 +10,9 @@
 // Removed unused WebSocketMessage, ErrorResponse imports
 // import { WebSocketMessage, ErrorResponse } from '../types/api';
 
-// API Gateway WebSocket URL (Now includes /v1)
-const WS_BASE_URL = 'ws://localhost:8000/ws/v1'; // API Gateway WebSocket URL
+// API Gateway WebSocket URLs
+const WS_BASE_URL = 'ws://localhost:8000/ws/v1';
+const WS_A2A_BASE_URL = 'ws://localhost:8000/ws/v1/a2a'; // A2A WebSocket endpoint
 const RECONNECT_DELAY = 5000; // Increased initial delay
 const INITIAL_CONNECT_DELAY = 2000; // Delay before first connection attempt
 
@@ -23,15 +24,34 @@ interface AgentStreamingPacket {
   error?: string; // Error message from the backend
 }
 
+// A2A Message Types
+interface A2AMessage {
+  type: string;
+  from_agent: string;
+  task_id?: string;
+  content: any;
+}
+
+interface TaskEvent {
+  type: 'task_state' | 'task_update' | 'error';
+  task_id: string;
+  status?: string;
+  context?: any;
+  result?: any;
+  message?: string;
+}
+
 interface WebSocketCallbacks {
-  // Callbacks now include agentId
-  onPacket?: (agentId: string, packet: AgentStreamingPacket) => void; 
-  onError?: (agentId: string, error: { code: number; message: string }) => void; 
+  // Existing callbacks
+  onPacket?: (agentId: string, packet: AgentStreamingPacket) => void;
+  onError?: (agentId: string, error: { code: number; message: string }) => void;
   onReconnect?: (agentId: string) => void;
   onDisconnect?: (agentId: string) => void;
   onOpen?: (agentId: string) => void;
-  // New callback for status changes
   onStatusChange?: (agentId: string, status: AgentStatus) => void;
+  // New A2A callbacks
+  onA2AMessage?: (message: A2AMessage) => void;
+  onTaskEvent?: (event: TaskEvent) => void;
 }
 
 // Define the structure for agent status
@@ -59,17 +79,19 @@ interface AgentConnection {
 }
 
 class WebSocketService {
-  // Manage multiple connections: agentId -> AgentConnection
+  // Existing connection management
   private connections: Map<string, AgentConnection> = new Map();
-  // Store the latest known status even if disconnected
   private agentStatuses: Map<string, AgentStatus> = new Map();
   private callbacks: WebSocketCallbacks = {};
   private maxReconnectAttempts = 5;
-  // Removed singleton-level state like currentSessionId, currentAgentId, etc.
+
+  // A2A connection management
+  private a2aConnections: Map<string, WebSocket> = new Map(); // agentId -> WebSocket
+  private taskSubscriptions: Map<string, WebSocket> = new Map(); // taskId -> WebSocket
+  private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map(); // For managing reconnection timeouts
 
   /**
-   * Connect to the WebSocket server for a specific session and agent.
-   * Manages connection state within the `connections` map.
+   * Connect to the WebSocket server for chat communication
    */
   connect(sessionId: string, agentId: string) {
     // Get last known status or default
@@ -246,21 +268,182 @@ class WebSocketService {
   }
 
   /**
-   * Disconnect all active WebSocket connections.
+   * Attempt to reconnect a specific agent's connection.
+   * Uses exponential backoff strategy.
    */
-  disconnectAll() {
-      console.log("Disconnecting all WebSocket connections...");
-      // Create a copy of keys to avoid issues while iterating and deleting
-      const agentIds = Array.from(this.connections.keys()); 
-      agentIds.forEach(agentId => {
-          this.disconnect(agentId, false); // Disconnect each without triggering reconnect
-      });
+  private attemptReconnect(closedConnection: AgentConnection) {
+    // Check if we should attempt reconnection
+    if (closedConnection.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log(`[Agent: ${closedConnection.agentId}] Max reconnection attempts reached. Stopping.`);
+      this.callbacks.onError?.(closedConnection.agentId, { code: 503, message: 'Connection failed after multiple attempts.' });
+      return;
+    }
+
+    // Clear any existing reconnect timeout
+    this.clearReconnectTimeout(closedConnection.agentId);
+
+    // Calculate delay with exponential backoff
+    const attempts = closedConnection.reconnectAttempts + 1;
+    const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1);
+    console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${delay / 1000}s (${attempts}/${this.maxReconnectAttempts})...`);
+
+    // Update status and notify UI
+    this.updateAgentStatus(closedConnection.agentId, { 
+      connection: 'reconnecting', 
+      activity: this.agentStatuses.get(closedConnection.agentId)?.activity ?? 'idle' 
+    });
+    this.callbacks.onReconnect?.(closedConnection.agentId);
+
+    // Store reconnect timeout
+    const timeoutId = setTimeout(() => {
+      // Create new connection with incremented attempt count
+      const newConnection: AgentConnection = {
+        ...closedConnection,
+        reconnectAttempts: attempts,
+        isConnecting: false,
+        socket: new WebSocket(closedConnection.connectionUrl)
+      };
+
+      // Establish the connection
+      this.establishConnection(
+        closedConnection.sessionId,
+        closedConnection.agentId,
+        newConnection
+      );
+    }, delay);
+
+    this.reconnectTimeouts.set(closedConnection.agentId, timeoutId);
+  }
+
+  /**
+   * Clear any pending reconnection timeout for a specific agent.
+   */
+  private clearReconnectTimeout(agentId: string) {
+    const timeoutId = this.reconnectTimeouts.get(agentId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.reconnectTimeouts.delete(agentId);
+    }
+  }
+
+  /**
+   * Connect to the A2A WebSocket endpoint for agent-to-agent communication
+   */
+  connectA2A(agentId: string) {
+    console.log(`[A2A] Connecting agent ${agentId} to A2A WebSocket...`);
+    const socket = new WebSocket(`${WS_A2A_BASE_URL}/agent/${agentId}`);
+
+    socket.onopen = () => {
+      console.log(`[A2A] Agent ${agentId} connected to A2A WebSocket`);
+      this.a2aConnections.set(agentId, socket);
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const message: A2AMessage = JSON.parse(event.data);
+        console.log(`[A2A] Received message for agent ${agentId}:`, message);
+        this.callbacks.onA2AMessage?.(message);
+      } catch (error) {
+        console.error(`[A2A] Failed to parse A2A message:`, error);
+      }
+    };
+
+    socket.onerror = (event) => {
+      console.error(`[A2A] WebSocket error for agent ${agentId}:`, event);
+      this.handleError(agentId, { code: 500, message: 'A2A WebSocket error' });
+    };
+
+    socket.onclose = () => {
+      console.log(`[A2A] Agent ${agentId} disconnected from A2A WebSocket`);
+      this.a2aConnections.delete(agentId);
+      // Implement reconnection logic similar to chat WebSocket
+      setTimeout(() => this.connectA2A(agentId), RECONNECT_DELAY);
+    };
+  }
+
+  /**
+   * Subscribe to task events
+   */
+  subscribeToTask(taskId: string) {
+    console.log(`[Task] Subscribing to task ${taskId} events...`);
+    const socket = new WebSocket(`${WS_A2A_BASE_URL}/tasks/${taskId}`);
+
+    socket.onopen = () => {
+      console.log(`[Task] Connected to task ${taskId} events`);
+      this.taskSubscriptions.set(taskId, socket);
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const taskEvent: TaskEvent = JSON.parse(event.data);
+        console.log(`[Task] Received event for task ${taskId}:`, taskEvent);
+        this.callbacks.onTaskEvent?.(taskEvent);
+      } catch (error) {
+        console.error(`[Task] Failed to parse task event:`, error);
+      }
+    };
+
+    socket.onerror = (event) => {
+      console.error(`[Task] WebSocket error for task ${taskId}:`, event);
+    };
+
+    socket.onclose = () => {
+      console.log(`[Task] Unsubscribed from task ${taskId} events`);
+      this.taskSubscriptions.delete(taskId);
+      // Implement reconnection logic if needed
+    };
+  }
+
+  /**
+   * Send a message to another agent through A2A WebSocket
+   */
+  async sendA2AMessage(fromAgentId: string, toAgentId: string, content: any, taskId?: string) {
+    const socket = this.a2aConnections.get(fromAgentId);
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      throw new Error(`No active A2A connection for agent ${fromAgentId}`);
+    }
+
+    const message = {
+      type: 'agent_message',
+      to_agent: toAgentId,
+      content,
+      task_id: taskId
+    };
+
+    try {
+      socket.send(JSON.stringify(message));
+      console.log(`[A2A] Sent message from ${fromAgentId} to ${toAgentId}`);
+    } catch (error) {
+      console.error(`[A2A] Failed to send message:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update task status or context
+   */
+  async updateTask(taskId: string, action: 'update_status' | 'update_context', data: any) {
+    const socket = this.taskSubscriptions.get(taskId);
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      throw new Error(`No active subscription for task ${taskId}`);
+    }
+
+    const message = {
+      action,
+      ...data
+    };
+
+    try {
+      socket.send(JSON.stringify(message));
+      console.log(`[Task] Sent ${action} for task ${taskId}`);
+    } catch (error) {
+      console.error(`[Task] Failed to update task:`, error);
+      throw error;
+    }
   }
 
   /**
    * Send a plain text message to a specific agent's WebSocket.
-   * @param agentId - The target agent ID.
-   * @param text - The message content.
    */
   async sendTextMessage(agentId: string, text: string) {
     const connection = this.connections.get(agentId);
@@ -361,68 +544,6 @@ class WebSocketService {
     this.callbacks.onError?.(agentId, error);
   }
 
-  /**
-   * Attempt to reconnect a specific agent's connection.
-   * Uses the state from the closed connection passed as an argument.
-   */
-   private attemptReconnect(closedConnection: AgentConnection) {
-     // Check if we should attempt reconnection
-     if (closedConnection.reconnectAttempts >= this.maxReconnectAttempts) {
-       console.log(`[Agent: ${closedConnection.agentId}] Max reconnection attempts reached. Stopping.`);
-       this.callbacks.onError?.(closedConnection.agentId, { code: 503, message: 'Connection failed after multiple attempts.' });
-       return;
-     }
-
-     // Clear any existing reconnect timeout
-     this.clearReconnectTimeout(closedConnection.agentId);
-
-     // Calculate delay with exponential backoff
-     const attempts = closedConnection.reconnectAttempts + 1;
-     const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1);
-     console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${delay / 1000}s (${attempts}/${this.maxReconnectAttempts})...`);
-
-     // Update status and notify UI
-     this.updateAgentStatus(closedConnection.agentId, { 
-       connection: 'reconnecting', 
-       activity: this.agentStatuses.get(closedConnection.agentId)?.activity ?? 'idle' 
-     });
-     this.callbacks.onReconnect?.(closedConnection.agentId);
-
-     // Store reconnect timeout
-     const timeoutId = setTimeout(() => {
-       // Create new connection with incremented attempt count
-       const newConnection: AgentConnection = {
-         ...closedConnection,
-         reconnectAttempts: attempts,
-         isConnecting: false,
-         socket: new WebSocket(closedConnection.connectionUrl)
-       };
-
-       // Establish the connection
-       this.establishConnection(
-         closedConnection.sessionId,
-         closedConnection.agentId,
-         newConnection
-       );
-     }, delay);
-
-     this.reconnectTimeouts.set(closedConnection.agentId, timeoutId);
-   }
-
-  // Add the reconnectTimeouts map declaration
-  // Map to store pending reconnect timeout IDs
-  private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
-
-  /**
-   * Clear any pending reconnection timeout for a specific agent.
-   */
-  private clearReconnectTimeout(agentId: string) {
-    const timeoutId = this.reconnectTimeouts.get(agentId);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      this.reconnectTimeouts.delete(agentId);
-    }
-  }
 }
 
 // Export singleton instance

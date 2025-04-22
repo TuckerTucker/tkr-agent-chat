@@ -46,24 +46,6 @@ class MessageRole(str, Enum):
 
 # --- SQLAlchemy Models ---
 
-class ChatSession(Base):
-    """SQLAlchemy model for a chat session."""
-    __tablename__ = "chat_sessions"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    title = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    session_type = Column(String, default="chat")  # chat, task, etc.
-    session_metadata = Column(JSON, nullable=True)  # Store session configuration, preferences, etc.
-
-    # Relationships
-    messages = relationship("Message", back_populates="session", cascade="all, delete-orphan", lazy="selectin")
-    tasks = relationship("A2ATask", back_populates="session", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<ChatSession(id={self.id}, title='{self.title}')>"
-
 class Message(Base):
     """SQLAlchemy model for a message."""
     __tablename__ = "messages"
@@ -91,10 +73,11 @@ class Message(Base):
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
     agent = relationship("AgentCard", backref="messages")
-    replies = relationship(
+    parent = relationship(
         "Message",
-        backref=relationship("Message", remote_side=[id]),
-        remote_side=[in_reply_to]
+        remote_side=[message_uuid],
+        backref="replies",
+        foreign_keys=[in_reply_to]
     )
 
     def __repr__(self):

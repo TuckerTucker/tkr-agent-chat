@@ -14,13 +14,14 @@ from enum import Enum
 
 from sqlalchemy import (
     Column, String, DateTime, ForeignKey, JSON, Text, Integer, 
-    Enum as SQLAlchemyEnum, Boolean, Table, ForeignKeyConstraint
+    Enum as SQLAlchemyEnum, Boolean, Table
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from pydantic import BaseModel, Field
 
 from ..database import Base
+from .messages import Message
 
 # --- Enums ---
 
@@ -40,13 +41,6 @@ class TaskPriority(str, Enum):
     CRITICAL = "critical"
 
 # --- Association Tables ---
-
-agent_capabilities = Table(
-    'agent_capabilities',
-    Base.metadata,
-    Column('agent_id', String, ForeignKey('agent_cards.id'), primary_key=True),
-    Column('capability', String, primary_key=True)
-)
 
 task_agents = Table(
     'task_agents',
@@ -72,21 +66,27 @@ class AgentCard(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Store additional configuration as JSON
+    # Store additional configuration and capabilities as JSON
     config = Column(JSON, nullable=True)
-    
-    # Many-to-many relationship with capabilities
-    capabilities = relationship(
-        "str", 
-        secondary=agent_capabilities,
-        collection_class=set
-    )
+    capabilities = Column(JSON, nullable=True, default=lambda: [])
     
     # Relationship to tasks (many-to-many)
     tasks = relationship(
         "A2ATask",
         secondary=task_agents,
         back_populates="agents"
+    )
+    
+    # Relationships for shared contexts
+    source_contexts = relationship(
+        "SharedContext",
+        foreign_keys="SharedContext.source_agent_id",
+        backref="source_agent"
+    )
+    target_contexts = relationship(
+        "SharedContext",
+        foreign_keys="SharedContext.target_agent_id",
+        backref="target_agent"
     )
 
     def __repr__(self):
@@ -119,7 +119,7 @@ class A2ATask(Base):
     result = Column(JSON, nullable=True)   # Task results
     
     # Relationships
-    session = relationship("ChatSession", backref="tasks")
+    session = relationship("ChatSession", backref="a2a_tasks")
     agents = relationship(
         "AgentCard",
         secondary=task_agents,
@@ -128,10 +128,11 @@ class A2ATask(Base):
     
     # Link to related messages
     messages = relationship(
-        "Message",
+        Message,
         primaryjoin="and_(Message.session_id==A2ATask.session_id, "
                    "Message.message_metadata.contains({'task_id': A2ATask.id}))",
-        viewonly=True
+        viewonly=True,
+        foreign_keys=[Message.session_id]
     )
 
     def __repr__(self):

@@ -15,7 +15,12 @@ import {
 } from "../lib/mention-highlighter";
 import type { ChatInputProps } from './chat-input.d';
 
-export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(({
+// Define imperative handle type
+interface ChatInputHandle {
+  setTaskContext: (taskId: string | null) => void;
+}
+
+export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(({
   onSend,
   onTyping,
   disabled = false,
@@ -34,6 +39,15 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
   const [suggestionsPosition, setSuggestionsPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [activeMention, setActiveMention] = useState<MentionMatch | null>(null);
   const [showMarkdownHint, setShowMarkdownHint] = useState(false);
+  const [targetAgentId, setTargetAgentId] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  
+  // Extract @mentions from message
+  const extractMentions = (text: string): string[] => {
+    const mentionRegex = /@(\w+)/g;
+    const matches = text.match(mentionRegex);
+    return matches ? matches.map(m => m.slice(1)) : [];
+  };
   
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -41,14 +55,19 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
   const visibleInputRef = useRef<HTMLDivElement | null>(null);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   
-  // Initialize merged ref
+  // Set task context for A2A messages
+  const setTaskContext = (id: string | null) => {
+    setTaskId(id);
+  };
+
+  // Expose methods through ref
+  React.useImperativeHandle(ref, () => ({
+    setTaskContext
+  }));
+
+  // Initialize textarea ref
   const handleRef = (element: HTMLTextAreaElement | null) => {
-    // Handle textarea ref
     textareaRef.current = element;
-    
-    // Handle forwarded ref
-    if (typeof ref === 'function') ref(element);
-    else if (ref) ref.current = element;
   };
   
   // Auto-resize textarea based on content
@@ -263,7 +282,22 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
     
     try {
       setIsSending(true);
-      await onSend(trimmedMessage, currentAgentId || 'default');
+      const mentions = extractMentions(trimmedMessage);
+      
+      // If there's exactly one mention and it's a valid agent, treat as A2A message
+      if (mentions.length === 1 && availableAgents.includes(mentions[0])) {
+        const targetAgent = mentions[0];
+        // Send A2A message
+        await onSend(trimmedMessage, currentAgentId || 'default', {
+          type: 'a2a',
+          targetAgent,
+          taskId: taskId
+        });
+      } else {
+        // Regular message
+        await onSend(trimmedMessage, currentAgentId || 'default');
+      }
+      
       setMessage("");
       
       // Focus textarea after sending
@@ -271,9 +305,10 @@ export const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>((
         textareaRef.current.focus();
       }
       
-      // Clear suggestions
+      // Clear suggestions and context
       setSuggestions([]);
       setActiveMention(null);
+      setTargetAgentId(null);
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {

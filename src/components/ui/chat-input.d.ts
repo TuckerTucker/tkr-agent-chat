@@ -1,7 +1,13 @@
 import { ReactNode } from 'react';
 
+interface MessageMetadata {
+  type: 'a2a';
+  targetAgent: string;
+  taskId?: string | null;
+}
+
 export interface ChatInputProps {
-  onSend: (message: string, agentId: string) => Promise<void>;
+  onSend: (message: string, agentId: string, metadata?: MessageMetadata) => Promise<void>;
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
   placeholder?: string;
