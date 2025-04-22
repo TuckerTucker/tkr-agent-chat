@@ -3,7 +3,6 @@ import { cn, formatMessageTime, copyToClipboard } from "../lib/utils";
 import { Button } from "./button";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { AgentTooltip } from "./agent-tooltip";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { MessageControlsProps, MessageProps } from './message.d';
 
 const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({

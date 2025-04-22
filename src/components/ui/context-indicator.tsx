@@ -2,7 +2,6 @@ import React from 'react';
 import { Info, Link, ExternalLink } from 'lucide-react';
 
 interface ContextIndicatorProps {
-    messageId: string;
     usedContext: boolean;
     contextCount?: number;
     relevanceScore?: number;
@@ -10,7 +9,6 @@ interface ContextIndicatorProps {
 }
 
 export const ContextIndicator: React.FC<ContextIndicatorProps> = ({
-    messageId,
     usedContext,
     contextCount = 0,
     relevanceScore,

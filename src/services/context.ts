@@ -205,11 +205,7 @@ export const useShareContext = () => {
     });
 };
 
-export const useFilterContext = (
-    targetAgentId: string,
-    sessionId?: string,
-    sourceAgentId?: string
-) => {
+export const useFilterContext = (targetAgentId: string) => {
     return useMutation({
         mutationFn: (request: FilterContextRequest) => contextApi.filterContext(
             targetAgentId,

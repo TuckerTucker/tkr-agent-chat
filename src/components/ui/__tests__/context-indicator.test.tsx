@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import { ContextIndicator } from '../context-indicator';
@@ -7,7 +6,6 @@ describe('ContextIndicator', () => {
     it('renders nothing when usedContext is false', () => {
         const { container } = render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={false}
             />
         );
@@ -17,7 +15,6 @@ describe('ContextIndicator', () => {
     it('renders basic context indicator', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={1}
             />
@@ -28,7 +25,6 @@ describe('ContextIndicator', () => {
     it('renders plural form for multiple contexts', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={3}
             />
@@ -39,7 +35,6 @@ describe('ContextIndicator', () => {
     it('displays relevance score when provided', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={1}
                 relevanceScore={0.75}
@@ -52,7 +47,6 @@ describe('ContextIndicator', () => {
         const mockOnView = vi.fn();
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={1}
                 onViewContext={mockOnView}
@@ -67,7 +61,6 @@ describe('ContextIndicator', () => {
     it('shows correct tooltip for single context', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={1}
             />
@@ -79,7 +72,6 @@ describe('ContextIndicator', () => {
     it('shows correct tooltip for multiple contexts', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={3}
             />
@@ -91,7 +83,6 @@ describe('ContextIndicator', () => {
     it('hides view button when onViewContext is not provided', () => {
         render(
             <ContextIndicator
-                messageId="test-message"
                 usedContext={true}
                 contextCount={1}
             />

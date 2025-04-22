@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Edit, RefreshCw, Trash2, AlertCircle } from 'lucide-react';
+import { Clock, Edit, RefreshCw, AlertCircle } from 'lucide-react';
 import { useSharedContext, useUpdateContext, useExtendContextTTL } from '../../services/context';
 import type { SharedContext } from '../../services/context';
 

@@ -39,7 +39,6 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(({
   const [suggestionsPosition, setSuggestionsPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [activeMention, setActiveMention] = useState<MentionMatch | null>(null);
   const [showMarkdownHint, setShowMarkdownHint] = useState(false);
-  const [targetAgentId, setTargetAgentId] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   
   // Extract @mentions from message
@@ -308,7 +307,6 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(({
       // Clear suggestions and context
       setSuggestions([]);
       setActiveMention(null);
-      setTargetAgentId(null);
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
