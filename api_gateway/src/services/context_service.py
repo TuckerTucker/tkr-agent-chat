@@ -7,11 +7,21 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 
-from ..models.shared_context import SharedContext
-from ..services.chat_service import chat_service
+from models.shared_context import SharedContext
+from services.chat_service import chat_service
 
 logger = logging.getLogger(__name__)
+
+class DateTimeJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+def datetime_json_dumps(obj):
+    return json.dumps(obj, cls=DateTimeJSONEncoder)
 
 def calculate_relevance_score(content: Dict[str, Any], query: str) -> float:
     """
@@ -21,26 +31,27 @@ def calculate_relevance_score(content: Dict[str, Any], query: str) -> float:
     """
     # Convert query to lowercase set of words
     query_words = set(query.lower().split())
-    
+
     # Convert content to searchable text
-    content_text = json.dumps(content).lower()
-    content_words = set(content_text.split())
-    
+    content_text = json.dumps(content, ensure_ascii=False).lower()
+    # Split on common delimiters and remove punctuation
+    content_words = set(''.join(c if c.isalnum() or c.isspace() else ' ' for c in content_text).split())
+
     # Calculate word overlap
     matching_words = query_words.intersection(content_words)
     if not query_words:
         return 0.0
-    
+
     # Basic TF-IDF inspired scoring
     word_score = len(matching_words) / len(query_words)
-    
+
     # Boost score based on content size and structure
     size_factor = min(1.0, len(content_text) / 1000)  # Normalize by typical content size
     depth_factor = 1.0 + (content_text.count('{') * 0.1)  # Boost for structural complexity
-    
+
     # Combine factors with weights
     final_score = (word_score * 0.6) + (size_factor * 0.2) + (depth_factor * 0.2)
-    
+
     return min(1.0, final_score)
 
 class ContextService:
@@ -70,12 +81,12 @@ class ContextService:
             SharedContext: The created context object
         """
         context_id = str(uuid.uuid4())
-        
+
         # Calculate expiration if TTL provided
         expires_at = None
         if ttl_minutes:
             expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
-        
+
         context = SharedContext(
             id=context_id,
             session_id=session_id,
@@ -83,20 +94,20 @@ class ContextService:
             target_agent_id=target_agent_id,
             context_type=context_type,
             content=context_data,
-            context_metadata={
-                "created_at": datetime.now(UTC).isoformat(),
+            context_metadata=json.loads(datetime_json_dumps({
+                "created_at": datetime.now(UTC),
                 "content_size": len(json.dumps(context_data))
-            },
+            })),
             expires_at=expires_at
         )
-        
+
         db.add(context)
         await db.commit()
         await db.refresh(context)
-        
+
         logger.info(f"Created shared context {context_id} from {source_agent_id} to {target_agent_id}")
         return context
-    
+
     async def get_shared_context(
         self,
         db: AsyncSession,
@@ -117,20 +128,27 @@ class ContextService:
             List[SharedContext]: List of available context objects
         """
         current_time = datetime.now(UTC)
-        query = select(SharedContext).filter(
-            SharedContext.target_agent_id == target_agent_id,
-            SharedContext.expires_at.is_(None) | 
-            (SharedContext.expires_at > current_time)
+        query = (
+            select(SharedContext)
+            .options(
+                joinedload(SharedContext.source_agent),
+                joinedload(SharedContext.target_agent),
+                joinedload(SharedContext.session)
+            )
+            .filter(
+                SharedContext.target_agent_id == target_agent_id,
+                (SharedContext.expires_at.is_(None) | (SharedContext.expires_at > current_time))
+            )
         )
-        
+
         if session_id:
             query = query.filter(SharedContext.session_id == session_id)
         if source_agent_id:
             query = query.filter(SharedContext.source_agent_id == source_agent_id)
-            
+
         result = await db.execute(query)
         return result.scalars().all()
-    
+
     async def filter_relevant_context(
         self,
         db: AsyncSession,
@@ -154,7 +172,7 @@ class ContextService:
         for context in contexts:
             # Calculate relevance score
             score = calculate_relevance_score(context.content, query)
-            
+
             if score >= min_score:
                 scored_contexts.append({
                     "context": context,
@@ -164,10 +182,10 @@ class ContextService:
                         "relevance_score": score
                     }
                 })
-        
+
         # Sort by relevance score
         return sorted(scored_contexts, key=lambda x: x["score"], reverse=True)
-    
+
     async def cleanup_expired_context(
         self,
         db: AsyncSession
@@ -188,11 +206,11 @@ class ContextService:
             )
         )
         expired = result.scalars().all()
-        
+
         for context in expired:
             logger.info(f"Removing expired context {context.id}")
             await db.delete(context)
-        
+
         await db.commit()
         return len(expired)
 
@@ -217,24 +235,24 @@ class ContextService:
             select(SharedContext).filter(SharedContext.id == context_id)
         )
         context = result.scalar_one_or_none()
-        
+
         if context:
             # Update allowed fields
             allowed_fields = {"content", "context_type", "expires_at", "context_metadata"}
             for field, value in updates.items():
                 if field in allowed_fields:
                     setattr(context, field, value)
-            
+
             # Update metadata
-            context.context_metadata = {
+            context.context_metadata = json.loads(datetime_json_dumps({
                 **context.context_metadata,
-                "updated_at": datetime.now(UTC).isoformat()
-            }
-            
+                "updated_at": datetime.now(UTC)
+            }))
+
             await db.commit()
             await db.refresh(context)
             logger.info(f"Updated context {context_id}")
-            
+
         return context
 
     async def extend_context_ttl(
@@ -258,24 +276,24 @@ class ContextService:
             select(SharedContext).filter(SharedContext.id == context_id)
         )
         context = result.scalar_one_or_none()
-        
+
         if context:
             current_time = datetime.now(UTC)
-            # If already expired, start from current time
+            # If already expired start from current time
             base_time = max(current_time, context.expires_at) if context.expires_at else current_time
             new_expiry = base_time + timedelta(minutes=additional_minutes)
-            
+
             context.expires_at = new_expiry
-            context.context_metadata = {
+            context.context_metadata = json.loads(datetime_json_dumps({
                 **context.context_metadata,
-                "ttl_extended_at": current_time.isoformat(),
+                "ttl_extended_at": current_time,
                 "ttl_extension": additional_minutes
-            }
-            
+            }))
+
             await db.commit()
             await db.refresh(context)
             logger.info(f"Extended TTL for context {context_id} by {additional_minutes} minutes")
-            
+
         return context
 
     async def batch_cleanup_contexts(
@@ -295,7 +313,7 @@ class ContextService:
         """
         total_removed = 0
         current_time = datetime.now(UTC)
-        
+
         while True:
             # Get batch of expired contexts
             result = await db.execute(
@@ -304,21 +322,21 @@ class ContextService:
                 .limit(batch_size)
             )
             batch = result.scalars().all()
-            
+
             if not batch:
                 break
-                
+
             # Delete batch
             for context in batch:
                 await db.delete(context)
                 logger.debug(f"Removing expired context {context.id}")
                 total_removed += 1
-            
+
             await db.commit()
-            
+
         if total_removed > 0:
             logger.info(f"Batch cleanup removed {total_removed} expired contexts")
-        
+
         return total_removed
 
 # Global instance

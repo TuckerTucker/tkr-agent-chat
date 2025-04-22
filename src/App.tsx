@@ -38,7 +38,7 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   // Track agent connection statuses
-  const [agentStatuses, setAgentStatuses] = useState<Record<string, { 
+  const [agentStatuses, setAgentStatuses] = useState<Record<string, {
     connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
     activity: 'idle' | 'thinking' | 'responding' | 'error';
   }>>({});
@@ -69,11 +69,13 @@ function App() {
 
   // Effect for managing all agent connections
   React.useEffect(() => {
+    if (!selectedSessionId || !availableAgents.length) return;
+
     let mounted = true;
     let connectTimeout: NodeJS.Timeout | null = null;
 
     const attemptConnections = () => {
-      if (!mounted || !selectedSessionId || availableAgents.length === 0) return;
+      if (!mounted) return;
 
       // Clear any pending connection attempts
       if (connectTimeout) {
@@ -93,21 +95,22 @@ function App() {
     // Attempt initial connections with a slight delay
     connectTimeout = setTimeout(attemptConnections, 1000);
 
-    // Cleanup function runs only on actual unmount
+    // Cleanup function
     return () => {
       mounted = false;
       if (connectTimeout) {
         clearTimeout(connectTimeout);
       }
+      // Only disconnect if we're unmounting and had connected
       if (isInitialConnect.current) {
-        console.log("Disconnecting all agents on final unmount...");
+        console.log("Disconnecting all agents...");
         availableAgents.forEach(agentId => {
           webSocketService.disconnect(agentId, false);
         });
         isInitialConnect.current = false;
       }
     };
-  }, []); // Empty dependency array - only run on mount/unmount
+  }, [selectedSessionId, availableAgents]); // Add proper dependencies
 
   // Set up WebSocket callbacks
   React.useEffect(() => {
@@ -144,7 +147,6 @@ function App() {
           ...prev,
           [agentId]: { connection: 'error', activity: 'error' }
         }));
-        // No manual reconnect - WebSocketService handles reconnection
       },
       onStatusChange: (agentId: string, status: { connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error'; activity: 'idle' | 'thinking' | 'responding' | 'error' }) => {
         if (!isSubscribed) return;
@@ -167,7 +169,7 @@ function App() {
         onStatusChange: () => {}
       });
     };
-  }, [agentMetadata]); // Only depends on agentMetadata for message creation
+  }, [agentMetadata]);
 
   // Fetch messages for the selected session
   const { data: messages = [] } = useQuery<MessageRead[]>({
@@ -178,7 +180,6 @@ function App() {
 
   // Update local messages when server messages change
   React.useEffect(() => {
-    // Convert API messages to UI format
     const uiMessages = messages.map(msg => createUIMessage({
       id: msg.message_uuid,
       role: msg.type === 'user' ? 'user' : 'agent',
@@ -186,16 +187,16 @@ function App() {
       agentId: msg.agent_id,
       agentName: msg.agent_id ? (agentMetadata[msg.agent_id]?.name || msg.agent_id) : undefined,
       timestamp: msg.created_at,
-          metadata: msg.type === 'user' ? {
-            avatar: userAvatar,
-            name: 'You'
-          } : {
-            ...msg.metadata,
-            agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
-            avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
-            description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
-            capabilities: msg.agent_id ? agentMetadata[msg.agent_id]?.capabilities : undefined
-          },
+      metadata: msg.type === 'user' ? {
+        avatar: userAvatar,
+        name: 'You'
+      } : {
+        ...msg.metadata,
+        agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
+        avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
+        description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
+        capabilities: msg.agent_id ? agentMetadata[msg.agent_id]?.capabilities : undefined
+      },
       deliveryStatus: 'sent'
     }));
     setLocalMessages(uiMessages);
@@ -204,7 +205,7 @@ function App() {
   // Keep track of current conversation messages
   const currentMessages = React.useMemo(() => {
     if (!selectedSessionId) return [];
-    return localMessages.filter(msg => 
+    return localMessages.filter(msg =>
       msg.id && msg.content && (msg.role === 'user' || (msg.role === 'agent' && msg.agentName))
     );
   }, [localMessages, selectedSessionId]);
@@ -217,7 +218,7 @@ function App() {
   })), [sessions, selectedSessionId, currentMessages]);
 
   // Find the current conversation object
-  const currentConversation = React.useMemo(() => 
+  const currentConversation = React.useMemo(() =>
     conversations.find((conv) => conv.id === selectedSessionId) || null,
     [conversations, selectedSessionId]
   );
@@ -234,10 +235,10 @@ function App() {
         role: 'user',
         content: message,
         timestamp: new Date().toISOString(),
-          metadata: {
-            avatar: userAvatar,
-            name: 'You'
-          },
+        metadata: {
+          avatar: userAvatar,
+          name: 'You'
+        },
         deliveryStatus: 'sent'
       });
 
@@ -273,25 +274,25 @@ function App() {
     <TooltipPrimitive.Provider>
       <ThemeProvider>
         <ErrorBoundary
-        fallback={
-          <ErrorMessage
-            title="Application Error"
-            message="Something went wrong in the chat UI. Please try again."
+          fallback={
+            <ErrorMessage
+              title="Application Error"
+              message="Something went wrong in the chat UI. Please try again."
+            />
+          }
+        >
+          <AppLayout
+            conversations={conversations}
+            currentConversation={currentConversation}
+            onSendMessage={handleSendMessage}
+            onCreateConversation={handleCreateConversation}
+            onSelectConversation={handleSelectConversation}
+            currentAgentId={currentAgentId}
+            onSelectAgent={handleSelectAgent}
+            availableAgents={availableAgents}
+            agentMetadata={agentMetadata}
+            agentStatuses={agentStatuses}
           />
-        }
-      >
-        <AppLayout
-          conversations={conversations}
-          currentConversation={currentConversation}
-          onSendMessage={handleSendMessage}
-          onCreateConversation={handleCreateConversation}
-          onSelectConversation={handleSelectConversation}
-          currentAgentId={currentAgentId}
-          onSelectAgent={handleSelectAgent}
-          availableAgents={availableAgents}
-          agentMetadata={agentMetadata}
-          agentStatuses={agentStatuses}
-        />
         </ErrorBoundary>
       </ThemeProvider>
     </TooltipPrimitive.Provider>

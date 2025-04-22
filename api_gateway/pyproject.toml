@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "api_gateway"
+version = "0.1.0"
+description = "API Gateway for TKR Multi-Agent Chat System"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
+testpaths = [
+    "src/tests"
+]
+python_files = "test_*.py"
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.setuptools]
+package-dir = {"" = "src"}

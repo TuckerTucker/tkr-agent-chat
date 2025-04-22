@@ -2,7 +2,7 @@
 Data models for the API Gateway.
 
 Defines:
-- SQLAlchemy models for database persistence (ChatSession, Message).
+- SQLAlchemy models for database persistence (Message).
 - Pydantic models for API validation (ErrorResponse).
 - Enums for message types and roles.
 - Support for A2A protocol features.
@@ -18,14 +18,15 @@ from sqlalchemy import (
     Column, String, DateTime, ForeignKey, JSON, Text, Integer, Enum as SQLAlchemyEnum
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID # Use Text for SQLite compatibility if needed
+from sqlalchemy.dialects.postgresql import UUID  # Use Text for SQLite compatibility if needed
 from sqlalchemy.sql import func
 
 # Pydantic Imports (for API validation, keep ErrorResponse)
 from pydantic import BaseModel, Field
 
 # Local Imports
-from ..database import Base # Import Base from database setup
+from database import Base  # Import Base from database setup
+from models.chat_sessions import ChatSession  # Import ChatSession model
 
 # --- Enums ---
 
@@ -108,7 +109,7 @@ class ChatSessionRead(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True # Updated from orm_mode for Pydantic v2
+        from_attributes = True  # Updated from orm_mode for Pydantic v2
 
 class MessageRead(BaseModel):
     """Schema for reading message data."""

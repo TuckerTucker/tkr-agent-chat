@@ -2,12 +2,12 @@ from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, CheckConstrai
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
-from ..database import Base
-from .chat_sessions import ChatSession
+from database import Base
+from models.chat_sessions import ChatSession
 
 class SharedContext(Base):
     __tablename__ = "shared_contexts"
-    
+
     id = Column(String, primary_key=True)
     session_id = Column(String, ForeignKey("chat_sessions.id"))
     source_agent_id = Column(String, ForeignKey("agent_cards.id"))
@@ -17,21 +17,19 @@ class SharedContext(Base):
     context_metadata = Column(JSON)  # Additional context metadata
     created_at = Column(DateTime, server_default=func.now())
     expires_at = Column(DateTime, nullable=True)
-    
+
     # Relationships
     session = relationship("ChatSession", back_populates="shared_contexts")
-    source_agent = relationship("AgentCard", foreign_keys=[source_agent_id])
-    target_agent = relationship("AgentCard", foreign_keys=[target_agent_id])
-    
-    # SQLite-compatible check constraint for context_type and indexes
+    source_agent = relationship("AgentCard", foreign_keys=[source_agent_id], back_populates="outbound_contexts")
+    target_agent = relationship("AgentCard", foreign_keys=[target_agent_id], back_populates="inbound_contexts")
+
+    # SQLite-compatible check constraint for context_type
     __table_args__ = (
         CheckConstraint(
             "context_type IN ('full', 'relevant', 'summary')",
             name="context_type_check"
         ),
         {
-            'sqlite_on_conflict': 'ROLLBACK',  # Enforce constraints strictly
-            'sqlite_with_rowid': True,  # Enable rowid for better performance
             'info': {
                 'notes': 'Stores shared context between agents with TTL support'
             }

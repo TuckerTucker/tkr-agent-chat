@@ -180,7 +180,7 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(({
   // Trigger handleCursorChange when the cursor moves or message changes
   useEffect(() => {
     handleCursorChange();
-  }, [cursorPosition, message, handleCursorChange]);
+  }, [cursorPosition, message]);
   
   // Handle textarea cursor position changes
   const handleSelectionChange = () => {

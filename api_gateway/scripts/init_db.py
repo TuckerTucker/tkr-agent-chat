@@ -176,7 +176,7 @@ def init_database():
                 "id": "chloe",
                 "name": "Chloe",
                 "description": "Git operations and general help",
-                "color": "rgb(34 197 94)",
+                "color": "rgb(34, 197, 94)",
                 "icon_path": "agents/chloe/src/assets/chloe.svg",
                 "capabilities": ["git", "search", "explain"]
             },
@@ -184,7 +184,7 @@ def init_database():
                 "id": "phil_connors",
                 "name": "Phil Connors",
                 "description": "Task management and coordination",
-                "color": "rgb(249 115 22)",
+                "color": "rgb(249, 115, 22)",
                 "icon_path": "agents/phil_connors/src/assets/phil.svg",
                 "capabilities": ["task", "coordinate", "plan"]
             }

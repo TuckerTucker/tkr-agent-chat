@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Any
 # SQLAlchemy Imports
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload # For eager loading messages if needed
+from sqlalchemy.orm import selectinload  # For eager loading messages if needed
 
 # --- ADK Imports ---
 print("DEBUG: Starting ADK imports in chat_service.py...")
@@ -35,8 +35,8 @@ except ImportError as e:
     class InMemorySessionService: pass
 
 # Local Imports
-from ..database import get_db # Assuming get_db provides AsyncSession
-from ..models.messages import ChatSession, Message, MessageType # Import DB models
+from database import get_db  # Assuming get_db provides AsyncSession
+from models.messages import ChatSession, Message, MessageType  # Import DB models
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class ChatService:
         self.agent_instances: Dict[str, Any] = {}
         # ADK Session Management
         self.adk_session_service = InMemorySessionService() if ADK_AVAILABLE else None
-        self.active_adk_sessions: Dict[str, Session] = {} # Maps app session_id to ADK Session
+        self.active_adk_sessions: Dict[str, Session] = {}  # Maps app session_id to ADK Session
 
     # --- Agent Management (Remains the same) ---
     def set_agents(self, agents: Dict[str, Any]) -> None:
@@ -76,7 +76,7 @@ class ChatService:
         )
         db.add(session)
         await db.commit()
-        await db.refresh(session) # Load default values like created_at
+        await db.refresh(session)  # Load default values like created_at
         logger.info(f"Created session {session_id} in database.")
         return session
 
@@ -116,8 +116,8 @@ class ChatService:
             # Use the application session_id also as the ADK session_id and user_id for simplicity
             adk_session = self.adk_session_service.create_session(
                 app_name=APP_NAME,
-                user_id=user_id or session_id, # Default user_id to session_id if not provided
-                session_id=session_id,
+                user_id=user_id or session_id,  # Default user_id to session_id if not provided
+                session_id=session_id
             )
             self.active_adk_sessions[session_id] = adk_session
             return adk_session
@@ -143,10 +143,10 @@ class ChatService:
         result = await db.execute(
             select(Message)
             .filter(Message.session_id == session_id)
-            .order_by(Message.created_at.asc()) # Show oldest first
+            .order_by(Message.created_at.asc())  # Show oldest first
             .offset(skip)
             .limit(limit)
-            # .options(selectinload(Message.session)) # Eager load session if needed elsewhere
+            # .options(selectinload(Message.session))  # Eager load session if needed elsewhere
         )
         messages = result.scalars().all()
         logger.debug(f"Retrieved {len(messages)} messages for session {session_id}.")
@@ -155,7 +155,7 @@ class ChatService:
     # --- Message Saving (Helper for ws.py) ---
     async def save_message(self, db: AsyncSession, session_id: str, msg_type: MessageType, parts: List[Dict[str, Any]], agent_id: Optional[str] = None, message_metadata: Optional[Dict[str, Any]] = None) -> Message:
         """Saves a message to the database. Called from WebSocket handler."""
-        log_prefix = f"[SaveMessage Session: {session_id}, Type: {msg_type.name}, Agent: {agent_id or 'N/A'}]"
+        log_prefix = f"[SaveMessage Session: {session_id} Type: {msg_type.name} Agent: {agent_id or 'N/A'}]"
         logger.info(f"{log_prefix} Attempting to save. Content snippet: '{str(parts)[:100]}...'")
 
         # Basic validation (could be more robust)
@@ -164,17 +164,11 @@ class ChatService:
              logger.error(f"{log_prefix} Error: Session not found.")
              raise ValueError(f"Session not found: {session_id}")
 
-        # *** Add check for existing identical message? (Could be complex/slow) ***
-        # existing = await db.execute(select(Message).filter_by(session_id=session_id, agent_id=agent_id, parts=json.dumps(parts)))
-        # if existing.scalar_one_or_none():
-        #     logger.warning(f"{log_prefix} Potential duplicate detected, skipping save.")
-        #     # Decide how to handle - return existing? Raise error? For now, proceed but log.
-
         message = Message(
             session_id=session_id,
             type=msg_type,
             agent_id=agent_id,
-            parts=parts, # Store the list of dicts directly as JSON
+            parts=parts,  # Store the list of dicts directly as JSON
             message_metadata=message_metadata or {},
             # created_at handled by server_default
             # message_uuid handled by default
@@ -183,11 +177,11 @@ class ChatService:
             db.add(message)
             await db.commit()
             await db.refresh(message)
-            logger.info(f"{log_prefix} Successfully saved message ID: {message.id}, UUID: {message.message_uuid}")
+            logger.info(f"{log_prefix} Successfully saved message ID: {message.id} UUID: {message.message_uuid}")
         except Exception as e:
             logger.error(f"{log_prefix} Database commit/refresh error: {e}", exc_info=True)
-            await db.rollback() # Rollback on error
-            raise # Re-raise the exception
+            await db.rollback()  # Rollback on error
+            raise  # Re-raise the exception
         return message
 
 
