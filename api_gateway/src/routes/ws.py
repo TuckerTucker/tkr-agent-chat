@@ -46,6 +46,7 @@ except ImportError as e:
 from ..services.chat_service import chat_service
 from ..models.messages import MessageType, MessageRole
 from ..services.a2a_service import A2AService
+from ..services.context_service import context_service
 
 # --- Configuration ---
 router = APIRouter()
@@ -143,6 +144,7 @@ async def agent_to_client_messaging(
                     try:
                         message_parts = [{"type": "text", "content": accumulated_text.strip()}]
                         msg_metadata = {"timestamp": datetime.utcnow().isoformat(), "streaming": False}
+                        # Save the message
                         saved_message = chat_service.save_message(
                             session_id=session_id,
                             msg_type=MessageType.AGENT,
@@ -150,6 +152,22 @@ async def agent_to_client_messaging(
                             parts=message_parts,
                             message_metadata=msg_metadata
                         )
+
+                        # Share context with other agents in the session
+                        other_agents = [a for a in chat_service.get_agents() if a.id != agent_id]
+                        for other_agent in other_agents:
+                            await context_service.share_context(
+                                source_agent_id=agent_id,
+                                target_agent_id=other_agent.id,
+                                context_data={
+                                    "message_uuid": saved_message["message_uuid"],
+                                    "content": accumulated_text.strip(),
+                                    "type": "message"
+                                },
+                                session_id=session_id,
+                                context_type="relevant",
+                                ttl_minutes=60
+                            )
                         saved_message_uuid = saved_message['message_uuid']
                         logger.info(f"[{agent_id}] Saved agent message to DB (UUID: {saved_message_uuid}): '{accumulated_text[:50]}...'")
                         message_saved_in_loop = True

@@ -54,7 +54,14 @@ class BaseAgent(ADKAgentBase):
         agent_display_name = config["name"]  # Keep display name separately
         model_name = config.get("model", "gemini-2.0-flash-exp") # Default model from quickstart
         agent_description = config["description"]
-        agent_instruction = system_prompt # Use system_prompt as instruction
+        
+        # Add context awareness to system prompt
+        context_prompt = """
+        You have access to shared context from other agents in the conversation.
+        When responding, consider any relevant context that has been shared.
+        This helps maintain conversation coherence and build upon what other agents have said.
+        """
+        agent_instruction = f"{system_prompt}\n\n{context_prompt}"
         
         # Map our tool registry to the format ADK expects (list of tool functions/objects)
         # Assuming tool_registry maps name -> function for now
@@ -83,10 +90,30 @@ class BaseAgent(ADKAgentBase):
 
     # Keep our helper methods if still needed, otherwise remove/adapt
     def get_system_prompt(self, **template_vars) -> str:
+        # Get shared context from the context service
+        shared_context = []
+        try:
+            from ..services.context_service import context_service
+            shared_context = context_service.get_shared_context(
+                target_agent_id=self.id,
+                session_id=template_vars.get("session_id")
+            )
+        except Exception as e:
+            logging.warning(f"Failed to get shared context: {e}")
+
+        # Add context to template vars
+        if shared_context:
+            template_vars["shared_context"] = "\n".join([
+                f"Context from {ctx['source_agent_id']}: {ctx['content']['content']}"
+                for ctx in shared_context
+            ])
+        else:
+            template_vars["shared_context"] = "No shared context available."
+
         # Simple template substitution for system prompt
         prompt = self.system_prompt
         for k, v in template_vars.items():
-            prompt = prompt.replace("{{" + k + "}}", v)
+            prompt = prompt.replace("{{" + k + "}}", str(v))
         return prompt
 
     def get_tool(self, name):
