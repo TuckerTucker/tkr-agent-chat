@@ -20,11 +20,24 @@ class SharedContext(Base):
     
     # Relationships
     session = relationship("ChatSession", back_populates="shared_contexts")
+    source_agent = relationship("AgentCard", foreign_keys=[source_agent_id])
+    target_agent = relationship("AgentCard", foreign_keys=[target_agent_id])
     
-    # SQLite-compatible check constraint for context_type
+    # SQLite-compatible check constraint for context_type and indexes
     __table_args__ = (
         CheckConstraint(
             "context_type IN ('full', 'relevant', 'summary')",
             name="context_type_check"
         ),
+        {
+            'sqlite_on_conflict': 'ROLLBACK',  # Enforce constraints strictly
+            'sqlite_with_rowid': True,  # Enable rowid for better performance
+            'info': {
+                'notes': 'Stores shared context between agents with TTL support'
+            }
+        }
     )
+
+    def __repr__(self):
+        """String representation of the shared context."""
+        return f"<SharedContext(id={self.id}, type={self.context_type}, source={self.source_agent_id}, target={self.target_agent_id})>"
