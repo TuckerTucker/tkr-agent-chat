@@ -4,20 +4,23 @@ Service layer for A2A protocol task management.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from sqlalchemy.orm import joinedload
 
-from ..models.agent_tasks import A2ATask, AgentCard, TaskStatus, TaskPriority
-from ..models.messages import Message, ChatSession, MessageType, MessageRole
+from ..db import (
+    create_task as db_create_task,
+    get_task as db_get_task,
+    update_task as db_update_task,
+    get_agent_tasks as db_get_agent_tasks,
+    get_session_tasks as db_get_session_tasks,
+    link_task_agents,
+    create_message as db_create_message
+)
+from ..models.agent_tasks import TaskStatus, TaskPriority
+from ..models.messages import MessageType, MessageRole
 
 class A2AService:
     """Service for managing Agent-to-Agent communication tasks."""
     
-    def __init__(self, db: AsyncSession):
-        self.db = db
-
-    async def create_task(
+    def create_task(
         self,
         session_id: str,
         title: str,
@@ -26,172 +29,132 @@ class A2AService:
         priority: TaskPriority = TaskPriority.MEDIUM,
         config: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None
-    ) -> A2ATask:
+    ) -> Dict:
         """Create a new A2A task."""
         # Create task
-        task = A2ATask(
-            session_id=session_id,
-            title=title,
-            description=description,
-            status=TaskStatus.PENDING,
-            priority=priority,
-            config=config,
-            context=context
-        )
+        task_data = {
+            'session_id': session_id,
+            'title': title,
+            'description': description,
+            'status': TaskStatus.PENDING.value,
+            'priority': priority.value,
+            'config': config,
+            'context': context
+        }
+        
+        task = db_create_task(task_data)
         
         # Link agents
-        agents = await self._get_agents(agent_ids)
-        task.agents.extend(agents)
-        
-        # Save to database
-        self.db.add(task)
-        await self.db.flush()
+        link_task_agents(task['id'], agent_ids)
         
         # Create system message for task creation
-        message = Message(
-            session_id=session_id,
-            type=MessageType.TASK,
-            role=MessageRole.COORDINATOR,
-            parts=[{
-                "type": "text",
-                "content": f"Task created: {title}"
-            }],
-            message_metadata={
-                "task_id": task.id,
-                "action": "create"
+        message_data = {
+            'session_id': session_id,
+            'type': MessageType.TASK.value,
+            'role': MessageRole.COORDINATOR.value,
+            'parts': [{'type': 'text', 'content': f"Task created: {title}"}],
+            'message_metadata': {
+                'task_id': task['id'],
+                'action': 'create'
             }
-        )
-        self.db.add(message)
-        await self.db.commit()
+        }
+        db_create_message(message_data)
         
         return task
 
-    async def update_task_status(
+    def update_task_status(
         self,
         task_id: str,
         status: TaskStatus,
         result: Optional[Dict[str, Any]] = None
-    ) -> A2ATask:
+    ) -> Dict:
         """Update a task's status and optionally add results."""
-        task = await self._get_task(task_id)
+        task = db_get_task(task_id)
+        if not task:
+            raise ValueError(f"Task not found: {task_id}")
         
         # Update status and timing
-        task.status = status
-        if status == TaskStatus.IN_PROGRESS and not task.started_at:
-            task.started_at = datetime.utcnow()
+        update_data = {'status': status.value}
+        
+        if status == TaskStatus.IN_PROGRESS and not task.get('started_at'):
+            update_data['started_at'] = datetime.utcnow().isoformat()
         elif status in (TaskStatus.COMPLETED, TaskStatus.FAILED):
-            task.completed_at = datetime.utcnow()
+            update_data['completed_at'] = datetime.utcnow().isoformat()
         
         # Add results if provided
         if result:
-            task.result = result
+            update_data['result'] = result
+        
+        # Update task
+        updated_task = db_update_task(task_id, update_data)
         
         # Create status update message
-        message = Message(
-            session_id=task.session_id,
-            type=MessageType.TASK,
-            role=MessageRole.COORDINATOR,
-            parts=[{
-                "type": "text",
-                "content": f"Task status updated to: {status.value}"
+        message_data = {
+            'session_id': task['session_id'],
+            'type': MessageType.TASK.value,
+            'role': MessageRole.COORDINATOR.value,
+            'parts': [{
+                'type': 'text',
+                'content': f"Task status updated to: {status.value}"
             }],
-            message_metadata={
-                "task_id": task.id,
-                "action": "status_update",
-                "status": status.value
+            'message_metadata': {
+                'task_id': task_id,
+                'action': 'status_update',
+                'status': status.value
             }
-        )
-        self.db.add(message)
-        await self.db.commit()
+        }
+        db_create_message(message_data)
         
-        return task
+        return updated_task
 
-    async def get_agent_tasks(
+    def get_agent_tasks(
         self,
         agent_id: str,
         status: Optional[TaskStatus] = None
-    ) -> List[A2ATask]:
+    ) -> List[Dict]:
         """Get all tasks for a specific agent, optionally filtered by status."""
-        query = (
-            select(A2ATask)
-            .join(A2ATask.agents)
-            .where(AgentCard.id == agent_id)
-        )
-        
-        if status:
-            query = query.where(A2ATask.status == status)
-            
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return db_get_agent_tasks(agent_id, status.value if status else None)
 
-    async def get_session_tasks(
+    def get_session_tasks(
         self,
         session_id: str,
         include_completed: bool = False
-    ) -> List[A2ATask]:
+    ) -> List[Dict]:
         """Get all tasks for a chat session."""
-        query = select(A2ATask).where(A2ATask.session_id == session_id)
-        
-        if not include_completed:
-            query = query.where(
-                A2ATask.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS])
-            )
-            
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return db_get_session_tasks(session_id, include_completed)
 
-    async def add_task_context(
+    def add_task_context(
         self,
         task_id: str,
         context_update: Dict[str, Any]
-    ) -> A2ATask:
+    ) -> Dict:
         """Add or update context for a task."""
-        task = await self._get_task(task_id)
-        
-        # Merge new context with existing
-        current_context = task.context or {}
-        current_context.update(context_update)
-        task.context = current_context
-        
-        # Create context update message
-        message = Message(
-            session_id=task.session_id,
-            type=MessageType.TASK,
-            role=MessageRole.COORDINATOR,
-            parts=[{
-                "type": "text",
-                "content": "Task context updated"
-            }],
-            message_metadata={
-                "task_id": task.id,
-                "action": "context_update",
-                "context_keys": list(context_update.keys())
-            }
-        )
-        self.db.add(message)
-        await self.db.commit()
-        
-        return task
-
-    async def _get_task(self, task_id: str) -> A2ATask:
-        """Get a task by ID."""
-        result = await self.db.execute(
-            select(A2ATask)
-            .where(A2ATask.id == task_id)
-            .options(joinedload(A2ATask.agents))
-        )
-        task = result.scalar_one_or_none()
+        task = db_get_task(task_id)
         if not task:
             raise ValueError(f"Task not found: {task_id}")
-        return task
-
-    async def _get_agents(self, agent_ids: List[str]) -> List[AgentCard]:
-        """Get a list of agents by their IDs."""
-        result = await self.db.execute(
-            select(AgentCard).where(AgentCard.id.in_(agent_ids))
-        )
-        agents = list(result.scalars().all())
-        if len(agents) != len(agent_ids):
-            missing = set(agent_ids) - {a.id for a in agents}
-            raise ValueError(f"Agents not found: {missing}")
-        return agents
+        
+        # Merge new context with existing
+        current_context = task.get('context', {}) or {}
+        current_context.update(context_update)
+        
+        # Update task
+        updated_task = db_update_task(task_id, {'context': current_context})
+        
+        # Create context update message
+        message_data = {
+            'session_id': task['session_id'],
+            'type': MessageType.TASK.value,
+            'role': MessageRole.COORDINATOR.value,
+            'parts': [{
+                'type': 'text',
+                'content': "Task context updated"
+            }],
+            'message_metadata': {
+                'task_id': task_id,
+                'action': 'context_update',
+                'context_keys': list(context_update.keys())
+            }
+        }
+        db_create_message(message_data)
+        
+        return updated_task

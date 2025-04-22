@@ -14,11 +14,6 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
-# SQLAlchemy Imports
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload  # For eager loading messages if needed
-
 # --- ADK Imports ---
 print("DEBUG: Starting ADK imports in chat_service.py...")
 try:
@@ -35,8 +30,14 @@ except ImportError as e:
     class InMemorySessionService: pass
 
 # Local Imports
-from database import get_db  # Assuming get_db provides AsyncSession
-from models.messages import ChatSession, Message, MessageType  # Import DB models
+from ..db import (
+    create_session as db_create_session,
+    get_session as db_get_session,
+    list_sessions as db_list_sessions,
+    create_message as db_create_message,
+    get_session_messages as db_get_session_messages
+)
+from ..models.messages import MessageType
 
 logger = logging.getLogger(__name__)
 
@@ -66,35 +67,20 @@ class ChatService:
         return self.agent_instances.get(agent_id)
 
     # --- Session Management (Database) ---
-    async def create_session(self, db: AsyncSession, title: Optional[str] = None) -> ChatSession:
+    def create_session(self, title: Optional[str] = None) -> Dict:
         """Create a new chat session in the database."""
-        session_id = str(uuid.uuid4())
-        session = ChatSession(
-            id=session_id,
-            title=title or f"Chat Session {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
-            # created_at is handled by server_default
-        )
-        db.add(session)
-        await db.commit()
-        await db.refresh(session)  # Load default values like created_at
-        logger.info(f"Created session {session_id} in database.")
+        session = db_create_session(title)
+        logger.info(f"Created session {session['id']} in database.")
         return session
 
-    async def get_session(self, db: AsyncSession, session_id: str) -> Optional[ChatSession]:
+    def get_session(self, session_id: str) -> Optional[Dict]:
         """Get an existing chat session from the database."""
-        result = await db.execute(
-            select(ChatSession).filter(ChatSession.id == session_id)
-        )
-        session = result.scalar_one_or_none()
-        # logger.debug(f"Retrieved session {session_id}: {'Found' if session else 'Not Found'}")
+        session = db_get_session(session_id)
         return session
 
-    async def get_sessions(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ChatSession]:
+    def get_sessions(self, skip: int = 0, limit: int = 100) -> List[Dict]:
         """Get a list of chat sessions from the database."""
-        result = await db.execute(
-            select(ChatSession).order_by(ChatSession.created_at.desc()).offset(skip).limit(limit)
-        )
-        sessions = result.scalars().all()
+        sessions = db_list_sessions(skip, limit)
         logger.debug(f"Retrieved {len(sessions)} sessions.")
         return sessions
 
@@ -131,59 +117,47 @@ class ChatService:
             del self.active_adk_sessions[session_id]
 
     # --- Message Management (Database - Read Only Here) ---
-    # Note: Message creation happens in ws.py
-    async def get_messages(self, db: AsyncSession, session_id: str, skip: int = 0, limit: int = 1000) -> List[Message]:
+    def get_messages(self, session_id: str, skip: int = 0, limit: int = 1000) -> List[Dict]:
         """Get messages for a specific session from the database."""
-        # Ensure session exists first (optional, depends on desired behavior)
-        session = await self.get_session(db, session_id)
+        # Ensure session exists first
+        session = self.get_session(session_id)
         if not session:
             logger.warning(f"Attempted to get messages for non-existent session: {session_id}")
             return []
 
-        result = await db.execute(
-            select(Message)
-            .filter(Message.session_id == session_id)
-            .order_by(Message.created_at.asc())  # Show oldest first
-            .offset(skip)
-            .limit(limit)
-            # .options(selectinload(Message.session))  # Eager load session if needed elsewhere
-        )
-        messages = result.scalars().all()
+        messages = db_get_session_messages(session_id, skip, limit)
         logger.debug(f"Retrieved {len(messages)} messages for session {session_id}.")
         return messages
 
     # --- Message Saving (Helper for ws.py) ---
-    async def save_message(self, db: AsyncSession, session_id: str, msg_type: MessageType, parts: List[Dict[str, Any]], agent_id: Optional[str] = None, message_metadata: Optional[Dict[str, Any]] = None) -> Message:
+    def save_message(self, session_id: str, msg_type: MessageType, parts: List[Dict[str, Any]], agent_id: Optional[str] = None, message_metadata: Optional[Dict[str, Any]] = None) -> Dict:
         """Saves a message to the database. Called from WebSocket handler."""
         log_prefix = f"[SaveMessage Session: {session_id} Type: {msg_type.name} Agent: {agent_id or 'N/A'}]"
         logger.info(f"{log_prefix} Attempting to save. Content snippet: '{str(parts)[:100]}...'")
 
-        # Basic validation (could be more robust)
-        session = await self.get_session(db, session_id)
+        # Basic validation
+        session = self.get_session(session_id)
         if not session:
              logger.error(f"{log_prefix} Error: Session not found.")
              raise ValueError(f"Session not found: {session_id}")
 
-        message = Message(
-            session_id=session_id,
-            type=msg_type,
-            agent_id=agent_id,
-            parts=parts,  # Store the list of dicts directly as JSON
-            message_metadata=message_metadata or {},
-            # created_at handled by server_default
-            # message_uuid handled by default
-        )
-        try:
-            db.add(message)
-            await db.commit()
-            await db.refresh(message)
-            logger.info(f"{log_prefix} Successfully saved message ID: {message.id} UUID: {message.message_uuid}")
-        except Exception as e:
-            logger.error(f"{log_prefix} Database commit/refresh error: {e}", exc_info=True)
-            await db.rollback()  # Rollback on error
-            raise  # Re-raise the exception
-        return message
+        message_data = {
+            'session_id': session_id,
+            'type': msg_type.value,
+            'agent_id': agent_id,
+            'parts': parts,
+            'message_metadata': message_metadata or {},
+            'message_uuid': str(uuid.uuid4()),
+            'created_at': datetime.utcnow().isoformat()
+        }
 
+        try:
+            message = db_create_message(message_data)
+            logger.info(f"{log_prefix} Successfully saved message UUID: {message['message_uuid']}")
+            return message
+        except Exception as e:
+            logger.error(f"{log_prefix} Database error: {e}", exc_info=True)
+            raise
 
 # Global instance (used by main.py for agent loading and ws.py for access)
 chat_service = ChatService()

@@ -1,41 +1,53 @@
-from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, CheckConstraint
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+"""
+Data model for shared context between agents.
+"""
 
-from database import Base
-from models.chat_sessions import ChatSession
+from typing import Optional, Dict, Any
+from enum import Enum
+from pydantic import BaseModel, Field
 
-class SharedContext(Base):
-    __tablename__ = "shared_contexts"
+class ContextType(str, Enum):
+    """Types of shared context."""
+    FULL = "full"
+    RELEVANT = "relevant"
+    SUMMARY = "summary"
 
-    id = Column(String, primary_key=True)
-    session_id = Column(String, ForeignKey("chat_sessions.id"))
-    source_agent_id = Column(String, ForeignKey("agent_cards.id"))
-    target_agent_id = Column(String, ForeignKey("agent_cards.id"))
-    context_type = Column(String)
-    content = Column(JSON)  # The shared context data
-    context_metadata = Column(JSON)  # Additional context metadata
-    created_at = Column(DateTime, server_default=func.now())
-    expires_at = Column(DateTime, nullable=True)
+class SharedContext(BaseModel):
+    """Model for shared context between agents."""
+    id: str
+    session_id: Optional[str] = None
+    source_agent_id: str
+    target_agent_id: str
+    context_type: ContextType
+    content: Dict[str, Any]
+    context_metadata: Optional[Dict[str, Any]] = None
+    created_at: Optional[str] = None
+    expires_at: Optional[str] = None
 
-    # Relationships
-    session = relationship("ChatSession", back_populates="shared_contexts")
-    source_agent = relationship("AgentCard", foreign_keys=[source_agent_id], back_populates="outbound_contexts")
-    target_agent = relationship("AgentCard", foreign_keys=[target_agent_id], back_populates="inbound_contexts")
+    class Config:
+        from_attributes = True
 
-    # SQLite-compatible check constraint for context_type
-    __table_args__ = (
-        CheckConstraint(
-            "context_type IN ('full', 'relevant', 'summary')",
-            name="context_type_check"
-        ),
-        {
-            'info': {
-                'notes': 'Stores shared context between agents with TTL support'
-            }
-        }
-    )
+class SharedContextCreate(BaseModel):
+    """Schema for creating a new shared context."""
+    session_id: Optional[str] = None
+    source_agent_id: str
+    target_agent_id: str
+    context_type: ContextType
+    content: Dict[str, Any]
+    context_metadata: Optional[Dict[str, Any]] = None
+    expires_at: Optional[str] = None
 
-    def __repr__(self):
-        """String representation of the shared context."""
-        return f"<SharedContext(id={self.id}, type={self.context_type}, source={self.source_agent_id}, target={self.target_agent_id})>"
+class SharedContextRead(BaseModel):
+    """Schema for reading shared context data."""
+    id: str
+    session_id: Optional[str]
+    source_agent_id: str
+    target_agent_id: str
+    context_type: ContextType
+    content: Dict[str, Any]
+    context_metadata: Optional[Dict[str, Any]]
+    created_at: str
+    expires_at: Optional[str]
+
+    class Config:
+        from_attributes = True

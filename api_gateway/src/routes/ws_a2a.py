@@ -8,13 +8,11 @@ import logging
 from typing import Dict, Any, Optional, Set
 from datetime import datetime
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 
-from ..database import get_db
 from ..services.a2a_service import A2AService
 from ..services.chat_service import chat_service
-from ..models.agent_tasks import TaskStatus, A2ATask
+from ..models.agent_tasks import TaskStatus
 from ..models.messages import MessageType, MessageRole
 
 router = APIRouter()
@@ -24,17 +22,17 @@ logger = logging.getLogger(__name__)
 task_subscribers: Dict[str, Set[WebSocket]] = {}  # task_id -> set of WebSockets
 agent_connections: Dict[str, Set[WebSocket]] = {}  # agent_id -> set of WebSockets
 
-async def broadcast_task_update(task: A2ATask) -> None:
+async def broadcast_task_update(task: Dict[str, Any]) -> None:
     """Broadcast task updates to all subscribed clients."""
-    if task.id in task_subscribers:
+    if task['id'] in task_subscribers:
         message = {
             "type": "task_update",
-            "task_id": task.id,
-            "status": task.status.value,
-            "updated_at": task.updated_at.isoformat() if task.updated_at else None,
-            "result": task.result
+            "task_id": task['id'],
+            "status": task['status'],
+            "updated_at": task.get('updated_at'),
+            "result": task.get('result')
         }
-        for websocket in task_subscribers[task.id]:
+        for websocket in task_subscribers[task['id']]:
             try:
                 await websocket.send_text(json.dumps(message))
             except Exception as e:
@@ -63,8 +61,7 @@ async def broadcast_agent_message(
 async def handle_agent_message(
     websocket: WebSocket,
     agent_id: str,
-    message: Dict[str, Any],
-    db: AsyncSession
+    message: Dict[str, Any]
 ) -> None:
     """Handle incoming agent messages and route them appropriately."""
     message_type = message.get("type")
@@ -81,8 +78,7 @@ async def handle_agent_message(
 
     try:
         # Save message to database
-        await chat_service.save_message(
-            db=db,
+        chat_service.save_message(
             session_id=task_id if task_id else f"a2a_{agent_id}_{target_agent}",
             msg_type=MessageType.AGENT,
             agent_id=agent_id,
@@ -107,8 +103,7 @@ async def handle_agent_message(
 @router.websocket("/agent/{agent_id}")
 async def agent_communication(
     websocket: WebSocket,
-    agent_id: str,
-    db: AsyncSession = Depends(get_db)
+    agent_id: str
 ):
     """WebSocket endpoint for agent-to-agent communication."""
     await websocket.accept()
@@ -123,7 +118,7 @@ async def agent_communication(
         while True:
             try:
                 data = await websocket.receive_json()
-                await handle_agent_message(websocket, agent_id, data, db)
+                await handle_agent_message(websocket, agent_id, data)
             except json.JSONDecodeError:
                 await websocket.send_text(json.dumps({
                     "type": "error",
@@ -148,8 +143,7 @@ async def agent_communication(
 @router.websocket("/tasks/{task_id}")
 async def task_events(
     websocket: WebSocket,
-    task_id: str,
-    db: AsyncSession = Depends(get_db)
+    task_id: str
 ):
     """WebSocket endpoint for subscribing to task events."""
     await websocket.accept()
@@ -162,15 +156,18 @@ async def task_events(
 
     try:
         # Send initial task state
-        service = A2AService(db)
+        service = A2AService()
         try:
-            task = await service._get_task(task_id)
+            task = service.get_task(task_id)
+            if not task:
+                raise ValueError(f"Task {task_id} not found")
+                
             initial_state = {
                 "type": "task_state",
-                "task_id": task.id,
-                "status": task.status.value,
-                "context": task.context,
-                "result": task.result
+                "task_id": task['id'],
+                "status": task['status'],
+                "context": task.get('context'),
+                "result": task.get('result')
             }
             await websocket.send_text(json.dumps(initial_state))
         except ValueError:
@@ -189,14 +186,14 @@ async def task_events(
 
                 if action == "update_context":
                     context_update = data.get("context", {})
-                    task = await service.add_task_context(task_id, context_update)
+                    task = service.add_task_context(task_id, context_update)
                     # Broadcast update to all subscribers
                     await broadcast_task_update(task)
 
                 elif action == "update_status":
                     new_status = TaskStatus(data.get("status"))
                     result = data.get("result")
-                    task = await service.update_task_status(task_id, new_status, result)
+                    task = service.update_task_status(task_id, new_status, result)
                     # Broadcast update to all subscribers
                     await broadcast_task_update(task)
 

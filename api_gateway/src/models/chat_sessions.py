@@ -2,28 +2,35 @@
 Data model for chat sessions.
 """
 
-import uuid
-from datetime import datetime
-from typing import List, Optional, Dict, Any
-from sqlalchemy import Column, String, DateTime, JSON
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from typing import Optional, Dict, Any
+from pydantic import BaseModel
 
-from database import Base
+class ChatSession(BaseModel):
+    """Model for a chat session."""
+    id: str
+    title: Optional[str] = None
+    session_type: Optional[str] = None
+    session_metadata: Optional[Dict[str, Any]] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
-class ChatSession(Base):
-    """SQLAlchemy model for a chat session."""
-    __tablename__ = "chat_sessions"
+    class Config:
+        from_attributes = True
 
-    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    title = Column(String, nullable=True)
-    session_metadata = Column(JSON, nullable=True)  # Additional session metadata
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+class ChatSessionCreate(BaseModel):
+    """Schema for creating a new chat session."""
+    title: Optional[str] = None
+    session_type: Optional[str] = None
+    session_metadata: Optional[Dict[str, Any]] = None
 
-    # Relationships
-    messages = relationship("Message", back_populates="session", cascade="all, delete-orphan")
-    shared_contexts = relationship("SharedContext", back_populates="session", cascade="all, delete-orphan")
+class ChatSessionRead(BaseModel):
+    """Schema for reading chat session data."""
+    id: str
+    title: Optional[str]
+    session_type: Optional[str]
+    session_metadata: Optional[Dict[str, Any]]
+    created_at: str
+    updated_at: Optional[str]
 
-    def __repr__(self):
-        return f"<ChatSession(id='{self.id}' title='{self.title}')>"
+    class Config:
+        from_attributes = True

@@ -16,28 +16,25 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import agent factories
 from agents.chloe.src.index import get_agent as get_chloe_agent
-from agents.phil_connors.src.index import get_agent as get_phil_connors_agent # Updated path
+from agents.phil_connors.src.index import get_agent as get_phil_connors_agent
 
 # Import routes and services
 from .routes import api, ws, agents, a2a, ws_a2a, context
 from .services.chat_service import chat_service
 from .services.a2a_service import A2AService
-from .database import init_db, get_db
-# from .services.adk_runner_service import adk_runner_service # Remove ADK runner service import
-from dotenv import load_dotenv # Import dotenv
+from .db import init_database  # Import our new direct SQL database module
+from dotenv import load_dotenv
 
 # Load environment variables from .env file in the project root
-# This ensures GOOGLE_API_KEY is available when BaseAgent is initialized
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env') # Look in project root
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env')
 load_dotenv(dotenv_path=dotenv_path) 
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Changed to DEBUG to see more details
+    level=logging.DEBUG,
     format='[%(asctime)s] %(levelname)s %(name)s: %(message)s',
     handlers=[
         logging.StreamHandler(),
-        # logging.FileHandler('api_gateway.log') # Optional: Keep file logging if desired
     ]
 )
 
@@ -45,7 +42,7 @@ logging.basicConfig(
 logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Check for necessary environment variables (e.g., Gemini API Key for ADK)
+# Check for necessary environment variables
 if not os.getenv("GOOGLE_API_KEY"):
      logger.warning("GOOGLE_API_KEY not found in environment variables or .env file. ADK features might fail.")
 
@@ -70,7 +67,6 @@ def load_agents() -> Dict[str, object]:
     Returns a dictionary mapping agent IDs to agent instances.
     """
     try:
-        # Use updated function name and agent ID key
         agents = { 
             "chloe": get_chloe_agent(),
             "phil_connors": get_phil_connors_agent() 
@@ -85,13 +81,13 @@ def load_agents() -> Dict[str, object]:
 async def startup_event():
     """Initialize services and database on startup."""
     try:
-        # Initialize Database
-        await init_db()
+        # Initialize Database using direct SQL
+        init_database()
         logger.info("Database initialized.")
 
-        # Load agents into ChatService (ADK runner is now managed within ws.py)
+        # Load agents into ChatService
         loaded_agents = load_agents()
-        chat_service.set_agents(loaded_agents) # Set agents on the global instance
+        chat_service.set_agents(loaded_agents)
         logger.info("Chat service initialized with agents.")
     except Exception as e:
         logger.error(f"Startup error: {e}")

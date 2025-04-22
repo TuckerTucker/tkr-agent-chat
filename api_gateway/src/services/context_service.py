@@ -1,27 +1,21 @@
-import uuid
+"""
+Service layer for shared context management.
+"""
+
 import json
 import logging
 from datetime import datetime, timedelta, UTC
 from typing import Optional, Dict, Any, List
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import text
-from sqlalchemy.orm import joinedload
-
-from models.shared_context import SharedContext
-from services.chat_service import chat_service
+from ..db import (
+    share_context as db_share_context,
+    get_shared_contexts,
+    update_shared_context,
+    extend_context_ttl,
+    cleanup_expired_contexts
+)
 
 logger = logging.getLogger(__name__)
-
-class DateTimeJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super().default(obj)
-
-def datetime_json_dumps(obj):
-    return json.dumps(obj, cls=DateTimeJSONEncoder)
 
 def calculate_relevance_score(content: Dict[str, Any], query: str) -> float:
     """
@@ -55,21 +49,19 @@ def calculate_relevance_score(content: Dict[str, Any], query: str) -> float:
     return min(1.0, final_score)
 
 class ContextService:
-    async def share_context(
+    def share_context(
         self,
-        db: AsyncSession,
         source_agent_id: str,
         target_agent_id: str,
         context_data: Dict[str, Any],
         session_id: Optional[str] = None,
         context_type: str = "relevant",
         ttl_minutes: Optional[int] = None
-    ) -> SharedContext:
+    ) -> Dict:
         """
         Share context between agents.
 
         Args:
-            db: Database session
             source_agent_id: ID of the agent sharing context
             target_agent_id: ID of the agent receiving context
             context_data: The context data to share
@@ -78,107 +70,82 @@ class ContextService:
             ttl_minutes: Optional time-to-live in minutes
 
         Returns:
-            SharedContext: The created context object
+            Dict: The created context object
         """
-        context_id = str(uuid.uuid4())
-
         # Calculate expiration if TTL provided
         expires_at = None
         if ttl_minutes:
-            expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
+            expires_at = (datetime.now(UTC) + timedelta(minutes=ttl_minutes)).isoformat()
 
-        context = SharedContext(
-            id=context_id,
-            session_id=session_id,
-            source_agent_id=source_agent_id,
-            target_agent_id=target_agent_id,
-            context_type=context_type,
-            content=context_data,
-            context_metadata=json.loads(datetime_json_dumps({
-                "created_at": datetime.now(UTC),
-                "content_size": len(json.dumps(context_data))
-            })),
-            expires_at=expires_at
-        )
+        context_metadata = {
+            "created_at": datetime.now(UTC).isoformat(),
+            "content_size": len(json.dumps(context_data))
+        }
 
-        db.add(context)
-        await db.commit()
-        await db.refresh(context)
+        context = db_share_context({
+            'session_id': session_id,
+            'source_agent_id': source_agent_id,
+            'target_agent_id': target_agent_id,
+            'context_type': context_type,
+            'content': context_data,
+            'context_metadata': context_metadata,
+            'expires_at': expires_at
+        })
 
-        logger.info(f"Created shared context {context_id} from {source_agent_id} to {target_agent_id}")
+        logger.info(f"Created shared context {context['id']} from {source_agent_id} to {target_agent_id}")
         return context
 
-    async def get_shared_context(
+    def get_shared_context(
         self,
-        db: AsyncSession,
         target_agent_id: str,
         session_id: Optional[str] = None,
         source_agent_id: Optional[str] = None
-    ) -> List[SharedContext]:
+    ) -> List[Dict]:
         """
         Get shared context available to an agent.
 
         Args:
-            db: Database session
             target_agent_id: ID of the agent to get context for
             session_id: Optional chat session ID to filter by
             source_agent_id: Optional source agent ID to filter by
 
         Returns:
-            List[SharedContext]: List of available context objects
+            List[Dict]: List of available context objects
         """
-        current_time = datetime.now(UTC)
-        query = (
-            select(SharedContext)
-            .options(
-                joinedload(SharedContext.source_agent),
-                joinedload(SharedContext.target_agent),
-                joinedload(SharedContext.session)
-            )
-            .filter(
-                SharedContext.target_agent_id == target_agent_id,
-                (SharedContext.expires_at.is_(None) | (SharedContext.expires_at > current_time))
-            )
+        return get_shared_contexts(
+            target_agent_id=target_agent_id,
+            session_id=session_id,
+            source_agent_id=source_agent_id
         )
 
-        if session_id:
-            query = query.filter(SharedContext.session_id == session_id)
-        if source_agent_id:
-            query = query.filter(SharedContext.source_agent_id == source_agent_id)
-
-        result = await db.execute(query)
-        return result.scalars().all()
-
-    async def filter_relevant_context(
+    def filter_relevant_context(
         self,
-        db: AsyncSession,
-        contexts: List[SharedContext],
+        contexts: List[Dict],
         query: str,
         min_score: float = 0.3
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict]:
         """
-        Filter contexts by relevance using SQLite JSON1 and text similarity.
+        Filter contexts by relevance.
 
         Args:
-            db: Database session
             contexts: List of contexts to filter
             query: The query to filter by
             min_score: Minimum relevance score (0-1) to include
 
         Returns:
-            List[Dict[str, Any]]: List of contexts with relevance scores
+            List[Dict]: List of contexts with relevance scores
         """
         scored_contexts = []
         for context in contexts:
             # Calculate relevance score
-            score = calculate_relevance_score(context.content, query)
+            score = calculate_relevance_score(context['content'], query)
 
             if score >= min_score:
                 scored_contexts.append({
                     "context": context,
                     "score": score,
                     "metadata": {
-                        **context.context_metadata,
+                        **(context.get('context_metadata', {})),
                         "relevance_score": score
                     }
                 })
@@ -186,158 +153,68 @@ class ContextService:
         # Sort by relevance score
         return sorted(scored_contexts, key=lambda x: x["score"], reverse=True)
 
-    async def cleanup_expired_context(
+    def update_context(
         self,
-        db: AsyncSession
-    ) -> int:
-        """
-        Remove expired shared contexts.
-
-        Args:
-            db: Database session
-
-        Returns:
-            int: Number of contexts removed
-        """
-        current_time = datetime.now(UTC)
-        result = await db.execute(
-            select(SharedContext).filter(
-                SharedContext.expires_at <= current_time
-            )
-        )
-        expired = result.scalars().all()
-
-        for context in expired:
-            logger.info(f"Removing expired context {context.id}")
-            await db.delete(context)
-
-        await db.commit()
-        return len(expired)
-
-    async def update_context(
-        self,
-        db: AsyncSession,
         context_id: str,
         updates: Dict[str, Any]
-    ) -> Optional[SharedContext]:
+    ) -> Optional[Dict]:
         """
         Update an existing shared context.
 
         Args:
-            db: Database session
             context_id: ID of the context to update
             updates: Dictionary of fields to update
 
         Returns:
-            Optional[SharedContext]: Updated context or None if not found
+            Optional[Dict]: Updated context or None if not found
         """
-        result = await db.execute(
-            select(SharedContext).filter(SharedContext.id == context_id)
-        )
-        context = result.scalar_one_or_none()
+        # Update allowed fields
+        allowed_fields = {"content", "context_type", "expires_at", "context_metadata"}
+        filtered_updates = {k: v for k, v in updates.items() if k in allowed_fields}
 
-        if context:
-            # Update allowed fields
-            allowed_fields = {"content", "context_type", "expires_at", "context_metadata"}
-            for field, value in updates.items():
-                if field in allowed_fields:
-                    setattr(context, field, value)
+        # Update metadata
+        if filtered_updates:
+            metadata = filtered_updates.get('context_metadata', {})
+            metadata['updated_at'] = datetime.now(UTC).isoformat()
+            filtered_updates['context_metadata'] = metadata
 
-            # Update metadata
-            context.context_metadata = json.loads(datetime_json_dumps({
-                **context.context_metadata,
-                "updated_at": datetime.now(UTC)
-            }))
+            return update_shared_context(context_id, filtered_updates)
+        return None
 
-            await db.commit()
-            await db.refresh(context)
-            logger.info(f"Updated context {context_id}")
-
-        return context
-
-    async def extend_context_ttl(
+    def extend_context_ttl(
         self,
-        db: AsyncSession,
         context_id: str,
         additional_minutes: int
-    ) -> Optional[SharedContext]:
+    ) -> Optional[Dict]:
         """
         Extend the TTL of a context.
 
         Args:
-            db: Database session
             context_id: ID of the context to extend
             additional_minutes: Minutes to add to current expiration
 
         Returns:
-            Optional[SharedContext]: Updated context or None if not found
+            Optional[Dict]: Updated context or None if not found
         """
-        result = await db.execute(
-            select(SharedContext).filter(SharedContext.id == context_id)
-        )
-        context = result.scalar_one_or_none()
+        return extend_context_ttl(context_id, additional_minutes)
 
-        if context:
-            current_time = datetime.now(UTC)
-            # If already expired start from current time
-            base_time = max(current_time, context.expires_at) if context.expires_at else current_time
-            new_expiry = base_time + timedelta(minutes=additional_minutes)
-
-            context.expires_at = new_expiry
-            context.context_metadata = json.loads(datetime_json_dumps({
-                **context.context_metadata,
-                "ttl_extended_at": current_time,
-                "ttl_extension": additional_minutes
-            }))
-
-            await db.commit()
-            await db.refresh(context)
-            logger.info(f"Extended TTL for context {context_id} by {additional_minutes} minutes")
-
-        return context
-
-    async def batch_cleanup_contexts(
+    def batch_cleanup_contexts(
         self,
-        db: AsyncSession,
         batch_size: int = 100
     ) -> int:
         """
         Clean up expired contexts in batches.
 
         Args:
-            db: Database session
             batch_size: Number of contexts to process per batch
 
         Returns:
             int: Total number of contexts removed
         """
-        total_removed = 0
-        current_time = datetime.now(UTC)
-
-        while True:
-            # Get batch of expired contexts
-            result = await db.execute(
-                select(SharedContext)
-                .filter(SharedContext.expires_at <= current_time)
-                .limit(batch_size)
-            )
-            batch = result.scalars().all()
-
-            if not batch:
-                break
-
-            # Delete batch
-            for context in batch:
-                await db.delete(context)
-                logger.debug(f"Removing expired context {context.id}")
-                total_removed += 1
-
-            await db.commit()
-
-        if total_removed > 0:
-            logger.info(f"Batch cleanup removed {total_removed} expired contexts")
-
-        return total_removed
+        removed_count = cleanup_expired_contexts(batch_size)
+        if removed_count > 0:
+            logger.info(f"Batch cleanup removed {removed_count} expired contexts")
+        return removed_count
 
 # Global instance
 context_service = ContextService()
