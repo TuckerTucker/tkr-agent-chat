@@ -11,17 +11,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from enum import Enum
-
-from sqlalchemy import (
-    Column, String, DateTime, ForeignKey, JSON, Text, Integer, 
-    Enum as SQLAlchemyEnum, Boolean, Table
-)
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from pydantic import BaseModel, Field
-
-from ..database import Base
-from .messages import Message
 
 # --- Enums ---
 
@@ -39,104 +29,6 @@ class TaskPriority(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
-# --- Association Tables ---
-
-task_agents = Table(
-    'task_agents',
-    Base.metadata,
-    Column('task_id', String, ForeignKey('a2a_tasks.id'), primary_key=True),
-    Column('agent_id', String, ForeignKey('agent_cards.id'), primary_key=True)
-)
-
-# --- SQLAlchemy Models ---
-
-class AgentCard(Base):
-    """
-    SQLAlchemy model for storing agent metadata and capabilities.
-    """
-    __tablename__ = "agent_cards"
-
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    color = Column(String)  # RGB/HEX color code
-    icon_path = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Store additional configuration and capabilities as JSON
-    config = Column(JSON, nullable=True)
-    capabilities = Column(JSON, nullable=True, default=lambda: [])
-    
-    # Relationship to tasks (many-to-many)
-    tasks = relationship(
-        "A2ATask",
-        secondary=task_agents,
-        back_populates="agents"
-    )
-    
-    # Relationships for shared contexts
-    source_contexts = relationship(
-        "SharedContext",
-        foreign_keys="SharedContext.source_agent_id",
-        backref="source_agent"
-    )
-    target_contexts = relationship(
-        "SharedContext",
-        foreign_keys="SharedContext.target_agent_id",
-        backref="target_agent"
-    )
-
-    def __repr__(self):
-        return f"<AgentCard(id='{self.id}', name='{self.name}')>"
-
-class A2ATask(Base):
-    """
-    SQLAlchemy model for managing agent-to-agent communication tasks.
-    """
-    __tablename__ = "a2a_tasks"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    session_id = Column(String, ForeignKey("chat_sessions.id"), nullable=False)
-    
-    # Task details
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    status = Column(SQLAlchemyEnum(TaskStatus), nullable=False, default=TaskStatus.PENDING)
-    priority = Column(SQLAlchemyEnum(TaskPriority), nullable=False, default=TaskPriority.MEDIUM)
-    
-    # Timing information
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    started_at = Column(DateTime(timezone=True), nullable=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
-    
-    # Task configuration and results
-    config = Column(JSON, nullable=True)  # Task-specific configuration
-    context = Column(JSON, nullable=True)  # Shared context between agents
-    result = Column(JSON, nullable=True)   # Task results
-    
-    # Relationships
-    session = relationship("ChatSession", backref="a2a_tasks")
-    agents = relationship(
-        "AgentCard",
-        secondary=task_agents,
-        back_populates="tasks"
-    )
-    
-    # Link to related messages
-    messages = relationship(
-        Message,
-        primaryjoin="and_(Message.session_id==A2ATask.session_id, "
-                   "Message.message_metadata.contains({'task_id': A2ATask.id}))",
-        viewonly=True,
-        foreign_keys=[Message.session_id]
-    )
-
-    def __repr__(self):
-        return f"<A2ATask(id='{self.id}', title='{self.title}', status='{self.status}')>"
 
 # --- Pydantic Models ---
 
@@ -160,14 +52,15 @@ class AgentCardRead(BaseModel):
     is_active: bool
     capabilities: List[str]
     config: Optional[Dict[str, Any]]
-    created_at: datetime
-    updated_at: Optional[datetime]
+    created_at: str
+    updated_at: Optional[str]
 
     class Config:
         from_attributes = True
 
 class A2ATaskCreate(BaseModel):
     """Schema for creating a new A2A task."""
+    session_id: str
     title: str
     description: Optional[str] = None
     priority: TaskPriority = TaskPriority.MEDIUM
@@ -183,13 +76,14 @@ class A2ATaskRead(BaseModel):
     description: Optional[str]
     status: TaskStatus
     priority: TaskPriority
-    created_at: datetime
-    updated_at: Optional[datetime]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    created_at: str
+    updated_at: Optional[str]
+    started_at: Optional[str]
+    completed_at: Optional[str]
     config: Optional[Dict[str, Any]]
     context: Optional[Dict[str, Any]]
     result: Optional[Dict[str, Any]]
+    agents: Optional[List[AgentCardRead]] = None
 
     class Config:
         from_attributes = True

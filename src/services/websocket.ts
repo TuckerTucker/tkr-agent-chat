@@ -99,31 +99,34 @@ class WebSocketService {
     this.updateAgentStatus(agentId, { ...initialStatus, connection: 'connecting' });
 
     const existingConnection = this.connections.get(agentId);
+    
+    // If there's an existing connection in OPEN state with the same session, just return
+    if (existingConnection && 
+        existingConnection.socket.readyState === WebSocket.OPEN && 
+        existingConnection.sessionId === sessionId) {
+      console.log(`[Agent: ${agentId}] Already connected to session ${sessionId}`);
+      return;
+    }
+    
+    // If there's an existing connection in any state, disconnect it first
+    if (existingConnection) {
+      console.log(`[Agent: ${agentId}] Cleaning up existing connection before reconnecting`);
+      this.disconnect(agentId, false);
+    }
 
     // Add delay before initial connection attempt
     setTimeout(() => {
-      this.establishConnection(sessionId, agentId, existingConnection);
+      this.establishConnection(sessionId, agentId, undefined);
     }, INITIAL_CONNECT_DELAY);
   }
 
   private establishConnection(sessionId: string, agentId: string, existingConnection: AgentConnection | undefined) {
-
-    // Avoid reconnecting if already connected/connecting for this agent
-    if (existingConnection && (existingConnection.socket.readyState === WebSocket.OPEN || existingConnection.socket.readyState === WebSocket.CONNECTING)) {
-      // If session ID changed, disconnect old and connect new (or handle differently if needed)
-      if (existingConnection.sessionId !== sessionId) {
-          console.warn(`Agent ${agentId} is connected to session ${existingConnection.sessionId}, reconnecting to ${sessionId}`);
-          this.disconnect(agentId, false); // Disconnect old session connection first
-      } else {
-          console.log(`WebSocket already connected or connecting for agent ${agentId}.`);
-          return;
-      }
-    }
-    
-    // Avoid multiple concurrent connection attempts for the same agent
-    if (existingConnection?.isConnecting) {
-        console.log(`WebSocket connection attempt already in progress for agent ${agentId}.`);
-        return;
+    // We should never have an existing connection at this point since we clean it up in connect()
+    // But let's double-check to be safe
+    const currentConnection = this.connections.get(agentId);
+    if (currentConnection) {
+      console.warn(`[Agent: ${agentId}] Found unexpected existing connection during establishConnection. Cleaning up.`);
+      this.disconnect(agentId, false);
     }
 
     const connectionUrl = `${WS_BASE_URL}/chat/${sessionId}/${agentId}`;
@@ -443,7 +446,8 @@ class WebSocketService {
   }
 
   /**
-   * Send a plain text message to a specific agent's WebSocket.
+   * Send a text message to a specific agent's WebSocket.
+   * Formats the message as a JSON object as expected by the backend.
    */
   async sendTextMessage(agentId: string, text: string) {
     const connection = this.connections.get(agentId);
@@ -491,8 +495,14 @@ class WebSocketService {
     }
 
     try {
+      // Create a properly formatted JSON message object
+      const messageObject = {
+        type: "text",
+        text: text
+      };
+      
       console.log(`[Agent: ${agentId}] Sending text message:`, text);
-      connection.socket.send(text);
+      connection.socket.send(JSON.stringify(messageObject));
     } catch (error) {
       console.error(`[Agent: ${agentId}] Failed to send message:`, error);
       this.handleError(agentId, { code: 500, message: `Failed to send message: ${error}` });

@@ -26,7 +26,7 @@ from .db import init_database  # Import our new direct SQL database module
 from dotenv import load_dotenv
 
 # Load environment variables from .env file in the project root
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env')
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(dotenv_path=dotenv_path) 
 
 # Configure logging

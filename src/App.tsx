@@ -42,6 +42,24 @@ function App() {
     connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
     activity: 'idle' | 'thinking' | 'responding' | 'error';
   }>>({});
+  
+  // Initialize agent statuses when agents are loaded
+  React.useEffect(() => {
+    if (agents.length > 0) {
+      const initialStatuses = agents.reduce((acc, agent) => {
+        acc[agent.id] = {
+          connection: 'connected', // Set to connected by default
+          activity: 'idle'
+        };
+        return acc;
+      }, {} as Record<string, {
+        connection: 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
+        activity: 'idle' | 'thinking' | 'responding' | 'error';
+      }>);
+      
+      setAgentStatuses(initialStatuses);
+    }
+  }, [agents]);
 
   // Keep local state for messages
   const [localMessages, setLocalMessages] = useState<APIMessage[]>([]);
@@ -83,6 +101,7 @@ function App() {
         connectTimeout = null;
       }
 
+      // Only attempt connections if we haven't already or if the session ID changed
       if (!isInitialConnect.current) {
         console.log("Attempting initial connection for all agents...");
         availableAgents.forEach(agentId => {
@@ -95,22 +114,31 @@ function App() {
     // Attempt initial connections with a slight delay
     connectTimeout = setTimeout(attemptConnections, 1000);
 
-    // Cleanup function
+    // Cleanup function - only disconnect on component unmount, not on dependency changes
     return () => {
       mounted = false;
       if (connectTimeout) {
         clearTimeout(connectTimeout);
       }
-      // Only disconnect if we're unmounting and had connected
-      if (isInitialConnect.current) {
-        console.log("Disconnecting all agents...");
-        availableAgents.forEach(agentId => {
-          webSocketService.disconnect(agentId, false);
-        });
-        isInitialConnect.current = false;
-      }
+      
+      // We'll only disconnect when the component is truly unmounting
+      // This is handled by the React.useEffect cleanup below
     };
-  }, [selectedSessionId, availableAgents]); // Add proper dependencies
+  }, [selectedSessionId, availableAgents]);
+  
+  // Separate effect for handling component unmount
+  React.useEffect(() => {
+    // No setup needed, this is just for cleanup on unmount
+    
+    return () => {
+      // This cleanup only runs when the component is truly unmounting
+      console.log("Component unmounting, disconnecting all agents...");
+      availableAgents.forEach(agentId => {
+        webSocketService.disconnect(agentId, false);
+      });
+      isInitialConnect.current = false;
+    };
+  }, []); // Empty dependency array means this only runs on mount/unmount
 
   // Set up WebSocket callbacks
   React.useEffect(() => {
@@ -178,28 +206,44 @@ function App() {
     enabled: !!selectedSessionId,
   });
 
+  // Ref to track previous messages to avoid unnecessary updates
+  const prevMessagesRef = React.useRef('');
+
   // Update local messages when server messages change
   React.useEffect(() => {
-    const uiMessages = messages.map(msg => createUIMessage({
-      id: msg.message_uuid,
-      role: msg.type === 'user' ? 'user' : 'agent',
-      content: msg.parts[0]?.content || '',
-      agentId: msg.agent_id,
-      agentName: msg.agent_id ? (agentMetadata[msg.agent_id]?.name || msg.agent_id) : undefined,
-      timestamp: msg.created_at,
-      metadata: msg.type === 'user' ? {
-        avatar: userAvatar,
-        name: 'You'
-      } : {
-        ...msg.metadata,
-        agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
-        avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
-        description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
-        capabilities: msg.agent_id ? agentMetadata[msg.agent_id]?.capabilities : undefined
-      },
-      deliveryStatus: 'sent'
-    }));
-    setLocalMessages(uiMessages);
+    // Skip if no messages to process
+    if (!messages.length) return;
+    
+    // Create a stable representation of messages for comparison
+    const messageIds = messages.map(msg => msg.message_uuid).join(',');
+    
+    // Only update if messages have changed
+    if (messageIds !== prevMessagesRef.current) {
+      prevMessagesRef.current = messageIds;
+      
+      const uiMessages = messages.map(msg => createUIMessage({
+        id: msg.message_uuid,
+        role: msg.type === 'user' ? 'user' : 'agent',
+        content: msg.parts[0]?.content || '',
+        agentId: msg.agent_id,
+        agentName: msg.agent_id ? (agentMetadata[msg.agent_id]?.name || msg.agent_id) : undefined,
+        timestamp: msg.created_at,
+        metadata: msg.type === 'user' ? {
+          avatar: userAvatar,
+          name: 'You'
+        } : {
+          ...(msg.metadata || {}),
+          agentColor: msg.agent_id ? agentMetadata[msg.agent_id]?.color : undefined,
+          avatar: msg.agent_id ? agentMetadata[msg.agent_id]?.avatar : undefined,
+          description: msg.agent_id ? agentMetadata[msg.agent_id]?.description : undefined,
+          capabilities: msg.agent_id ? agentMetadata[msg.agent_id]?.capabilities : undefined
+        },
+        deliveryStatus: 'sent'
+      }));
+      
+      // Use functional update to avoid dependency on localMessages
+      setLocalMessages(uiMessages);
+    }
   }, [messages, agentMetadata]);
 
   // Keep track of current conversation messages

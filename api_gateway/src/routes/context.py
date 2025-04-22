@@ -2,7 +2,7 @@
 API routes for shared context management.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 from time import time
 from fastapi import APIRouter, HTTPException
 

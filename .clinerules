@@ -28,6 +28,10 @@ app:
     onboarding: "README.md"
     design_system: "https://ui.shadcn.com"
     architecture: "_planning/tkr-project.yaml"
+  venv: 
+    location: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/tkr_env"
+    start: "source start_env" # in project root
+  dev server: npm run dev # starts client and server concurrently
 
 database:
   framework: "SQLite"
