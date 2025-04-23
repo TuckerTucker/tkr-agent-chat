@@ -3,7 +3,7 @@ import { ThemeProvider } from "./components/theme/theme-provider";
 import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSessions, getAgents, getMessages, createSession, deleteSession } from "./services/api";
 import webSocketService from "./services/websocket";
 import { AgentInfo, ChatSessionRead, MessageRead } from "./types/api";
@@ -297,13 +297,39 @@ function App() {
     }
   };
 
-  const handleCreateConversation = async () => {
-    try {
-      const newSession = await createSession();
+  // Get React Query client for cache management
+  const queryClient = useQueryClient();
+
+  // Create conversation mutation
+  const createConversationMutation = useMutation({
+    mutationFn: createSession,
+    onSuccess: (newSession) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
       setSelectedSessionId(newSession.id);
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Failed to create conversation:", error);
     }
+  });
+
+  // Delete conversation mutation
+  const deleteConversationMutation = useMutation({
+    mutationFn: deleteSession,
+    onSuccess: (_, deletedId) => {
+      // Invalidate both sessions and messages queries
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["messages", deletedId] });
+      if (deletedId === selectedSessionId) {
+        setSelectedSessionId(null);
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to delete conversation:", error);
+    }
+  });
+
+  const handleCreateConversation = () => {
+    createConversationMutation.mutate(undefined);
   };
 
   const handleSelectConversation = (conv: { id: string }) => {
@@ -314,16 +340,8 @@ function App() {
     setCurrentAgentId(agentId);
   };
 
-  const handleDeleteConversation = async (id: string) => {
-    try {
-      await deleteSession(id);
-      // If the deleted session was selected, clear the selection
-      if (id === selectedSessionId) {
-        setSelectedSessionId(null);
-      }
-    } catch (error) {
-      console.error("Failed to delete conversation:", error);
-    }
+  const handleDeleteConversation = (id: string) => {
+    deleteConversationMutation.mutate(id);
   };
 
   return (
