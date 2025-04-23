@@ -152,11 +152,28 @@ def list_sessions(skip: int = 0, limit: int = 100) -> List[Dict]:
 
 def delete_session(session_id: str) -> bool:
     """Delete a chat session and its associated messages."""
-    with get_connection() as conn:
-        # Delete messages first due to foreign key constraint
-        conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
-        cursor = conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
-        return cursor.rowcount > 0
+    try:
+        with get_connection() as conn:
+            # First verify the session exists
+            cursor = conn.execute("SELECT id FROM chat_sessions WHERE id = ?", (session_id,))
+            if not cursor.fetchone():
+                logger.warning(f"Attempted to delete non-existent session: {session_id}")
+                return False
+
+            # Delete messages first due to foreign key constraint
+            conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+            
+            # Delete shared contexts associated with this session
+            conn.execute("DELETE FROM shared_contexts WHERE session_id = ?", (session_id,))
+            
+            # Finally delete the session
+            cursor = conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+            
+            logger.info(f"Successfully deleted session {session_id} and its associated data")
+            return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        logger.error(f"Database error while deleting session {session_id}: {e}", exc_info=True)
+        raise
 
 # --- Message Operations ---
 

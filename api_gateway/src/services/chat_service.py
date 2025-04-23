@@ -35,7 +35,8 @@ from ..db import (
     get_session as db_get_session,
     list_sessions as db_list_sessions,
     create_message as db_create_message,
-    get_session_messages as db_get_session_messages
+    get_session_messages as db_get_session_messages,
+    delete_session as db_delete_session
 )
 from ..models.messages import MessageType
 
@@ -86,17 +87,20 @@ class ChatService:
 
     def delete_session(self, session_id: str) -> bool:
         """Delete a chat session and its associated data."""
-        # Clear ADK session if it exists
-        self.clear_adk_session(session_id)
-        
-        # Delete from database
-        from ..db import delete_session as db_delete_session
-        success = db_delete_session(session_id)
-        if success:
-            logger.info(f"Deleted session {session_id} from database.")
-        else:
-            logger.warning(f"Failed to delete session {session_id} - not found.")
-        return success
+        try:
+            # Clear ADK session if it exists
+            self.clear_adk_session(session_id)
+            
+            # Delete from database
+            success = db_delete_session(session_id)
+            if success:
+                logger.info(f"Deleted session {session_id} from database.")
+            else:
+                logger.warning(f"Failed to delete session {session_id} - not found.")
+            return success
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}", exc_info=True)
+            raise
 
     # --- ADK Session Management ---
     def get_or_create_adk_session(self, session_id: str, user_id: Optional[str] = None) -> Optional[Session]:
