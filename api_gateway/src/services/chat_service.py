@@ -36,7 +36,8 @@ from ..db import (
     list_sessions as db_list_sessions,
     create_message as db_create_message,
     get_session_messages as db_get_session_messages,
-    delete_session as db_delete_session
+    delete_session as db_delete_session,
+    update_session as db_update_session
 )
 from ..models.messages import MessageType
 
@@ -84,6 +85,19 @@ class ChatService:
         sessions = db_list_sessions(skip, limit)
         logger.debug(f"Retrieved {len(sessions)} sessions.")
         return sessions
+
+    def update_session(self, session_id: str, title: str) -> Optional[Dict]:
+        """Update a chat session's title."""
+        try:
+            session = db_update_session(session_id, {'title': title})
+            if session:
+                logger.info(f"Updated session {session_id} title to: {title}")
+            else:
+                logger.warning(f"Session not found for update: {session_id}")
+            return session
+        except Exception as e:
+            logger.error(f"Error updating session {session_id}: {e}", exc_info=True)
+            raise
 
     def delete_session(self, session_id: str) -> bool:
         """Delete a chat session and its associated data."""

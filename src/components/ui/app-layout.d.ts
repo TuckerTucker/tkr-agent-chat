@@ -14,6 +14,7 @@ export interface AppLayoutProps {
   onCreateConversation: () => void;
   onSelectConversation: (conversation: { id: string }) => void;
   onDeleteConversation: (id: string) => void;
+  onUpdateTitle: (id: string, title: string) => void;
   currentAgentId: string;
   onSelectAgent: (agentId: string) => void;
   availableAgents: string[];

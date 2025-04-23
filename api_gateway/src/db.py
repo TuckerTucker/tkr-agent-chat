@@ -150,6 +150,24 @@ def list_sessions(skip: int = 0, limit: int = 100) -> List[Dict]:
         )
         return [row_to_dict(row) for row in cursor.fetchall()]
 
+def update_session(session_id: str, data: Dict) -> Optional[Dict]:
+    """Update a chat session."""
+    with get_connection() as conn:
+        # First verify the session exists
+        cursor = conn.execute("SELECT id FROM chat_sessions WHERE id = ?", (session_id,))
+        if not cursor.fetchone():
+            logger.warning(f"Attempted to update non-existent session: {session_id}")
+            return None
+
+        set_clause = ', '.join([f"{k} = ?" for k in data.keys()])
+        values = tuple(json.dumps(v) if isinstance(v, (dict, list)) else v for v in data.values())
+        cursor = conn.execute(
+            f"UPDATE chat_sessions SET {set_clause}, updated_at = ? WHERE id = ?",
+            values + (datetime.utcnow().isoformat(), session_id)
+        )
+        conn.commit()
+        return get_session(session_id) if cursor.rowcount > 0 else None
+
 def delete_session(session_id: str) -> bool:
     """Delete a chat session and its associated messages."""
     try:

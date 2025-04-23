@@ -11,10 +11,14 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from ..services.chat_service import chat_service
 from ..models.chat_sessions import ChatSessionCreate, ChatSessionRead
 from ..models.messages import MessageRead, ErrorResponse
+
+class SessionUpdate(BaseModel):
+    title: str
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -68,6 +72,24 @@ def get_session_endpoint(session_id: str):
         logger.warning(f"API: Session not found: {session_id}")
         raise HTTPException(status_code=404, detail="Session not found")
     return session
+
+@router.patch(
+    "/sessions/{session_id}",
+    response_model=ChatSessionRead,
+    summary="Update a chat session",
+    tags=["Sessions"],
+    responses={404: {"description": "Session not found"}}
+)
+def update_session_endpoint(session_id: str, session_data: SessionUpdate):
+    """Updates a chat session's title."""
+    try:
+        session = chat_service.update_session(session_id=session_id, title=session_data.title)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session
+    except Exception as e:
+        logger.error(f"Error updating session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update session")
 
 @router.delete(
     "/sessions/{session_id}",

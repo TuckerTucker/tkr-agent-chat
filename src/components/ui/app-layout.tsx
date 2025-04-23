@@ -24,6 +24,7 @@ export function AppLayout({
   agentMetadata = {},
   agentStatuses = {},
   onDeleteConversation = () => {},
+  onUpdateTitle = () => {},
 }: AppLayoutProps): React.ReactElement {
 
   // Helper function to get status tooltip text
@@ -71,6 +72,7 @@ export function AppLayout({
                 onSelectConversation={onSelectConversation}
                 onCreateConversation={onCreateConversation}
                 onDeleteConversation={onDeleteConversation}
+                onUpdateTitle={onUpdateTitle}
                 className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent"
               />
             </div>

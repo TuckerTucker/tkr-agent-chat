@@ -4,7 +4,7 @@ import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSessions, getAgents, getMessages, createSession, deleteSession } from "./services/api";
+import { getSessions, getAgents, getMessages, createSession, deleteSession, updateSession } from "./services/api";
 import webSocketService from "./services/websocket";
 import { AgentInfo, ChatSessionRead, MessageRead } from "./types/api";
 import chloeAvatar from "../agents/chloe/src/assets/chloe.svg";
@@ -17,13 +17,29 @@ const createUIMessage = (params: APIMessage): APIMessage => params;
 
 function App() {
   // Fetch all chat sessions
-  const { data: sessions = [] } = useQuery<ChatSessionRead[]>({
+  const { 
+    data: sessions = [], 
+    isLoading: isLoadingSessions,
+    isError: isSessionsError,
+    error: sessionsError
+  } = useQuery<ChatSessionRead[], Error, ChatSessionRead[]>({
     queryKey: ["sessions"],
     queryFn: getSessions,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 3, // Retry failed requests 3 times
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
+  // Handle sessions query error
+  React.useEffect(() => {
+    if (isSessionsError) {
+      console.error("Failed to fetch sessions:", sessionsError);
+    }
+  }, [isSessionsError, sessionsError]);
+
   // Fetch agents
-  const { data: agents = [] } = useQuery<AgentInfo[]>({
+  const { data: agents = [] } = useQuery<AgentInfo[], Error, AgentInfo[]>({
     queryKey: ["agents"],
     queryFn: getAgents,
   });
@@ -64,6 +80,32 @@ function App() {
   // Keep local state for messages
   const [localMessages, setLocalMessages] = useState<APIMessage[]>([]);
 
+  // Get React Query client for cache management
+  const queryClient = useQueryClient();
+
+  // Create conversation mutation
+  const createConversationMutation = useMutation({
+    mutationFn: createSession,
+    onSuccess: (newSession) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      setSelectedSessionId(newSession.id);
+    },
+    onError: (error) => {
+      console.error("Failed to create conversation:", error);
+    }
+  });
+
+  // Update conversation title mutation
+  const updateTitleMutation = useMutation({
+    mutationFn: (params: { id: string; title: string }) => updateSession(params.id, params.title),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    },
+    onError: (error) => {
+      console.error("Failed to update conversation title:", error);
+    }
+  });
+
   // Build agent metadata map with imported avatars
   const agentMetadata = React.useMemo(() => {
     return agents.reduce((acc, agent) => {
@@ -75,12 +117,36 @@ function App() {
     }, {} as Record<string, AgentInfo>);
   }, [agents]);
 
-  // Select the first session by default when sessions load
+  // Ref to track if we've initiated conversation creation
+  const hasInitiatedCreation = React.useRef(false);
+
+  // Select the first session by default or create a new one if empty
   React.useEffect(() => {
-    if (!selectedSessionId && sessions.length > 0) {
-      setSelectedSessionId(sessions[0].id);
+    // Only proceed if we've finished loading and there's no error
+    if (isLoadingSessions || isSessionsError) return;
+
+    if (sessions.length > 0) {
+      // If we have sessions, select the first one if none is selected
+      if (!selectedSessionId) {
+        setSelectedSessionId(sessions[0].id);
+      }
+      // Reset creation flag when we have sessions
+      hasInitiatedCreation.current = false;
+    } else if (!hasInitiatedCreation.current && !createConversationMutation.isPending) {
+      // Create a new session only if:
+      // 1. There are no sessions
+      // 2. We haven't already initiated creation
+      // 3. We're not currently creating a session
+      hasInitiatedCreation.current = true;
+      createConversationMutation.mutate(undefined);
     }
-  }, [sessions, selectedSessionId]);
+  }, [
+    sessions,
+    selectedSessionId,
+    createConversationMutation,
+    isLoadingSessions,
+    isSessionsError
+  ]);
 
   // Ref to track if initial connection has been attempted
   const isInitialConnect = React.useRef(false);
@@ -200,7 +266,7 @@ function App() {
   }, [agentMetadata]);
 
   // Fetch messages for the selected session
-  const { data: messages = [] } = useQuery<MessageRead[]>({
+  const { data: messages = [] } = useQuery<MessageRead[], Error, MessageRead[]>({
     queryKey: ["messages", selectedSessionId],
     queryFn: () => (selectedSessionId ? getMessages(selectedSessionId) : Promise.resolve([])),
     enabled: !!selectedSessionId,
@@ -255,7 +321,7 @@ function App() {
   }, [localMessages, selectedSessionId]);
 
   // Build conversations from sessions with memoized messages
-  const conversations = React.useMemo(() => sessions.map((session) => ({
+  const conversations = React.useMemo(() => sessions.map((session: ChatSessionRead) => ({
     id: session.id,
     title: session.title || "Untitled Chat",
     messages: session.id === selectedSessionId ? currentMessages : [],
@@ -263,7 +329,7 @@ function App() {
 
   // Find the current conversation object
   const currentConversation = React.useMemo(() =>
-    conversations.find((conv) => conv.id === selectedSessionId) || null,
+    conversations.find((conv: { id: string }) => conv.id === selectedSessionId) || null,
     [conversations, selectedSessionId]
   );
 
@@ -297,23 +363,9 @@ function App() {
     }
   };
 
-  // Get React Query client for cache management
-  const queryClient = useQueryClient();
-
-  // Create conversation mutation
-  const createConversationMutation = useMutation({
-    mutationFn: createSession,
-    onSuccess: (newSession) => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      setSelectedSessionId(newSession.id);
-    },
-    onError: (error) => {
-      console.error("Failed to create conversation:", error);
-    }
-  });
 
   // Delete conversation mutation
-  const deleteConversationMutation = useMutation({
+  const deleteConversationMutation = useMutation<void, Error, string>({
     mutationFn: deleteSession,
     onSuccess: (_, deletedId) => {
       // Invalidate both sessions and messages queries
@@ -344,6 +396,10 @@ function App() {
     deleteConversationMutation.mutate(id);
   };
 
+  const handleUpdateTitle = (id: string, title: string) => {
+    updateTitleMutation.mutate({ id, title });
+  };
+
   return (
     <TooltipPrimitive.Provider>
       <ThemeProvider>
@@ -367,6 +423,7 @@ function App() {
             agentMetadata={agentMetadata}
             agentStatuses={agentStatuses}
             onDeleteConversation={handleDeleteConversation}
+            onUpdateTitle={handleUpdateTitle}
           />
         </ErrorBoundary>
       </ThemeProvider>
