@@ -80,7 +80,6 @@ export function AppLayout({
                 conversations={conversations}
                 currentConversation={currentConversation}
                 onSelectConversation={onSelectConversation}
-                onCreateConversation={onCreateConversation}
                 onDeleteConversation={onDeleteConversation}
                 className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent"
               />
