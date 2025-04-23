@@ -33,6 +33,7 @@ interface ConversationListProps {
     messages?: Array<any>;
   } | null;
   onSelectConversation: (conversation: any) => void;
+  onCreateConversation?: () => void;
   onDeleteConversation?: (id: string) => void;
   emptyState?: React.ReactNode;
   className?: string;
@@ -196,6 +197,7 @@ export const ConversationList = forwardRef<HTMLDivElement, ConversationListProps
   conversations = [],
   currentConversation = null,
   onSelectConversation,
+  onCreateConversation,
   onDeleteConversation,
   emptyState,
   className,
@@ -209,6 +211,20 @@ export const ConversationList = forwardRef<HTMLDivElement, ConversationListProps
       aria-label="Conversations"
       {...props}
     >
+      {/* New conversation button */}
+      <div className="p-3 border-b border-border">
+        <Button
+          className="w-full justify-center"
+          onClick={onCreateConversation}
+          aria-label="New conversation"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          New conversation
+        </Button>
+      </div>
+      
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
