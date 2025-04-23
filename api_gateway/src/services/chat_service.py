@@ -112,9 +112,26 @@ class ChatService:
         """Removes an ADK session from active management (e.g., on disconnect)."""
         if session_id in self.active_adk_sessions:
             logger.info(f"Clearing ADK session for app session {session_id}")
-            # Optionally call session_service.delete_session if needed by ADK
-            # self.adk_session_service.delete_session(session_id=session_id)
+            if self.adk_session_service:
+                try:
+                    self.adk_session_service.delete_session(
+                        app_name=APP_NAME,
+                        user_id=session_id,
+                        session_id=session_id
+                    )
+                except Exception as e:
+                    logger.error(f"Error deleting ADK session {session_id}: {e}")
             del self.active_adk_sessions[session_id]
+
+    def clear_all_sessions(self):
+        """Clear all active ADK sessions."""
+        logger.info(f"Clearing all ADK sessions (total: {len(self.active_adk_sessions)})")
+        for session_id in list(self.active_adk_sessions.keys()):
+            try:
+                self.clear_adk_session(session_id)
+            except Exception as e:
+                logger.error(f"Error clearing ADK session {session_id}: {e}")
+        self.active_adk_sessions.clear()
 
     # --- Message Management (Database - Read Only Here) ---
     def get_messages(self, session_id: str, skip: int = 0, limit: int = 1000) -> List[Dict]:

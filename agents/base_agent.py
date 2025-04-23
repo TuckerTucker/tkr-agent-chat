@@ -58,23 +58,33 @@ class BaseAgent(ADKAgentBase):
         # Add context awareness to system prompt
         context_prompt = """
         You have access to shared context from other agents in the conversation.
-        When responding, consider any relevant context that has been shared.
-        This helps maintain conversation coherence and build upon what other agents have said.
+        This context will be included at the start of user messages in this format:
+        
+        CONTEXT FROM OTHER PARTICIPANTS:
+        From [agent]: [message]
+        ...
+        
+        User message: [actual user message]
+
+        When you see context in a message:
+        1. Read and understand the context before the user message
+        2. Build upon what other agents have said
+        3. Avoid repeating information already shared
+        4. Provide consistent and complementary responses
+        5. Focus primarily on the user message while considering the context
         """
         agent_instruction = f"{system_prompt}\n\n{context_prompt}"
         
-        # Map our tool registry to the format ADK expects (list of tool functions/objects)
-        # Assuming tool_registry maps name -> function for now
+        # Map our tool registry to the format ADK expects
         adk_tools = list(tool_registry.values()) if tool_registry else []
 
         # Call the parent ADKAgentBase initializer
         super().__init__(
-            name=agent_id,  # Use ID as the ADK agent name
+            name=agent_id,
             model=model_name,
             description=agent_description,
             instruction=agent_instruction,
             tools=adk_tools
-            # Note: We are not passing sub_agents here, ADKAgentBase handles it
         )
         
         # Store our specific config and other attributes
@@ -93,7 +103,7 @@ class BaseAgent(ADKAgentBase):
         # Get shared context from the context service
         shared_context = []
         try:
-            from ..services.context_service import context_service
+            from api_gateway.src.services.context_service import context_service
             shared_context = context_service.get_shared_context(
                 target_agent_id=self.id,
                 session_id=template_vars.get("session_id")

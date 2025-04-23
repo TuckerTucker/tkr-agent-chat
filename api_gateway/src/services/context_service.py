@@ -216,5 +216,44 @@ class ContextService:
             logger.info(f"Batch cleanup removed {removed_count} expired contexts")
         return removed_count
 
+    def format_context_for_content(
+        self,
+        target_agent_id: str,
+        session_id: str
+    ) -> Optional[str]:
+        """
+        Format context from the database as a system message.
+
+        Args:
+            target_agent_id: ID of the agent to get context for
+            session_id: Chat session ID
+
+        Returns:
+            Optional[str]: Formatted context string or None if no context
+        """
+        # Get recent contexts from database
+        contexts = self.get_shared_context(
+            target_agent_id=target_agent_id,
+            session_id=session_id
+        )
+
+        if not contexts:
+            return None
+
+        # Sort contexts by timestamp
+        contexts.sort(key=lambda x: x.get('context_metadata', {}).get('created_at', ''), reverse=True)
+        
+        # Take only the 5 most recent contexts
+        recent_contexts = contexts[:5]
+
+        # Format as system message
+        formatted_context = "CONTEXT FROM OTHER PARTICIPANTS:\n\n"
+        for ctx in recent_contexts:
+            source = ctx.get('source_agent_id', 'Unknown')
+            content = ctx.get('content', {}).get('content', '')
+            formatted_context += f"From {source}: {content}\n\n"
+
+        return formatted_context
+
 # Global instance
 context_service = ContextService()

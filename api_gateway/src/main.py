@@ -9,6 +9,8 @@ Provides:
 """
 
 import os
+import sys
+import signal
 import logging
 from typing import Dict
 from fastapi import FastAPI
@@ -22,6 +24,7 @@ from agents.phil_connors.src.index import get_agent as get_phil_connors_agent
 from .routes import api, ws, agents, a2a, ws_a2a, context
 from .services.chat_service import chat_service
 from .services.a2a_service import A2AService
+from .services.state import shared_state
 from .db import init_database  # Import our new direct SQL database module
 from dotenv import load_dotenv
 
@@ -45,6 +48,35 @@ logger = logging.getLogger(__name__)
 # Check for necessary environment variables
 if not os.getenv("GOOGLE_API_KEY"):
      logger.warning("GOOGLE_API_KEY not found in environment variables or .env file. ADK features might fail.")
+
+# Signal handlers for graceful shutdown
+def signal_handler(sig, frame):
+    """Handle shutdown signals gracefully."""
+    logger.info(f"Received signal {sig}, shutting down gracefully...")
+    
+    # Clean up any active WebSocket connections
+    try:
+        for ws in shared_state.active_websockets:
+            try:
+                ws.close()
+            except Exception as e:
+                logger.error(f"Error closing WebSocket: {e}")
+        shared_state.clear_websockets()
+    except Exception as e:
+        logger.error(f"Error cleaning up WebSocket connections: {e}")
+    
+    # Clear any ADK sessions
+    try:
+        chat_service.clear_all_sessions()
+    except Exception as e:
+        logger.error(f"Error clearing ADK sessions: {e}")
+    
+    logger.info("Cleanup complete, exiting...")
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 app = FastAPI(
     title="TKR Multi-Agent Chat API Gateway",
@@ -92,6 +124,24 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Startup error: {e}")
         raise
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up resources on shutdown."""
+    try:
+        # Close all active WebSocket connections
+        for ws in shared_state.active_websockets:
+            try:
+                await ws.close()
+            except Exception as e:
+                logger.error(f"Error closing WebSocket during shutdown: {e}")
+        shared_state.clear_websockets()
+        
+        # Clear ADK sessions
+        chat_service.clear_all_sessions()
+        logger.info("Cleanup completed during shutdown")
+    except Exception as e:
+        logger.error(f"Error during shutdown cleanup: {e}")
 
 # API Routes
 app.include_router(
@@ -142,7 +192,8 @@ async def health_check():
         "status": "healthy",
         "version": "0.1.0",
         "agents": list(chat_service.agent_instances.keys()),
-        "features": ["a2a", "websocket", "agents"]
+        "features": ["a2a", "websocket", "agents"],
+        "active_websockets": shared_state.get_active_count()
     }
 
 if __name__ == "__main__":
