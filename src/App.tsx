@@ -4,7 +4,7 @@ import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { getSessions, getAgents, getMessages, createSession } from "./services/api";
+import { getSessions, getAgents, getMessages, createSession, deleteSession } from "./services/api";
 import webSocketService from "./services/websocket";
 import { AgentInfo, ChatSessionRead, MessageRead } from "./types/api";
 import chloeAvatar from "../agents/chloe/src/assets/chloe.svg";
@@ -314,6 +314,18 @@ function App() {
     setCurrentAgentId(agentId);
   };
 
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      await deleteSession(id);
+      // If the deleted session was selected, clear the selection
+      if (id === selectedSessionId) {
+        setSelectedSessionId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+    }
+  };
+
   return (
     <TooltipPrimitive.Provider>
       <ThemeProvider>
@@ -336,6 +348,7 @@ function App() {
             availableAgents={availableAgents}
             agentMetadata={agentMetadata}
             agentStatuses={agentStatuses}
+            onDeleteConversation={handleDeleteConversation}
           />
         </ErrorBoundary>
       </ThemeProvider>

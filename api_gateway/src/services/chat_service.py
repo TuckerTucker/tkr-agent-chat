@@ -84,6 +84,20 @@ class ChatService:
         logger.debug(f"Retrieved {len(sessions)} sessions.")
         return sessions
 
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a chat session and its associated data."""
+        # Clear ADK session if it exists
+        self.clear_adk_session(session_id)
+        
+        # Delete from database
+        from ..db import delete_session as db_delete_session
+        success = db_delete_session(session_id)
+        if success:
+            logger.info(f"Deleted session {session_id} from database.")
+        else:
+            logger.warning(f"Failed to delete session {session_id} - not found.")
+        return success
+
     # --- ADK Session Management ---
     def get_or_create_adk_session(self, session_id: str, user_id: Optional[str] = None) -> Optional[Session]:
         """

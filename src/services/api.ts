@@ -59,6 +59,13 @@ export const createSession = async (title?: string): Promise<ChatSessionRead> =>
   });
 };
 
+export const deleteSession = async (sessionId: string): Promise<void> => {
+  if (!sessionId) throw new Error("Session ID is required");
+  return fetchApi<void>(`/sessions/${sessionId}`, {
+    method: 'DELETE',
+  });
+};
+
 // --- Messages API ---
 
 export const getMessages = async (sessionId: string): Promise<MessageRead[]> => {

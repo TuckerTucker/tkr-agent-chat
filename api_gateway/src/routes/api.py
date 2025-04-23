@@ -69,6 +69,22 @@ def get_session_endpoint(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
+@router.delete(
+    "/sessions/{session_id}",
+    summary="Delete a chat session",
+    tags=["Sessions"],
+    responses={404: {"description": "Session not found"}}
+)
+def delete_session_endpoint(session_id: str):
+    """Deletes a chat session by its ID."""
+    try:
+        chat_service.delete_session(session_id=session_id)
+        logger.info(f"API: Deleted session {session_id}")
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error deleting session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete session")
+
 # --- Session History ---
 
 @router.get(

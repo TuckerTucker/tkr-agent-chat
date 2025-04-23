@@ -1,7 +1,8 @@
-import { AppLayoutProps, Conversation } from './app-layout.d';
+import { AppLayoutProps } from './app-layout.d';
 import { ThemeProvider } from '../theme/theme-provider';
 import { ThemeSwitch} from '../theme/theme-switch'; 
 import { Button } from './button';
+import { ConversationList } from './conversation-list';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
@@ -22,6 +23,7 @@ export function AppLayout({
   availableAgents = [],
   agentMetadata = {},
   agentStatuses = {},
+  onDeleteConversation = () => {},
 }: AppLayoutProps): React.ReactElement {
 
   // Helper function to get status tooltip text
@@ -74,48 +76,14 @@ export function AppLayout({
             
             {/* Sidebar content: conversations */}
             <div className="flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">
-                {conversations.map((conversation: Conversation) => (
-                  <div 
-                    key={conversation.id}
-                    onClick={() => onSelectConversation(conversation)}
-                    className={cn(
-                      "px-8 py-3.5 cursor-pointer",
-                      "transition-all duration-theme",
-                      "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:pl-10",
-                      "focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:bg-sidebar-accent/80",
-                      "border-l-2",
-                      "group relative",
-                      currentConversation?.id === conversation.id
-                        ? "bg-sidebar-accent/90 border-sidebar-primary text-sidebar-accent-foreground shadow-sm pl-10"
-                        : "border-transparent hover:shadow-sm"
-                    )}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onSelectConversation(conversation);
-                      }
-                    }}
-                  >
-                    <h3 className={cn(
-                      "font-medium text-sm truncate transition-all duration-theme",
-                      currentConversation?.id === conversation.id
-                        ? "text-foreground"
-                        : "text-foreground/70"
-                    )}>
-                      {conversation.title || new Date(conversation.id).toLocaleString('en-US', { 
-                        month: 'numeric',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        hour12: true 
-                      })}
-                    </h3>
-                  </div>
-                ))}
-              </div>
+              <ConversationList
+                conversations={conversations}
+                currentConversation={currentConversation}
+                onSelectConversation={onSelectConversation}
+                onCreateConversation={onCreateConversation}
+                onDeleteConversation={onDeleteConversation}
+                className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent"
+              />
             </div>
           </aside>
 

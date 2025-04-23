@@ -150,6 +150,14 @@ def list_sessions(skip: int = 0, limit: int = 100) -> List[Dict]:
         )
         return [row_to_dict(row) for row in cursor.fetchall()]
 
+def delete_session(session_id: str) -> bool:
+    """Delete a chat session and its associated messages."""
+    with get_connection() as conn:
+        # Delete messages first due to foreign key constraint
+        conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+        cursor = conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+        return cursor.rowcount > 0
+
 # --- Message Operations ---
 
 def create_message(data: Dict) -> Dict:

@@ -116,11 +116,11 @@ class WebSocketService {
 
     // Add delay before initial connection attempt
     setTimeout(() => {
-      this.establishConnection(sessionId, agentId, undefined);
+      this.establishConnection(sessionId, agentId);
     }, INITIAL_CONNECT_DELAY);
   }
 
-  private establishConnection(sessionId: string, agentId: string, existingConnection: AgentConnection | undefined) {
+  private establishConnection(sessionId: string, agentId: string) {
     // We should never have an existing connection at this point since we clean it up in connect()
     // But let's double-check to be safe
     const currentConnection = this.connections.get(agentId);
@@ -299,19 +299,12 @@ class WebSocketService {
 
     // Store reconnect timeout
     const timeoutId = setTimeout(() => {
-      // Create new connection with incremented attempt count
-      const newConnection: AgentConnection = {
-        ...closedConnection,
-        reconnectAttempts: attempts,
-        isConnecting: false,
-        socket: new WebSocket(closedConnection.connectionUrl)
-      };
-
-      // Establish the connection
+      // Establish the connection with incremented attempt count
+      closedConnection.reconnectAttempts = attempts;
+      closedConnection.isConnecting = false;
       this.establishConnection(
         closedConnection.sessionId,
-        closedConnection.agentId,
-        newConnection
+        closedConnection.agentId
       );
     }, delay);
 
