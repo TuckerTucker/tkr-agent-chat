@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useReducer } from "react";
 import { ThemeProvider } from "./components/theme/theme-provider";
 import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
@@ -77,8 +77,123 @@ function App() {
     }
   }, [agents]);
 
-  // Keep local state for messages
-  const [localMessages, setLocalMessages] = useState<APIMessage[]>([]);
+  // Message state types
+  type StreamingState = {
+    id: string | null;
+    content: string;
+    agentId: string | null;
+    agentMeta: AgentInfo | null;
+  };
+
+  type MessageState = {
+    messages: APIMessage[];
+    streaming: StreamingState;
+  };
+
+  type MessageAction = 
+    | { type: 'START_STREAMING'; payload: { id: string; agentId: string; agentMeta: AgentInfo; content: string; } }
+    | { type: 'UPDATE_STREAMING'; payload: { content: string; } }
+    | { type: 'COMPLETE_STREAMING' }
+    | { type: 'SET_MESSAGES'; payload: APIMessage[] }
+    | { type: 'ADD_MESSAGE'; payload: APIMessage };
+
+  // Message reducer
+  const messageReducer = (state: MessageState, action: MessageAction): MessageState => {
+    switch (action.type) {
+      case 'START_STREAMING': {
+        // Only start streaming if we're not already streaming
+        if (state.streaming.id) return state;
+
+        const { id, agentId, agentMeta, content } = action.payload;
+        const newMessage = createUIMessage({
+          id,
+          role: 'agent',
+          content,
+          agentId,
+          agentName: agentMeta.name || agentId,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            agentColor: agentMeta.color,
+            avatar: agentMeta.avatar,
+            description: agentMeta.description,
+            capabilities: agentMeta.capabilities
+          },
+          deliveryStatus: 'sending'
+        });
+        
+        return {
+          messages: [...state.messages, newMessage],
+          streaming: {
+            id,
+            content,
+            agentId,
+            agentMeta
+          }
+        };
+      }
+      
+      case 'UPDATE_STREAMING': {
+        if (!state.streaming.id) return state;
+        
+        const updatedContent = state.streaming.content + action.payload.content;
+        return {
+          messages: state.messages.map(msg =>
+            msg.id === state.streaming.id
+              ? { ...msg, content: updatedContent }
+              : msg
+          ),
+          streaming: {
+            ...state.streaming,
+            content: updatedContent
+          }
+        };
+      }
+      
+      case 'COMPLETE_STREAMING': {
+        if (!state.streaming.id) return state;
+        
+        return {
+          messages: state.messages.map(msg =>
+            msg.id === state.streaming.id
+              ? { ...msg, deliveryStatus: 'sent' }
+              : msg
+          ),
+          streaming: {
+            id: null,
+            content: '',
+            agentId: null,
+            agentMeta: null
+          }
+        };
+      }
+      
+      case 'SET_MESSAGES':
+        return {
+          ...state,
+          messages: action.payload
+        };
+      
+      case 'ADD_MESSAGE':
+        return {
+          ...state,
+          messages: [...state.messages, action.payload]
+        };
+      
+      default:
+        return state;
+    }
+  };
+
+  // Initialize message state with reducer
+  const [messageState, dispatch] = useReducer(messageReducer, {
+    messages: [],
+    streaming: {
+      id: null,
+      content: '',
+      agentId: null,
+      agentMeta: null
+    }
+  });
 
   // Get React Query client for cache management
   const queryClient = useQueryClient();
@@ -212,26 +327,64 @@ function App() {
 
     const callbacks = {
       onPacket: (agentId: string, packet: { message?: string; turn_complete?: boolean; interrupted?: boolean; error?: string }) => {
-        if (!isSubscribed || !packet.message) return;
+        if (!isSubscribed) return;
 
-        const agentMeta = agentMetadata[agentId];
-        const newMessage = createUIMessage({
-          id: crypto.randomUUID(),
-          role: 'agent',
-          content: packet.message,
-          agentId: agentId,
-          agentName: agentMeta?.name || agentId,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            agentColor: agentMeta?.color,
-            avatar: agentMeta?.avatar,
-            description: agentMeta?.description,
-            capabilities: agentMeta?.capabilities
-          },
-          deliveryStatus: 'sent'
-        });
+        try {
+          console.log(`[${agentId}] Received packet:`, packet);
 
-        setLocalMessages(prev => [...prev, newMessage]);
+          const agentMeta = agentMetadata[agentId];
+          if (!agentMeta) {
+            console.error(`[${agentId}] Agent metadata not found`);
+            return;
+          }
+
+          // Handle message packets
+          if (packet.message) {
+            // Skip if this is the final complete message
+            const isCompleteMessage = packet.message.endsWith('\n') && packet.message.indexOf('\n') === packet.message.length - 1;
+            if (!isCompleteMessage) {
+              if (!messageState.streaming.id) {
+                // Start new streaming message
+                const newId = crypto.randomUUID();
+                console.log(`[${agentId}] Creating new streaming message:`, newId);
+                
+                dispatch({
+                  type: 'START_STREAMING',
+                  payload: {
+                    id: newId,
+                    agentId,
+                    agentMeta,
+                    content: packet.message
+                  }
+                });
+              } else {
+                // Update existing streaming message
+                console.log(`[${agentId}] Updating streaming message:`, {
+                  id: messageState.streaming.id,
+                  contentLength: messageState.streaming.content.length + packet.message.length
+                });
+                
+                dispatch({
+                  type: 'UPDATE_STREAMING',
+                  payload: {
+                    content: packet.message
+                  }
+                });
+              }
+            }
+          }
+
+          // Handle turn completion
+          if (packet.turn_complete || packet.interrupted) {
+            console.log(`[${agentId}] Turn complete or interrupted. StreamingId:`, messageState.streaming.id);
+            
+            if (messageState.streaming.id) {
+              dispatch({ type: 'COMPLETE_STREAMING' });
+            }
+          }
+        } catch (error) {
+          console.error(`[${agentId}] Error processing packet:`, error);
+        }
       },
       onError: (agentId: string, error: { code: number; message: string }) => {
         if (!isSubscribed) return;
@@ -263,7 +416,7 @@ function App() {
         onStatusChange: () => {}
       });
     };
-  }, [agentMetadata]);
+  }, [agentMetadata, messageState.streaming.id]);
 
   // Fetch messages for the selected session
   const { data: messages = [] } = useQuery<MessageRead[], Error, MessageRead[]>({
@@ -307,18 +460,17 @@ function App() {
         deliveryStatus: 'sent'
       }));
       
-      // Use functional update to avoid dependency on localMessages
-      setLocalMessages(uiMessages);
+      dispatch({ type: 'SET_MESSAGES', payload: uiMessages });
     }
   }, [messages, agentMetadata]);
 
   // Keep track of current conversation messages
   const currentMessages = React.useMemo(() => {
     if (!selectedSessionId) return [];
-    return localMessages.filter(msg =>
+    return messageState.messages.filter(msg =>
       msg.id && msg.content && (msg.role === 'user' || msg.role === 'agent')
     );
-  }, [localMessages, selectedSessionId]);
+  }, [messageState.messages, selectedSessionId]);
 
   // Build conversations from sessions with memoized messages
   const conversations = React.useMemo(() => sessions.map((session: ChatSessionRead) => ({
@@ -352,7 +504,7 @@ function App() {
         deliveryStatus: 'sent'
       });
 
-      setLocalMessages(prev => [...prev, userMessage]);
+      dispatch({ type: 'ADD_MESSAGE', payload: userMessage });
       await webSocketService.sendTextMessage(agentId, message);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -362,7 +514,6 @@ function App() {
       }));
     }
   };
-
 
   // Delete conversation mutation
   const deleteConversationMutation = useMutation<void, Error, string>({
