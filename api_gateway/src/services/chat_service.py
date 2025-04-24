@@ -119,26 +119,24 @@ class ChatService:
     # --- ADK Session Management ---
     def get_or_create_adk_session(self, session_id: str, user_id: Optional[str] = None) -> Optional[Session]:
         """
-        Retrieves an existing ADK Session for the given application session_id
-        or creates a new one if it doesn't exist.
+        Creates a new ADK Session for each connection to prevent context persistence.
         """
         if not self.adk_session_service:
             logger.error("ADK Session Service not available.")
             return None
 
-        if session_id in self.active_adk_sessions:
-            logger.debug(f"Reusing existing ADK session for app session {session_id}")
-            return self.active_adk_sessions[session_id]
-        else:
-            logger.info(f"Creating new ADK session for app session {session_id}")
-            # Use the application session_id also as the ADK session_id and user_id for simplicity
-            adk_session = self.adk_session_service.create_session(
-                app_name=APP_NAME,
-                user_id=user_id or session_id,  # Default user_id to session_id if not provided
-                session_id=session_id
-            )
-            self.active_adk_sessions[session_id] = adk_session
-            return adk_session
+        # Always clear any existing session first
+        self.clear_adk_session(session_id)
+
+        # Create a new session
+        logger.info(f"Creating new ADK session for app session {session_id}")
+        adk_session = self.adk_session_service.create_session(
+            app_name=APP_NAME,
+            user_id=user_id or session_id,  # Default user_id to session_id if not provided
+            session_id=session_id
+        )
+        self.active_adk_sessions[session_id] = adk_session
+        return adk_session
 
     def clear_adk_session(self, session_id: str):
         """Removes an ADK session from active management (e.g., on disconnect)."""

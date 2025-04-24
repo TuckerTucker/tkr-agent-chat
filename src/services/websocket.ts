@@ -18,6 +18,7 @@ const INITIAL_CONNECT_DELAY = 2000; // Delay before first connection attempt
 
 // Define the structure of messages received from the backend ADK stream
 interface AgentStreamingPacket {
+  type?: 'message' | 'pong'; // Message type for heartbeat responses
   message?: string; // Partial or full text message from agent
   turn_complete?: boolean;
   interrupted?: boolean;
@@ -74,6 +75,8 @@ interface AgentConnection {
     reconnectAttempts: number;
     reconnectTimeout: NodeJS.Timeout | null;
     isConnecting: boolean;
+    heartbeatFailures: number;
+    lastHeartbeat: number;
     // Add status tracking to the connection object
     status: AgentStatus;
 }
@@ -152,6 +155,8 @@ class WebSocketService {
         reconnectAttempts: 0,
         reconnectTimeout: null,
         isConnecting: true, // Mark as connecting
+        heartbeatFailures: 0,
+        lastHeartbeat: Date.now(),
         status: { connection: 'connecting', activity: 'idle' }, // Initial status
     };
     this.connections.set(agentId, connection);
@@ -163,7 +168,10 @@ class WebSocketService {
       console.log(`[Agent: ${agentId}] WebSocket connected.`);
       connection.isConnecting = false;
       connection.reconnectAttempts = 0; // Reset on successful connection
+      connection.heartbeatFailures = 0; // Reset heartbeat failures
+      connection.lastHeartbeat = Date.now(); // Initialize heartbeat timestamp
       this.updateAgentStatus(agentId, { connection: 'connected', activity: 'idle' }); // Update status
+      this.startHeartbeat(agentId); // Start heartbeat immediately
       this.callbacks.onOpen?.(agentId);
     };
 
@@ -171,32 +179,54 @@ class WebSocketService {
       let currentActivity: AgentActivityStatus = 'responding'; // Assume responding if packet received
       try {
         const packet: AgentStreamingPacket = JSON.parse(event.data);
-        // console.log(`[Agent: ${agentId}] WebSocket packet received:`, packet);
+
+        // Handle heartbeat response
+        if (packet.type === 'pong') {
+          const connection = this.connections.get(agentId);
+          if (connection) {
+            connection.lastHeartbeat = Date.now();
+            connection.heartbeatFailures = 0;
+          }
+          return;
+        }
+
+        // Handle turn completion and interruption
+        if (packet.turn_complete || packet.interrupted) {
+          currentActivity = 'idle';
+          this.updateAgentStatus(agentId, { connection: 'connected', activity: currentActivity });
+          
+          // Keep connection alive and start heartbeat
+          if (packet.turn_complete) {
+            console.log(`[Agent: ${agentId}] Turn complete, maintaining connection`);
+            this.startHeartbeat(agentId);
+          }
+          return; // Skip further processing for completion messages
+        }
 
         // Infer agent activity status from packet
         if (packet.error) {
-            currentActivity = 'error';
-            console.error(`[Agent: ${agentId}] Error packet received:`, packet.error);
-            // Optionally trigger onError callback here too?
-            // this.handleError(agentId, { code: 500, message: packet.error });
-        } else if (packet.turn_complete) {
-            currentActivity = 'idle'; // Turn complete, back to idle
-        } else if (packet.interrupted) {
-            currentActivity = 'idle'; // Interrupted, back to idle (or maybe 'interrupted' status?)
-            console.log(`[Agent: ${agentId}] Turn interrupted.`);
+          currentActivity = 'error';
+          console.error(`[Agent: ${agentId}] Error packet received:`, packet.error);
+          // Format error message to exclude streaming markers
+          const errorMsg = packet.error.replace(/\[(\w+)\] Turn complete or interrupted\. StreamingId: [\w-]+/g, '').trim();
+          if (errorMsg) {
+            this.handleError(agentId, { code: 500, message: errorMsg });
+          }
         } else if (packet.message) {
-            // If only message, assume still responding/thinking
-            // We could add a 'thinking' state if the backend sends specific signals
-            currentActivity = 'responding';
+          // If message present, assume still responding/thinking
+          currentActivity = 'responding';
         }
 
         // Update status only if activity changed
         const currentStatus = this.agentStatuses.get(agentId);
         if (currentStatus?.activity !== currentActivity) {
-            this.updateAgentStatus(agentId, { connection: 'connected', activity: currentActivity });
+          this.updateAgentStatus(agentId, { connection: 'connected', activity: currentActivity });
         }
 
-        this.callbacks.onPacket?.(agentId, packet);
+        // Only notify of packet if it contains actual content
+        if (packet.message || packet.error) {
+          this.callbacks.onPacket?.(agentId, packet);
+        }
       } catch (error) {
         console.error(`[Agent: ${agentId}] Failed to parse WebSocket packet:`, error);
         this.updateAgentStatus(agentId, { connection: 'connected', activity: 'error' }); // Mark as error on parse fail
@@ -214,30 +244,60 @@ class WebSocketService {
     };
 
     socket.onclose = (event) => {
-      console.log(`[Agent: ${agentId}] WebSocket disconnected: code=${event.code}, reason=${event.reason}, wasClean=${event.wasClean}`);
+      console.log(`[Agent: ${agentId}] WebSocket connection lost: code=${event.code}, reason=${event.reason}`);
       connection.isConnecting = false;
-      const wasConnectionManaged = this.connections.has(agentId); // Check if it was in our map
 
-      // Determine final connection status based on close code
-      const finalConnectionStatus: ConnectionStatus = event.code === 1000 ? 'disconnected' : 'error';
-      // Keep last known activity status unless connection is now an error
-      const finalActivityStatus = finalConnectionStatus === 'error' ? 'error' : (this.agentStatuses.get(agentId)?.activity ?? 'idle');
+      // Clear any existing timeouts/intervals
+      this.clearReconnectTimeout(agentId);
+      this.clearHeartbeat(agentId);
 
-      // Update the persistent status map
-      this.updateAgentStatus(agentId, { connection: finalConnectionStatus, activity: finalActivityStatus });
+      // Handle different close codes
+      switch (event.code) {
+        case 1000: // Normal closure
+          console.log(`[Agent: ${agentId}] Normal closure, no reconnection needed`);
+          this.updateAgentStatus(agentId, { 
+            connection: 'disconnected', 
+            activity: 'idle' 
+          });
+          this.connections.delete(agentId);
+          break;
 
-      // Clean up the connection state *before* attempting reconnect
-      this.clearReconnectTimeout(agentId); // Clear any existing timer
-      this.connections.delete(agentId); // Remove from active connections map
+        case 1006: // Abnormal closure
+        case 1011: // Internal error
+        case 1012: // Service restart
+          console.log(`[Agent: ${agentId}] Abnormal closure (${event.code}), attempting reconnection...`);
+          this.updateAgentStatus(agentId, { 
+            connection: 'reconnecting', 
+            activity: 'idle' 
+          });
+          if (this.connections.has(agentId)) {
+            this.attemptReconnect(connection);
+          }
+          break;
 
-      this.callbacks.onDisconnect?.(agentId); // Notify client of disconnect
-
-      // Only attempt reconnect if it was previously managed by us
-      // And if the disconnect wasn't clean (or based on specific codes)
-      // Let's simplify: always attempt reconnect if it was in the map, unless explicitly disconnected
-      if (wasConnectionManaged && event.code !== 1000) { // Don't reconnect on normal closure (code 1000)
-          this.attemptReconnect(connection); // Pass the old connection state (includes attempt count)
+        default:
+          // For unknown codes, check if it's in the normal range (1000-1999) or error range (4000-4999)
+          if (event.code >= 4000) {
+            console.error(`[Agent: ${agentId}] Error closure (${event.code}), no reconnection`);
+            this.updateAgentStatus(agentId, { 
+              connection: 'error', 
+              activity: 'error' 
+            });
+            this.connections.delete(agentId);
+          } else {
+            console.log(`[Agent: ${agentId}] Unexpected closure (${event.code}), attempting reconnection...`);
+            this.updateAgentStatus(agentId, { 
+              connection: 'reconnecting', 
+              activity: 'idle' 
+            });
+            if (this.connections.has(agentId)) {
+              this.attemptReconnect(connection);
+            }
+          }
       }
+
+      // Notify client of disconnect
+      this.callbacks.onDisconnect?.(agentId);
     };
   }
 
@@ -246,6 +306,60 @@ class WebSocketService {
    * @param agentId - The ID of the agent to disconnect.
    * @param attemptReconnect - If true, will try to reconnect after disconnecting. (Usually false for manual disconnect)
    */
+  // Add heartbeat functionality
+  private heartbeatIntervals: Map<string, NodeJS.Timeout> = new Map();
+  
+  private startHeartbeat(agentId: string) {
+    // Clear any existing heartbeat
+    this.clearHeartbeat(agentId);
+    
+    // Start new heartbeat interval
+    const interval = setInterval(() => {
+      const connection = this.connections.get(agentId);
+      if (connection && connection.socket.readyState === WebSocket.OPEN) {
+        try {
+          connection.socket.send(JSON.stringify({ type: 'ping' }));
+        } catch (error) {
+          console.error(`[Agent: ${agentId}] Heartbeat failed:`, error);
+          this.handleConnectionFailure(agentId);
+        }
+      } else {
+        this.handleConnectionFailure(agentId);
+      }
+    }, 30000); // 30 second interval
+    
+    this.heartbeatIntervals.set(agentId, interval);
+  }
+  
+  private clearHeartbeat(agentId: string) {
+    const interval = this.heartbeatIntervals.get(agentId);
+    if (interval) {
+      clearInterval(interval);
+      this.heartbeatIntervals.delete(agentId);
+    }
+  }
+  
+  private handleConnectionFailure(agentId: string) {
+    const connection = this.connections.get(agentId);
+    if (!connection) return;
+
+    connection.heartbeatFailures++;
+    console.warn(`[Agent: ${agentId}] Connection failure detected (failures: ${connection.heartbeatFailures})`);
+
+    // Check time since last heartbeat
+    const timeSinceLastHeartbeat = Date.now() - connection.lastHeartbeat;
+    const isStale = timeSinceLastHeartbeat > 60000; // 60 seconds
+
+    // Only attempt reconnect if we have multiple failures or connection is stale
+    if (connection.heartbeatFailures >= 3 || isStale) {
+      console.error(`[Agent: ${agentId}] Connection deemed unstable, attempting reconnection`);
+      this.clearHeartbeat(agentId);
+      this.attemptReconnect(connection);
+    } else {
+      console.log(`[Agent: ${agentId}] Waiting for more heartbeat failures before reconnecting`);
+    }
+  }
+
   disconnect(agentId: string, attemptReconnect = false) {
     const connection = this.connections.get(agentId);
     if (!connection) {
@@ -254,19 +368,28 @@ class WebSocketService {
     }
 
     console.log(`[Agent: ${agentId}] Disconnecting WebSocket...`);
-    this.clearReconnectTimeout(agentId); // Stop any pending reconnect attempts for this agent
+    this.clearReconnectTimeout(agentId);
+    this.clearHeartbeat(agentId);
 
-    connection.socket.onclose = null; // Prevent the default onclose handler (which might reconnect)
-    connection.socket.close(1000, "Client initiated disconnect"); // Use code 1000 for normal closure
+    // Close the socket with a normal closure code
+    if (connection.socket.readyState === WebSocket.OPEN) {
+      connection.socket.close(1000, "Normal closure");
+    }
 
-    this.connections.delete(agentId); // Remove from map immediately
+    // Update status
+    this.updateAgentStatus(agentId, { 
+      connection: 'disconnected', 
+      activity: 'idle' 
+    });
 
-    // Manually trigger callback if needed, as onclose is bypassed
-    // this.callbacks.onDisconnect?.(agentId); 
+    // Remove from connections map
+    this.connections.delete(agentId);
 
     if (attemptReconnect) {
-        // This is less common for manual disconnects, but possible
-        this.attemptReconnect(connection); 
+      // Wait a bit before attempting reconnection
+      setTimeout(() => {
+        this.attemptReconnect(connection);
+      }, INITIAL_CONNECT_DELAY);
     }
   }
 
@@ -350,10 +473,28 @@ class WebSocketService {
     };
 
     socket.onclose = () => {
-      console.log(`[A2A] Agent ${agentId} disconnected from A2A WebSocket`);
-      this.a2aConnections.delete(agentId);
-      // Implement reconnection logic similar to chat WebSocket
-      setTimeout(() => this.connectA2A(agentId), RECONNECT_DELAY);
+      console.log(`[A2A] Agent ${agentId} connection lost, attempting reconnection...`);
+      
+      // Keep the connection in our map
+      if (this.a2aConnections.has(agentId)) {
+        // Attempt immediate reconnection with backoff
+        let attempts = 0;
+        const maxAttempts = 5;
+        const reconnect = () => {
+          if (attempts >= maxAttempts) {
+            console.error(`[A2A] Failed to reconnect agent ${agentId} after ${maxAttempts} attempts`);
+            return;
+          }
+          
+          setTimeout(() => {
+            console.log(`[A2A] Reconnection attempt ${attempts + 1} for agent ${agentId}`);
+            this.connectA2A(agentId);
+            attempts++;
+          }, RECONNECT_DELAY * Math.pow(2, attempts));
+        };
+        
+        reconnect();
+      }
     };
   }
 
@@ -384,9 +525,28 @@ class WebSocketService {
     };
 
     socket.onclose = () => {
-      console.log(`[Task] Unsubscribed from task ${taskId} events`);
-      this.taskSubscriptions.delete(taskId);
-      // Implement reconnection logic if needed
+      console.log(`[Task] Connection lost for task ${taskId}, attempting reconnection...`);
+      
+      // Keep the subscription in our map
+      if (this.taskSubscriptions.has(taskId)) {
+        // Attempt immediate reconnection with backoff
+        let attempts = 0;
+        const maxAttempts = 5;
+        const reconnect = () => {
+          if (attempts >= maxAttempts) {
+            console.error(`[Task] Failed to reconnect task ${taskId} after ${maxAttempts} attempts`);
+            return;
+          }
+          
+          setTimeout(() => {
+            console.log(`[Task] Reconnection attempt ${attempts + 1} for task ${taskId}`);
+            this.subscribeToTask(taskId);
+            attempts++;
+          }, RECONNECT_DELAY * Math.pow(2, attempts));
+        };
+        
+        reconnect();
+      }
     };
   }
 

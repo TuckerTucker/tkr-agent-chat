@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 export interface MessageProps {
-  content: string | string[] | { toString(): string };
+  content: string | string[];
   sender?: 'user' | 'agent' | 'system';
   timestamp?: Date;
   markdown?: boolean;
@@ -52,4 +52,4 @@ export interface MessageHeaderProps {
   className?: string;
 }
 
-export function Message(props: MessageProps): React.ReactElement;
+export function Message(props: MessageProps): ReactNode;

@@ -1,158 +1,121 @@
 """
 Web Scraper Tool for Chloe Agent
 
-Fetches and extracts content from web pages, optionally using a CSS selector.
-Includes structured error handling and logging.
+Fetches and extracts plain text content from web pages.
 """
 
-import re
-import time
-import logging
-from typing import Optional, Dict, Any # Add imports
-from datetime import datetime
-from urllib.parse import urlparse
-
 import requests
+import logging
+from typing import Dict, Any, Optional
 from bs4 import BeautifulSoup
+import re
 
 # Configure logger
-logger = logging.getLogger("chloe.web_scraper")
-if not logger.hasHandlers():
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Simple in-memory rate limit store
-_request_store = {}
+def web_scraper(url: str, selectors: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    """
+    Scrapes plain text content from a specified URL.
 
-def _should_rate_limit(domain):
-    now = time.time()
-    last_request = _request_store.get(domain)
-    if not last_request or (now - last_request) > 1.0:
-        _request_store[domain] = now
-        return False
-    return True
+    Args:
+        url: The URL to scrape
+        selectors: Optional CSS selectors to extract specific content
 
-def _extract_domain(url):
+    Returns:
+        A dictionary containing the scraped text content or an error message.
+    """
+    logger.info(f"Web scraper tool invoked for URL: '{url}'")
+    
+    if not url or not isinstance(url, str):
+        error_msg = "Invalid URL provided. Please provide a valid URL."
+        logger.error(error_msg)
+        return {"error": error_msg}
+
     try:
-        return urlparse(url).hostname
-    except Exception:
-        raise ValueError(f"Invalid URL: {url}")
-
-def _clean_text(text):
-    text = re.sub(r'\s+', ' ', text)
-    text = re.sub(r'\[.*?\]', '', text)
-    text = re.sub(r'e-remove\s*', '', text)
-    text = re.sub(r'[\r\n]+', '\n', text)
-    text = re.sub(r'\b(Your?|you)\s+email.*$', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'©.*$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\b(subscribe|sign up).*$', '', text, flags=re.IGNORECASE | re.MULTILINE)
-    return text.strip()
-
-# Add explicit type hints
-def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip_rate_limit: bool = False) -> Dict[str, Any]:
-    logger.info(f"web_scraper called with url={url}, selector={selector}, timeout={timeout}, skip_rate_limit={skip_rate_limit}")
-    start_time = time.time()
-    try:
-        # Normalize URL
-        if not url.startswith("http://") and not url.startswith("https://"):
-            url = "https://" + url
-
-        domain = _extract_domain(url)
-        if domain == "example.com":
-            logger.info("Returning mock response for example.com")
-            return {
-                "content": "This is a mocked response for example.com for testing purposes.",
-                "url": url,
-                "mocked": True
-            }
-        if not skip_rate_limit and _should_rate_limit(domain):
-            logger.warning(f"Rate limit exceeded for domain: {domain}")
-            return {
-                "error": f"Rate limit exceeded for domain: {domain}",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-
+        # Add user agent to avoid being blocked
         headers = {
-            "User-Agent": "Chloe-Agent/1.0"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
-        try:
-            resp = requests.get(url, headers=headers, timeout=timeout)
-            resp.raise_for_status()
-            html = resp.text
-        except requests.Timeout:
-            logger.error(f"Request timeout after {timeout}s for {url}")
-            return {
-                "error": f"Request timeout after {timeout}s",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        except requests.RequestException as e:
-            logger.error(f"HTTP error for {url}: {e}")
-            return {
-                "error": f"HTTP error: {e}",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+        
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Extract basic page information
+        title = soup.title.string if soup.title else None
+        
+        # Extract main content based on common patterns
+        main_content = None
+        
+        # Try to find main content using selectors if provided
+        if selectors and selectors.get('content'):
+            main_content = soup.select_one(selectors['content'])
+        
+        # If no selector provided or selector didn't match, use heuristics
+        if not main_content:
+            # Try common content containers
+            for selector in ['main', 'article', '#content', '.content', '#main', '.main']:
+                main_content = soup.select_one(selector)
+                if main_content:
+                    break
+        
+        # If still no content found, use body as fallback
+        if not main_content:
+            main_content = soup.body
+        
+        # Extract text content
+        text_content = main_content.get_text(separator='\n', strip=True) if main_content else None
+        
+        # Clean up text content
+        if text_content:
+            # Remove excessive whitespace
+            text_content = re.sub(r'\n\s*\n', '\n\n', text_content)
+            
+            # Remove "What's Hot Now" section and everything after it
+            if "What's Hot Now" in text_content:
+                text_content = text_content.split("What's Hot Now")[0]
+            
+            # Remove any remaining advertisement sections
+            text_content = re.sub(r'Read More\s*\n\s*', '', text_content)
+            
+            # Remove duplicate content by splitting into paragraphs and using a set
+            paragraphs = text_content.split('\n\n')
+            unique_paragraphs = []
+            seen = set()
+            for p in paragraphs:
+                p = p.strip()
+                if p and p not in seen:
+                    seen.add(p)
+                    unique_paragraphs.append(p)
+            
+            # Rejoin unique paragraphs
+            text_content = '\n\n'.join(unique_paragraphs)
+            
+            # Limit length
+            if len(text_content) > 8000:
+                text_content = text_content[:8000] + "... (content truncated)"
+        
+        # Create simplified result object
+        result = {
+            'title': title,
+            'url': url,
+            'text': text_content
+        }
+        
+        logger.info(f"Web scraper successful for '{url}'")
+        return result
 
-        soup = BeautifulSoup(html, "html.parser")
-
-        # Remove unwanted elements
-        elements_to_remove = [
-            "script", "style", "iframe", "noscript", "header", "footer",
-            "nav", "aside", "form", '[class*="menu"]', '[class*="nav"]',
-            '[class*="sidebar"]', '[class*="widget"]', '[role="complementary"]',
-            '[class*="popup"]', '[class*="modal"]', '[class*="cookie"]',
-            '[class*="newsletter"]', '[class*="subscribe"]'
-        ]
-        for selector_rm in elements_to_remove:
-            for el in soup.select(selector_rm):
-                el.decompose()
-
-        if selector:
-            elements = soup.select(selector)
-            if not elements:
-                logger.info(f"No elements found matching selector: {selector}")
-                return {
-                    "content": None,
-                    "message": "No elements found matching selector",
-                    "selector": selector,
-                    "url": url
-                }
-            content = [el.get_text(strip=True) for el in elements]
-            logger.info(f"Extracted {len(content)} elements for selector: {selector}")
-            return {"content": content, "selector": selector, "url": url}
-
-        # Try to get main content area
-        main_content = (
-            soup.select_one("main, [role='main'], article, .content, #content") or soup.body
-        )
-
-        # Extract and clean text from paragraphs, headings, and list items
-        if main_content:
-            tags = main_content.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"])
-        else:
-            tags = soup.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "li"])
-
-        paragraphs = [
-            _clean_text(tag.get_text())
-            for tag in tags
-            if tag.get_text() and
-               len(tag.get_text().split()) > 3 and
-               not re.match(r"^[\d\W]+$", tag.get_text()) and
-               not re.search(r"privacy|cookie|terms", tag.get_text(), re.IGNORECASE)
-        ]
-        content = "\n".join(paragraphs).strip()
-        elapsed = time.time() - start_time
-        logger.info(f"Scraping complete for {url} ({len(content)} chars, {elapsed:.2f}s)")
-        return {"content": content, "url": url}
+    except requests.Timeout:
+        error_msg = f"Request timed out while scraping '{url}'."
+        logger.error(error_msg)
+        return {"error": error_msg}
+    except requests.RequestException as e:
+        error_msg = f"Network error scraping '{url}': {e}"
+        logger.exception(error_msg)
+        return {"error": error_msg}
     except Exception as e:
-        logger.exception(f"Unexpected error in web_scraper: {e}")
-        return {
-            "error": str(e),
-            "url": url,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        error_msg = f"Unexpected error scraping '{url}': {e}"
+        logger.exception(error_msg)
+        return {"error": error_msg}

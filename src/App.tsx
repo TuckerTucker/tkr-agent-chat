@@ -12,6 +12,9 @@ import philConnorsAvatar from "../agents/phil_connors/src/assets/phil-connors.sv
 import userAvatar from "./assets/user-avatar.svg";
 import type { APIMessage } from "./components/ui/message-list.d";
 
+// Import agent components
+import '../agents/chloe/src/components';
+
 // Helper function to create UI messages with type safety
 const createUIMessage = (params: APIMessage): APIMessage => params;
 

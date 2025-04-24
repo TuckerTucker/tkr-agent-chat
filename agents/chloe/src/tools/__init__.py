@@ -1,7 +1,6 @@
-# Removed echo import
 from .web_scraper import web_scraper
 
+# Register tools
 TOOL_REGISTRY = {
-    # Removed echo entry
     "web_scraper": web_scraper,
 }

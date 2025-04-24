@@ -246,8 +246,13 @@ class ContextService:
         # Take only the 5 most recent contexts
         recent_contexts = contexts[:5]
 
-        # Format as system message
-        formatted_context = "CONTEXT FROM OTHER PARTICIPANTS:\n\n"
+        # Format as system message with clear instructions
+        formatted_context = (
+            "RECENT CONTEXT FROM OTHER PARTICIPANTS\n"
+            "This context is provided to help inform your responses to user messages.\n"
+            "Do not respond to this context directly unless the user asks about it.\n\n"
+        )
+        
         for ctx in recent_contexts:
             source = ctx.get('source_agent_id', 'Unknown')
             content = ctx.get('content', {}).get('content', '')
