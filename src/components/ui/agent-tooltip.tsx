@@ -1,6 +1,10 @@
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import { cn } from "../../lib/utils"
+import { ConnectionStatus } from "./connection-status"
+
+export type ConnectionStatusType = 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
+export type AgentActivityStatusType = 'idle' | 'thinking' | 'responding' | 'error';
 
 interface AgentTooltipProps {
   children: React.ReactNode
@@ -9,15 +13,30 @@ interface AgentTooltipProps {
   className?: string
   side?: "top" | "right" | "bottom" | "left"
   align?: "start" | "center" | "end"
+  status?: {
+    connection: ConnectionStatusType;
+    activity: AgentActivityStatusType;
+  }
+  agentName?: string
 }
 
 const AgentTooltip = React.forwardRef<HTMLDivElement, AgentTooltipProps>(
-  ({ children, content, agentColor, className, side = "top", align = "center" }, ref) => {
+  ({ children, content, agentColor, className, side = "top", align = "center", status, agentName }, ref) => {
     return (
       <TooltipPrimitive.Root delayDuration={100} disableHoverableContent>
         <TooltipPrimitive.Trigger asChild>
-          <div ref={ref}>
+          <div ref={ref} className="relative">
             {children}
+            {status && (
+              <div className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4">
+                <ConnectionStatus
+                  status={status}
+                  agentName={agentName}
+                  size="sm"
+                  position="floating"
+                />
+              </div>
+            )}
           </div>
         </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
@@ -35,7 +54,26 @@ const AgentTooltip = React.forwardRef<HTMLDivElement, AgentTooltipProps>(
             )}
             style={{ borderLeftColor: agentColor }}
           >
-            {content}
+            <div>
+              {/* Show agent status at the top of the tooltip if available */}
+              {status && (
+                <div className="flex items-center mb-2 text-xs text-gray-400">
+                  <ConnectionStatus
+                    status={status}
+                    agentName={agentName}
+                    showLabel={true}
+                    size="sm"
+                  />
+                  <span className="ml-1">
+                    {status.activity === 'idle' ? 'Ready' : 
+                     status.activity === 'thinking' ? 'Thinking' : 
+                     status.activity === 'responding' ? 'Responding' : 
+                     status.activity === 'error' ? 'Error' : ''}
+                  </span>
+                </div>
+              )}
+              {content}
+            </div>
             <TooltipPrimitive.Arrow className="fill-popover" />
           </TooltipPrimitive.Content>
         </TooltipPrimitive.Portal>

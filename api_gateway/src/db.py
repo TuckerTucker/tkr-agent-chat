@@ -11,9 +11,10 @@ import sqlite3
 import json
 import uuid
 import logging
+import traceback
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
+from typing import Dict, List, Any, Optional, Tuple, Union
+from datetime import datetime, timedelta
 from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
@@ -177,19 +178,174 @@ def get_message(message_uuid: str) -> Optional[Dict]:
         )
         return row_to_dict(cursor.fetchone())
 
-def get_session_messages(session_id: str, skip: int = 0, limit: int = 1000) -> List[Dict]:
-    """Get messages for a specific session."""
+def trim_session_messages(session_id: str, max_messages: int = 100) -> int:
+    """
+    Trim old messages when a session exceeds the maximum message count.
+    
+    Args:
+        session_id: The session to trim messages for
+        max_messages: Maximum number of messages to keep
+        
+    Returns:
+        Number of messages deleted
+    """
     with get_connection() as conn:
-        cursor = conn.execute(
-            """
-            SELECT * FROM messages 
-            WHERE session_id = ? 
-            ORDER BY created_at ASC
-            LIMIT ? OFFSET ?
-            """,
-            (session_id, limit, skip)
+        # Count total messages
+        count_cursor = conn.execute(
+            "SELECT COUNT(*) as total FROM messages WHERE session_id = ?",
+            (session_id,)
         )
-        return [row_to_dict(row) for row in cursor.fetchall()]
+        total = count_cursor.fetchone()[0]
+        
+        # If over limit, delete oldest messages
+        if total > max_messages:
+            # Identify messages to delete (oldest first)
+            num_to_delete = total - max_messages
+            cursor = conn.execute(
+                """
+                DELETE FROM messages 
+                WHERE id IN (
+                    SELECT id FROM messages
+                    WHERE session_id = ?
+                    ORDER BY created_at ASC
+                    LIMIT ?
+                )
+                """,
+                (session_id, num_to_delete)
+            )
+            
+            conn.commit()
+            return num_to_delete
+        
+        return 0
+
+def get_session_messages(
+    session_id: str, 
+    skip: int = 0, 
+    limit: int = 100,
+    cursor: Optional[str] = None,
+    direction: str = "desc",
+    include_total: bool = False
+) -> Union[List[Dict], Dict[str, Any]]:
+    """
+    Get messages for a specific session with improved pagination options.
+    
+    Args:
+        session_id: The chat session ID
+        skip: Number of messages to skip (for offset pagination)
+        limit: Maximum number of messages to return
+        cursor: Message UUID or timestamp for cursor-based pagination
+        direction: Sort direction, 'asc' (oldest first) or 'desc' (newest first)
+        include_total: Whether to count total messages
+        
+    Returns:
+        If include_total is False, returns a list of messages.
+        If include_total is True, returns a dict with 'items' (messages) and 'pagination' metadata.
+    """
+    logger.info(f"Getting messages for session {session_id} with params: skip={skip}, limit={limit}, cursor={cursor}, direction={direction}, include_total={include_total}")
+    
+    try:
+        with get_connection() as conn:
+            # Determine sort direction
+            sort_order = "ASC" if direction.lower() == "asc" else "DESC"
+            
+            # Build the query based on pagination type
+            if cursor:
+                # Cursor-based pagination
+                if sort_order == "ASC":
+                    # For ascending order, get messages created after the cursor
+                    operator = ">"
+                else:
+                    # For descending order, get messages created before the cursor
+                    operator = "<"
+                
+                # Try to use the cursor as a UUID first, then as a timestamp
+                try:
+                    uuid.UUID(cursor)  # Validate it's a valid UUID
+                    cursor_query = f"message_uuid {operator} ?"
+                    cursor_param = cursor
+                except ValueError:
+                    # Assume it's a timestamp
+                    cursor_query = f"created_at {operator} ?"
+                    cursor_param = cursor
+                
+                query = f"""
+                SELECT * FROM messages 
+                WHERE session_id = ? AND {cursor_query}
+                ORDER BY created_at {sort_order}
+                LIMIT ?
+                """
+                params = (session_id, cursor_param, limit)
+            else:
+                # Offset-based pagination
+                query = f"""
+                SELECT * FROM messages 
+                WHERE session_id = ? 
+                ORDER BY created_at {sort_order}
+                LIMIT ? OFFSET ?
+                """
+                params = (session_id, limit, skip)
+        
+            # Execute the query
+            cursor = conn.execute(query, params)
+            messages = [row_to_dict(row) for row in cursor.fetchall()]
+        
+            # If we don't need pagination metadata, just return the messages
+            if not include_total and not cursor:
+                return messages
+                
+            # Build pagination metadata with proper typing
+            pagination_data = {
+                "limit": limit,
+                "direction": direction
+            }
+            
+            # Add skip parameter for offset-based pagination
+            if cursor is None:
+                pagination_data["skip"] = skip
+            
+            # If requested, count total messages
+            if include_total:
+                count_cursor = conn.execute(
+                    "SELECT COUNT(*) as total FROM messages WHERE session_id = ?",
+                    (session_id,)
+                )
+                total = count_cursor.fetchone()[0]
+                pagination_data["total"] = total
+                
+            # Add next/prev cursors if there are results
+            if messages:
+                # Add next cursor (for fetching next page)
+                next_cursor = messages[-1]['message_uuid']
+                pagination_data["next_cursor"] = next_cursor
+                
+                # Add prev cursor if not first page (for fetching previous page)
+                if skip > 0 or cursor:
+                    prev_cursor = messages[0]['message_uuid']
+                    pagination_data["prev_cursor"] = prev_cursor
+                    
+            # Create the final result dictionary with proper types
+            result = {
+                "items": messages,
+                "pagination": pagination_data
+            }
+            
+            return result
+            
+    except Exception as e:
+        logger.error(f"Error fetching messages for session {session_id}: {str(e)}", exc_info=True)
+        # Return empty result to avoid breaking the frontend
+        if include_total:
+            return {
+                "items": [], 
+                "pagination": {
+                    "limit": limit, 
+                    "direction": direction,
+                    "total": 0,
+                    "skip": skip if cursor is None else None
+                }
+            }
+        return []
 
 # --- Shared Context Operations ---
 

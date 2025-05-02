@@ -27,6 +27,7 @@ export interface MessageProps {
   onDownload?: () => void;
   onToggleCollapse?: () => void;
   onDelete?: () => void;
+  onRetry?: () => void;
   status?: 'sent' | 'sending' | 'error' | 'delivered' | 'read';
   className?: string;
   ref?: React.ForwardedRef<HTMLDivElement>;

@@ -4,42 +4,196 @@ BaseAgent: Abstract base class for all agents.
 - Loads config, overview, system prompt, and tool registry
 - Provides interface for prompt and tool access
 - Inherits from google.adk.agents.Agent
-- Loads config, tool registry, system prompt
+- Handles ADK import errors gracefully
 - Provides basic structure for ADK compatibility
 """
 
+import os
+import sys
+import importlib
 import logging
-from typing import Dict, Any, List, Optional
+import traceback
+from datetime import datetime
+from typing import Dict, Any, List, Optional, Union, Type
 
-# --- ADK Import ---
-print("DEBUG: Starting ADK import attempts...")
-try:
-    print("DEBUG: Attempting to import Agent directly from google.adk...")
-    from google.adk import Agent as ADKAgentBase # Try importing directly from google.adk
-    print("DEBUG: Successfully imported Agent from google.adk")
-    ADK_AGENT_AVAILABLE = True
-except ImportError as e1:
-    print(f"DEBUG: Failed to import from google.adk directly: {str(e1)}")
+# Configure logging
+import os.path
+
+logger = logging.getLogger("agents.base")
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # Check if we should log to file in a log directory
+    # First check for timestamped directory from logger_service
+    base_log_dir = os.environ.get('TKR_LOG_DIR')
+    if base_log_dir:
+        try:
+            # Convert to absolute path if relative
+            if not os.path.isabs(base_log_dir):
+                base_log_dir = os.path.abspath(os.path.join(os.getcwd(), base_log_dir))
+            
+            # Check for TKR_RUN_ID for consistent timestamping with gateway logs
+            timestamp = os.environ.get('TKR_RUN_ID')
+            if not timestamp:
+                # Generate our own timestamp if TKR_RUN_ID is not set
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Create complete log directory path with timestamp
+            log_dir = os.path.join(base_log_dir, timestamp)
+                
+            # Ensure directory exists
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+                
+            # Add file handler for agent logs
+            agent_log_path = os.path.join(log_dir, 'agent.log')
+            file_handler = logging.handlers.RotatingFileHandler(
+                agent_log_path,
+                maxBytes=10 * 1024 * 1024,  # 10 MB
+                backupCount=5
+            )
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+            logger.info(f"Agent logging configured to write to {agent_log_path}")
+        except Exception as e:
+            logger.warning(f"Failed to set up agent file logging: {e}")
+
+# --- ADK Import Strategy ---
+class ImportError(Exception):
+    """Enhanced ImportError with more details."""
+    pass
+
+def import_adk_agent() -> Union[Type, None]:
+    """
+    Attempts to import the ADK Agent class using multiple strategies.
+    Returns the Agent class if successful, or a dummy class if all attempts fail.
+    
+    Strategies:
+    1. Direct import from google.adk
+    2. Import from google.adk.agents
+    3. Check for environment variables pointing to custom paths
+    """
+    # Track all errors for comprehensive reporting
+    import_errors = []
+    
+    # Check for custom ADK path in environment variables
+    adk_path = os.environ.get("ADK_PATH")
+    if adk_path and os.path.exists(adk_path):
+        logger.info(f"Using custom ADK path from ADK_PATH: {adk_path}")
+        try:
+            # Add custom path to Python path
+            sys.path.insert(0, adk_path)
+            # Try to import after adding the path
+            try:
+                from google.adk import Agent
+                logger.info("Successfully imported Agent from google.adk using custom path")
+                return Agent
+            except ImportError as e:
+                error_msg = f"Failed to import from google.adk using custom path: {str(e)}"
+                import_errors.append(error_msg)
+                logger.warning(error_msg)
+                
+                try:
+                    from google.adk.agents import Agent
+                    logger.info("Successfully imported Agent from google.adk.agents using custom path")
+                    return Agent
+                except ImportError as e:
+                    error_msg = f"Failed to import from google.adk.agents using custom path: {str(e)}"
+                    import_errors.append(error_msg)
+                    logger.warning(error_msg)
+        finally:
+            # Clean up the path modification to avoid side effects
+            if adk_path in sys.path:
+                sys.path.remove(adk_path)
+    
+    # Standard import attempts
     try:
-        print("DEBUG: Attempting to import Agent from google.adk.agents...")
-        from google.adk.agents import Agent as ADKAgentBase # Try the submodule if direct import fails
-        print("DEBUG: Successfully imported Agent from google.adk.agents")
-        ADK_AGENT_AVAILABLE = True
-    except ImportError as e2:
-        print(f"DEBUG: Failed to import from google.adk.agents: {str(e2)}")
-        print("DEBUG: google.adk Agent class not found. Using dummy base class.")
-        ADK_AGENT_AVAILABLE = False
-        class ADKAgentBase: # Dummy class
-            def __init__(self, name: str, model: Optional[str] = None, description: Optional[str] = None, 
-                        instruction: Optional[str] = None, tools: Optional[List[Any]] = None, **kwargs):
-                self.name = name
-                self.model = model
-                self.description = description
-                self.instruction = instruction
-                self.tools = tools or []
-                self.sub_agents = [] # Ensure dummy also has sub_agents
-                # Add dummy model_config for consistency if needed
-                model_config = {} 
+        # Strategy 1: Direct import from google.adk
+        from google.adk import Agent
+        logger.info("Successfully imported Agent from google.adk")
+        return Agent
+    except ImportError as e:
+        error_msg = f"Failed to import from google.adk directly: {str(e)}"
+        import_errors.append(error_msg)
+        logger.warning(error_msg)
+        
+        try:
+            # Strategy 2: Import from google.adk.agents
+            from google.adk.agents import Agent
+            logger.info("Successfully imported Agent from google.adk.agents")
+            return Agent
+        except ImportError as e:
+            error_msg = f"Failed to import from google.adk.agents: {str(e)}"
+            import_errors.append(error_msg)
+            logger.warning(error_msg)
+    
+    # If all strategies failed, log detailed error information
+    logger.error("All ADK import strategies failed. Using dummy base class.")
+    logger.error("Import errors encountered:")
+    for i, error in enumerate(import_errors, 1):
+        logger.error(f"  {i}. {error}")
+    
+    # Additionally, check for common issues
+    check_environment_issues()
+    
+    # Return dummy class as fallback
+    return None
+
+def check_environment_issues():
+    """Checks for common environment issues and logs helpful information."""
+    # Check Python version
+    py_version = sys.version.split()[0]
+    logger.info(f"Python version: {py_version}")
+    
+    # Check if GOOGLE_API_KEY is set
+    if not os.environ.get("GOOGLE_API_KEY"):
+        logger.warning("GOOGLE_API_KEY environment variable is not set. This may cause ADK to fail.")
+    
+    # Check for required packages
+    required_packages = ["google-adk", "google-generativeai"]
+    for package in required_packages:
+        try:
+            # Check if package is importable - this doesn't mean it's properly installed
+            spec = importlib.util.find_spec(package.replace("-", "_"))
+            if spec is None:
+                logger.warning(f"Required package '{package}' doesn't appear to be installed.")
+            else:
+                try:
+                    # Try to import the package to verify it
+                    module = importlib.import_module(package.replace("-", "_"))
+                    version = getattr(module, "__version__", "unknown")
+                    logger.info(f"Found package '{package}' (version: {version})")
+                except Exception as e:
+                    logger.warning(f"Package '{package}' is installed but failed to import: {e}")
+        except Exception as e:
+            logger.warning(f"Error checking for package '{package}': {e}")
+
+# Import ADK Agent or use dummy class
+ADKAgentBase = import_adk_agent()
+ADK_AGENT_AVAILABLE = ADKAgentBase is not None
+
+# Create dummy class if ADK Agent is not available
+if not ADK_AGENT_AVAILABLE:
+    class ADKAgentBase:
+        """Dummy ADK Agent class for fallback when ADK is not available."""
+        def __init__(self, name: str, model: Optional[str] = None, description: Optional[str] = None, 
+                    instruction: Optional[str] = None, tools: Optional[List[Any]] = None, **kwargs):
+            self.name = name
+            self.model = model
+            self.description = description
+            self.instruction = instruction
+            self.tools = tools or []
+            self.sub_agents = [] # Ensure dummy also has sub_agents
+            # Add dummy model_config for consistency if needed
+            model_config = {}
+            logger.info(f"Created dummy ADKAgentBase for {name} with {len(tools or [])} tools") 
 
 class BaseAgent(ADKAgentBase):
     """Our custom base agent, inheriting from ADK's Agent."""
@@ -48,88 +202,282 @@ class BaseAgent(ADKAgentBase):
     model_config = {"extra": "allow"} 
 
     def __init__(self, config: Dict[str, Any], tool_registry: Dict[str, Any], system_prompt: str, overview: str):
+        """
+        Initialize the base agent with configuration, tools, and prompts.
         
-        # Extract required fields for ADKAgentBase.__init__ from config
-        agent_id = config["id"]  # Use ID for ADK agent name (valid identifier)
-        agent_display_name = config["name"]  # Keep display name separately
-        model_name = config.get("model", "gemini-2.0-flash-exp") # Default model from quickstart
-        agent_description = config["description"]
+        Args:
+            config: Dictionary with agent configuration (id, name, description, etc.)
+            tool_registry: Dictionary mapping tool names to tool functions
+            system_prompt: The base system prompt for the agent
+            overview: A short overview description of the agent's capabilities
+        """
+        try:
+            # Validate required configuration
+            required_fields = ["id", "name", "description", "color"]
+            for field in required_fields:
+                if field not in config:
+                    raise ValueError(f"Missing required field '{field}' in agent config")
+            
+            # Extract required fields for ADKAgentBase.__init__ from config
+            agent_id = config["id"]  # Use ID for ADK agent name (valid identifier)
+            agent_display_name = config["name"]  # Keep display name separately
+            model_name = config.get("model", "gemini-2.0-flash-exp") # Default model
+            agent_description = config["description"]
+            
+            # Build enhanced context-aware system prompt
+            context_prompt = self._get_context_aware_prompt_extension()
+            agent_instruction = f"{system_prompt}\n\n{context_prompt}"
+            
+            # Map our tool registry to the format ADK expects
+            adk_tools = list(tool_registry.values()) if tool_registry else []
+            
+            # Log agent initialization
+            logger.info(f"Initializing agent: {agent_id} ({agent_display_name})")
+            logger.info(f"Using model: {model_name}")
+            logger.info(f"Tools: {len(adk_tools)} tool(s) available")
+            
+            # Call the parent ADKAgentBase initializer
+            try:
+                super().__init__(
+                    name=agent_id,
+                    model=model_name,
+                    description=agent_description,
+                    instruction=agent_instruction,
+                    tools=adk_tools
+                )
+                logger.info(f"Agent {agent_id} initialized successfully with ADK")
+            except Exception as e:
+                logger.error(f"Error initializing ADKAgentBase for {agent_id}: {e}")
+                if not ADK_AGENT_AVAILABLE:
+                    logger.warning("Using dummy ADKAgentBase due to import failure")
+                raise
+            
+            # Store our specific config and other attributes
+            self.config = config
+            self.id = config["id"] # Keep our internal ID
+            self.color = config["color"]
+            self.capabilities = config.get("capabilities", [])
+            self.system_prompt = system_prompt # Keep for potential direct use
+            self.overview = overview
+            self.avatar = config.get("avatar")  # Add avatar attribute if present in config
+            
+            # Initialize state tracking
+            self._last_error = None
+            self._health_status = "healthy"
+            self._last_activity = None
+            
+            # Initialize tool registry for our own use
+            self.tool_registry = tool_registry
         
-        # Add context awareness to system prompt
-        context_prompt = """
+        except Exception as e:
+            logger.error(f"Failed to initialize agent {config.get('id', 'unknown')}: {e}")
+            # Re-raise to allow proper error handling
+            raise
+    
+    def _get_context_aware_prompt_extension(self) -> str:
+        """
+        Create an enhanced context-aware prompt extension that helps the agent
+        understand and use context from other agents effectively.
+        """
+        return """
+        # CONTEXT HANDLING INSTRUCTIONS
+
         You have access to shared context from other agents in the conversation.
         This context will be included at the start of user messages in this format:
         
         CONTEXT FROM OTHER PARTICIPANTS:
         From [agent]: [message]
+        From [agent]: [message]
         ...
         
         User message: [actual user message]
 
-        When you see context in a message:
-        1. Read and understand the context before the user message
-        2. Build upon what other agents have said
-        3. Avoid repeating information already shared
-        4. Provide consistent and complementary responses
-        5. Focus primarily on the user message while considering the context
+        When you see this context:
+        
+        1. Analyze the context before responding to understand what other agents have already shared
+        2. Build upon this shared information rather than repeating it
+        3. If other agents have provided factual information, consider it reliable
+        4. If the context contains relevant expertise from specialized agents, defer to their knowledge
+        5. Ensure your responses complement and extend what has been shared
+        6. Consider mentioning specific agents by name when building on their contributions
+        7. Maintain a consistent approach with the conversation flow
+        8. Focus primarily on addressing the user's message while leveraging the shared context
+        
+        The quality of your collaboration with other agents will significantly enhance the user experience.
         """
-        agent_instruction = f"{system_prompt}\n\n{context_prompt}"
-        
-        # Map our tool registry to the format ADK expects
-        adk_tools = list(tool_registry.values()) if tool_registry else []
-
-        # Call the parent ADKAgentBase initializer
-        super().__init__(
-            name=agent_id,
-            model=model_name,
-            description=agent_description,
-            instruction=agent_instruction,
-            tools=adk_tools
-        )
-        
-        # Store our specific config and other attributes
-        self.config = config
-        self.id = config["id"] # Keep our internal ID
-        self.color = config["color"]
-        self.capabilities = config.get("capabilities", [])
-        # self.tools is now inherited from ADKAgentBase
-        self.system_prompt = system_prompt # Keep for potential direct use
-        self.overview = overview
-        # self.sub_agents is now inherited from ADKAgentBase
-        self.avatar = config.get("avatar")  # Add avatar attribute if present in config
-
-    # Keep our helper methods if still needed, otherwise remove/adapt
+    
     def get_system_prompt(self, **template_vars) -> str:
+        """
+        Get the system prompt with template variables filled in, including shared context.
+        
+        Args:
+            **template_vars: Keyword arguments to substitute in the prompt template
+            
+        Returns:
+            The filled system prompt
+        """
+        # Record activity for health tracking
+        self._last_activity = datetime.now().isoformat() if 'datetime' in globals() else None
+        
         # Get shared context from the context service
         shared_context = []
         try:
             from api_gateway.src.services.context_service import context_service
-            shared_context = context_service.get_shared_context(
-                target_agent_id=self.id,
-                session_id=template_vars.get("session_id")
-            )
+            session_id = template_vars.get("session_id")
+            
+            if session_id:
+                shared_context = context_service.get_shared_context(
+                    target_agent_id=self.id,
+                    session_id=session_id
+                )
+                
+                # Also, format context specifically for this prompt
+                formatted_context = context_service.format_context_for_content(
+                    target_agent_id=self.id,
+                    session_id=session_id
+                )
+                
+                if formatted_context:
+                    template_vars["formatted_context"] = formatted_context
+            
+        except ImportError as e:
+            logger.warning(f"Context service not available: {e}")
         except Exception as e:
-            logging.warning(f"Failed to get shared context: {e}")
+            logger.warning(f"Failed to get shared context: {e}")
+            self._last_error = str(e)
 
         # Add context to template vars
         if shared_context:
             template_vars["shared_context"] = "\n".join([
-                f"Context from {ctx['source_agent_id']}: {ctx['content']['content']}"
+                f"Context from {ctx['source_agent_id']}: {ctx['content'].get('content', '')}"
                 for ctx in shared_context
+                if isinstance(ctx['content'], dict) and 'content' in ctx['content']
             ])
         else:
             template_vars["shared_context"] = "No shared context available."
 
-        # Simple template substitution for system prompt
+        # Improved template substitution with error handling
         prompt = self.system_prompt
         for k, v in template_vars.items():
-            prompt = prompt.replace("{{" + k + "}}", str(v))
+            try:
+                placeholder = "{{" + k + "}}"
+                if placeholder in prompt:
+                    prompt = prompt.replace(placeholder, str(v))
+            except Exception as e:
+                logger.warning(f"Error substituting template variable {k}: {e}")
+                self._last_error = str(e)
+        
         return prompt
+    
+    def get_tool(self, name: str) -> Optional[Any]:
+        """
+        Get a tool by name.
+        
+        Args:
+            name: The name of the tool to get
+            
+        Returns:
+            The tool function or None if not found
+        """
+        if hasattr(self, 'tool_registry') and isinstance(self.tool_registry, dict):
+            return self.tool_registry.get(name)
+        
+        if hasattr(self, 'tools'):
+            if isinstance(self.tools, dict):
+                return self.tools.get(name)
+            elif isinstance(self.tools, list):
+                # Try to find a tool with matching name in the list
+                for tool in self.tools:
+                    if hasattr(tool, '__name__') and tool.__name__ == name:
+                        return tool
+                    if hasattr(tool, 'name') and tool.name == name:
+                        return tool
+        
+        logger.warning(f"Tool '{name}' not found for agent {self.id}")
+        return None
 
-    def get_tool(self, name):
-        return self.tools.get(name)
-
-    def list_tools(self):
-        return list(self.tools.keys())
-
-    # Removed get_agent_card method as it's part of the A2A protocol
+    def list_tools(self) -> List[str]:
+        """
+        List all available tool names.
+        
+        Returns:
+            List of tool names
+        """
+        if hasattr(self, 'tool_registry') and isinstance(self.tool_registry, dict):
+            return list(self.tool_registry.keys())
+        
+        if hasattr(self, 'tools'):
+            if isinstance(self.tools, dict):
+                return list(self.tools.keys())
+            elif isinstance(self.tools, list):
+                # Extract tool names from the list
+                names = []
+                for tool in self.tools:
+                    if hasattr(tool, '__name__'):
+                        names.append(tool.__name__)
+                    elif hasattr(tool, 'name'):
+                        names.append(tool.name)
+                return names
+        
+        return []
+    
+    def get_health_status(self) -> Dict[str, Any]:
+        """
+        Get the health status of the agent.
+        
+        Returns:
+            Dictionary with health status information including:
+            - Basic agent identification (id, name)
+            - Current health status (healthy, error, etc.)
+            - Last activity timestamp and error information
+            - Activity age check (hung detection)
+            - Available tools and capabilities
+        """
+        # Get current timestamp for age calculation
+        current_time = datetime.now().isoformat() if 'datetime' in globals() else None
+        
+        # Check for hung state based on activity timestamp
+        is_hung = False
+        minutes_since_activity = None
+        
+        if self._last_activity and current_time:
+            try:
+                # Parse timestamps to calculate elapsed time
+                last_activity_time = datetime.fromisoformat(self._last_activity)
+                current_time_parsed = datetime.fromisoformat(current_time)
+                
+                # Calculate minutes since last activity
+                delta = current_time_parsed - last_activity_time
+                minutes_since_activity = delta.total_seconds() / 60
+                
+                # Mark as hung if inactive too long (default: 30 minutes)
+                timeout_minutes = int(os.environ.get("AGENT_INACTIVITY_TIMEOUT_MINUTES", "30"))
+                is_hung = minutes_since_activity > timeout_minutes
+                
+                # Update status if hung
+                if is_hung and self._health_status == "healthy":
+                    self._health_status = "hung"
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error calculating activity age for agent {self.id}: {e}")
+        
+        return {
+            "id": self.id,
+            "name": self.config.get("name", self.id),
+            "status": self._health_status,
+            "last_error": self._last_error,
+            "last_activity": self._last_activity,
+            "minutes_since_activity": round(minutes_since_activity, 2) if minutes_since_activity is not None else None,
+            "is_hung": is_hung,
+            "tools_available": len(self.list_tools()),
+            "capabilities": self.capabilities
+        }
+    
+    def reset_state(self) -> None:
+        """
+        Reset the agent's state for recovery.
+        """
+        self._last_error = None
+        self._health_status = "healthy"
+        logger.info(f"Agent {self.id} state reset")
+        
+    # Additional helper methods can be added here if needed

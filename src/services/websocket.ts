@@ -10,9 +10,9 @@
 // Removed unused WebSocketMessage, ErrorResponse imports
 // import { WebSocketMessage, ErrorResponse } from '../types/api';
 
-// API Gateway WebSocket URLs
-const WS_BASE_URL = 'ws://localhost:8000/ws/v1';
-const WS_A2A_BASE_URL = 'ws://localhost:8000/ws/v1/a2a'; // A2A WebSocket endpoint
+// API Gateway WebSocket URLs using environment variables
+const WS_BASE_URL = import.meta.env.VITE_WS_URL ? `${import.meta.env.VITE_WS_URL}/ws/v1` : 'ws://localhost:8000/ws/v1';
+const WS_A2A_BASE_URL = import.meta.env.VITE_WS_URL ? `${import.meta.env.VITE_WS_URL}/ws/v1/a2a` : 'ws://localhost:8000/ws/v1/a2a';
 const RECONNECT_DELAY = 5000; // Increased initial delay
 const INITIAL_CONNECT_DELAY = 2000; // Delay before first connection attempt
 
@@ -83,7 +83,14 @@ class WebSocketService {
   private connections: Map<string, AgentConnection> = new Map();
   private agentStatuses: Map<string, AgentStatus> = new Map();
   private callbacks: WebSocketCallbacks = {};
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 7; // Increased from 5 to 7 for more resilience
+  private reconnectBackoffMultiplier = 1.5; // Use a more moderate backoff multiplier (was implicitly 2)
+  private maxReconnectDelay = 30000; // Cap reconnect delay at 30 seconds
+
+  // Connection monitoring
+  private connectionMonitorInterval: NodeJS.Timeout | null = null;
+  private readonly CONNECTION_MONITOR_FREQUENCY = 15000; // Check every 15 seconds
+  private readonly CONNECTION_TIMEOUT = 60000; // Mark as error if no activity for 60 seconds
 
   // A2A connection management
   private a2aConnections: Map<string, WebSocket> = new Map(); // agentId -> WebSocket
@@ -116,11 +123,84 @@ class WebSocketService {
 
     // Add delay before initial connection attempt
     setTimeout(() => {
-      this.establishConnection(sessionId, agentId, undefined);
+      this.establishConnection(sessionId, agentId);
     }, INITIAL_CONNECT_DELAY);
+    
+    // Start connection monitoring if it's not already running
+    this.startConnectionMonitoring();
+  }
+  
+  /**
+   * Start the connection monitoring interval to detect and clean up stale connections
+   */
+  private startConnectionMonitoring() {
+    // Only start if not already monitoring
+    if (this.connectionMonitorInterval) return;
+    
+    console.log(`Starting connection monitoring (every ${this.CONNECTION_MONITOR_FREQUENCY / 1000}s)`);
+    
+    // Create a heartbeat timestamp map to track last activity
+    const lastActivity = new Map<string, number>();
+    
+    this.connectionMonitorInterval = setInterval(() => {
+      const now = Date.now();
+      
+      // Check all connections
+      this.connections.forEach((connection, agentId) => {
+        // Skip connections that aren't in OPEN state
+        if (connection.socket.readyState !== WebSocket.OPEN) return;
+        
+        // Initialize activity timestamp if not present
+        if (!lastActivity.has(agentId)) {
+          lastActivity.set(agentId, now);
+          return;
+        }
+        
+        const lastActiveTime = lastActivity.get(agentId) || 0;
+        const inactiveTime = now - lastActiveTime;
+        
+        // If inactive for too long, mark as potential zombie
+        if (inactiveTime > this.CONNECTION_TIMEOUT) {
+          console.warn(`[Agent: ${agentId}] Connection appears stale (inactive for ${Math.round(inactiveTime / 1000)}s)`);
+          
+          // Send a ping to check if still alive
+          try {
+            // Use a ping-like message
+            connection.socket.send(JSON.stringify({ type: "ping" }));
+            
+            // Update status to indicate potential issue
+            this.updateAgentStatus(agentId, { 
+              connection: 'error',
+              activity: this.agentStatuses.get(agentId)?.activity ?? 'idle'
+            });
+            
+            // If ping doesn't get a response, the onclose handler will trigger
+            // and handle the reconnection logic
+          } catch (error) {
+            console.error(`[Agent: ${agentId}] Failed to ping stale connection:`, error);
+            // Force disconnect and attempt reconnect
+            this.disconnect(agentId, true);
+          }
+        }
+      });
+      
+      // Update activity timestamps on successful messages
+      // This is done by updating the map when messages are received in onmessage handler
+      
+    }, this.CONNECTION_MONITOR_FREQUENCY);
+  }
+  
+  /**
+   * Stop the connection monitoring interval
+   */
+  private stopConnectionMonitoring() {
+    if (this.connectionMonitorInterval) {
+      clearInterval(this.connectionMonitorInterval);
+      this.connectionMonitorInterval = null;
+    }
   }
 
-  private establishConnection(sessionId: string, agentId: string, existingConnection: AgentConnection | undefined) {
+  private establishConnection(sessionId: string, agentId: string) {
     // We should never have an existing connection at this point since we clean it up in connect()
     // But let's double-check to be safe
     const currentConnection = this.connections.get(agentId);
@@ -168,40 +248,84 @@ class WebSocketService {
     };
 
     socket.onmessage = (event) => {
+      // Record activity timestamp for connection monitoring
+      (this as any).lastActivityTimestamps = (this as any).lastActivityTimestamps || new Map<string, number>();
+      (this as any).lastActivityTimestamps.set(agentId, Date.now());
+      
       let currentActivity: AgentActivityStatus = 'responding'; // Assume responding if packet received
+      
       try {
-        const packet: AgentStreamingPacket = JSON.parse(event.data);
-        // console.log(`[Agent: ${agentId}] WebSocket packet received:`, packet);
-
+        // Try to parse as JSON
+        let packet: AgentStreamingPacket | { type: string };
+        try {
+          packet = JSON.parse(event.data);
+        } catch (parseError) {
+          // If not JSON, treat as plain text and create a message packet
+          packet = { message: event.data };
+        }
+        
+        // Handle ping/pong messages for connection health checks
+        if ('type' in packet && packet.type === 'pong') {
+          console.log(`[Agent: ${agentId}] Received pong, connection verified`);
+          // Update status to connected if previously in error state
+          const currentStatus = this.agentStatuses.get(agentId);
+          if (currentStatus?.connection === 'error') {
+            this.updateAgentStatus(agentId, { connection: 'connected', activity: currentStatus.activity });
+          }
+          return; // Don't process further for ping/pong messages
+        }
+        
         // Infer agent activity status from packet
-        if (packet.error) {
+        if ('error' in packet && packet.error) {
             currentActivity = 'error';
             console.error(`[Agent: ${agentId}] Error packet received:`, packet.error);
-            // Optionally trigger onError callback here too?
-            // this.handleError(agentId, { code: 500, message: packet.error });
-        } else if (packet.turn_complete) {
+            
+            // Provide more context in the UI about the error
+            this.handleError(agentId, { 
+              code: 500, 
+              message: typeof packet.error === 'string' 
+                ? packet.error 
+                : 'An error occurred while processing the request'
+            });
+        } else if ('turn_complete' in packet && packet.turn_complete) {
             currentActivity = 'idle'; // Turn complete, back to idle
-        } else if (packet.interrupted) {
+        } else if ('interrupted' in packet && packet.interrupted) {
             currentActivity = 'idle'; // Interrupted, back to idle (or maybe 'interrupted' status?)
             console.log(`[Agent: ${agentId}] Turn interrupted.`);
-        } else if (packet.message) {
+        } else if ('message' in packet && packet.message) {
             // If only message, assume still responding/thinking
             // We could add a 'thinking' state if the backend sends specific signals
             currentActivity = 'responding';
         }
 
-        // Update status only if activity changed
+        // Update status and ensure connection is marked as connected
+        // This helps recover from error states when normal messages resume
         const currentStatus = this.agentStatuses.get(agentId);
-        if (currentStatus?.activity !== currentActivity) {
-            this.updateAgentStatus(agentId, { connection: 'connected', activity: currentActivity });
+        
+        // Always update connection state to 'connected' on successful message receipt
+        let newConnectionState: ConnectionStatus = 'connected';
+        
+        // Only update if status has changed
+        if (currentStatus?.connection !== newConnectionState || currentStatus?.activity !== currentActivity) {
+            this.updateAgentStatus(agentId, { 
+              connection: newConnectionState, 
+              activity: currentActivity 
+            });
         }
 
-        this.callbacks.onPacket?.(agentId, packet);
+        // Forward packet to callback if it's a valid stream packet
+        if ('message' in packet || 'turn_complete' in packet || 'interrupted' in packet || 'error' in packet) {
+          this.callbacks.onPacket?.(agentId, packet as AgentStreamingPacket);
+        }
       } catch (error) {
-        console.error(`[Agent: ${agentId}] Failed to parse WebSocket packet:`, error);
-        this.updateAgentStatus(agentId, { connection: 'connected', activity: 'error' }); // Mark as error on parse fail
-        // Optionally notify client of format error
-        // this.callbacks.onError?.(agentId, { code: 400, message: 'Invalid packet format' });
+        console.error(`[Agent: ${agentId}] Failed to process WebSocket packet:`, error);
+        this.updateAgentStatus(agentId, { connection: 'connected', activity: 'error' }); // Mark activity as error
+        
+        // Notify client with more detailed error
+        this.callbacks.onError?.(agentId, { 
+          code: 400, 
+          message: `Failed to process message: ${(error as Error).message || 'Unknown error'}`
+        });
       }
     };
 
@@ -272,13 +396,22 @@ class WebSocketService {
 
   /**
    * Attempt to reconnect a specific agent's connection.
-   * Uses exponential backoff strategy.
+   * Uses improved exponential backoff strategy with capped max delay.
    */
   private attemptReconnect(closedConnection: AgentConnection) {
     // Check if we should attempt reconnection
     if (closedConnection.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log(`[Agent: ${closedConnection.agentId}] Max reconnection attempts reached. Stopping.`);
-      this.callbacks.onError?.(closedConnection.agentId, { code: 503, message: 'Connection failed after multiple attempts.' });
+      this.callbacks.onError?.(closedConnection.agentId, { 
+        code: 503, 
+        message: 'Connection failed after multiple attempts.' 
+      });
+      
+      // After max attempts, mark as error but allow manual reconnection later
+      this.updateAgentStatus(closedConnection.agentId, { 
+        connection: 'error', 
+        activity: 'error'
+      });
       return;
     }
 
@@ -287,8 +420,16 @@ class WebSocketService {
 
     // Calculate delay with exponential backoff
     const attempts = closedConnection.reconnectAttempts + 1;
-    const delay = RECONNECT_DELAY * Math.pow(2, attempts - 1);
-    console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${delay / 1000}s (${attempts}/${this.maxReconnectAttempts})...`);
+    
+    // Calculate delay with more moderate backoff and capped maximum
+    let delay = RECONNECT_DELAY * Math.pow(this.reconnectBackoffMultiplier, attempts - 1);
+    
+    // Add some jitter to prevent all clients reconnecting simultaneously
+    // (beneficial in high traffic scenarios)
+    const jitter = Math.random() * 1000; // Random jitter up to 1s
+    delay = Math.min(delay + jitter, this.maxReconnectDelay);
+    
+    console.log(`[Agent: ${closedConnection.agentId}] Attempting to reconnect in ${Math.round(delay / 1000)}s (${attempts}/${this.maxReconnectAttempts})...`);
 
     // Update status and notify UI
     this.updateAgentStatus(closedConnection.agentId, { 
@@ -299,20 +440,31 @@ class WebSocketService {
 
     // Store reconnect timeout
     const timeoutId = setTimeout(() => {
-      // Create new connection with incremented attempt count
-      const newConnection: AgentConnection = {
-        ...closedConnection,
-        reconnectAttempts: attempts,
-        isConnecting: false,
-        socket: new WebSocket(closedConnection.connectionUrl)
-      };
+      try {
+        // Create new connection with incremented attempt count
+        const newConnection: AgentConnection = {
+          ...closedConnection,
+          reconnectAttempts: attempts,
+          isConnecting: false,
+          socket: new WebSocket(closedConnection.connectionUrl)
+        };
 
-      // Establish the connection
-      this.establishConnection(
-        closedConnection.sessionId,
-        closedConnection.agentId,
-        newConnection
-      );
+        // Set the new connection
+        this.connections.set(closedConnection.agentId, newConnection);
+        
+        // Establish the connection
+        this.establishConnection(
+          closedConnection.sessionId,
+          closedConnection.agentId
+        );
+      } catch (error) {
+        console.error(`[Agent: ${closedConnection.agentId}] Failed to create WebSocket during reconnection:`, error);
+        // If socket creation fails, try again
+        this.attemptReconnect({
+          ...closedConnection,
+          reconnectAttempts: attempts
+        });
+      }
     }, delay);
 
     this.reconnectTimeouts.set(closedConnection.agentId, timeoutId);
@@ -547,6 +699,75 @@ class WebSocketService {
     return new Map(this.agentStatuses); // Return a copy
   }
 
+  /**
+   * Manually try to reconnect an agent that was previously in error state
+   * @param agentId The agent ID to reconnect
+   * @returns True if reconnection was attempted, false if agent wasn't in error state
+   */
+  retryConnection(agentId: string): boolean {
+    const status = this.agentStatuses.get(agentId);
+    const connection = this.connections.get(agentId);
+    
+    // Only retry if the connection is in error state
+    if (status?.connection === 'error' || connection?.socket.readyState !== WebSocket.OPEN) {
+      console.log(`[Agent: ${agentId}] Manually retrying connection...`);
+      
+      // Disconnect first to clean up
+      this.disconnect(agentId, false);
+      
+      // Then attempt to reconnect if we have the session info
+      if (connection?.sessionId) {
+        this.connect(connection.sessionId, agentId);
+        return true;
+      } else {
+        console.error(`[Agent: ${agentId}] Cannot retry without session ID`);
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Clean up all connections and stop monitoring
+   * Should be called when the application is shutting down
+   */
+  cleanup(): void {
+    console.log(`Cleaning up all WebSocket connections...`);
+    
+    // Stop the connection monitor
+    this.stopConnectionMonitoring();
+    
+    // Disconnect all regular connections
+    for (const agentId of this.connections.keys()) {
+      this.disconnect(agentId, false);
+    }
+    
+    // Clean up A2A connections
+    for (const [agentId, socket] of this.a2aConnections.entries()) {
+      try {
+        socket.close(1000, "Application shutdown");
+      } catch (error) {
+        console.error(`[A2A] Error closing connection for agent ${agentId}:`, error);
+      }
+    }
+    this.a2aConnections.clear();
+    
+    // Clean up task subscriptions
+    for (const [taskId, socket] of this.taskSubscriptions.entries()) {
+      try {
+        socket.close(1000, "Application shutdown");
+      } catch (error) {
+        console.error(`[Task] Error closing subscription for task ${taskId}:`, error);
+      }
+    }
+    this.taskSubscriptions.clear();
+    
+    // Clear all timeouts
+    for (const timeoutId of this.reconnectTimeouts.values()) {
+      clearTimeout(timeoutId);
+    }
+    this.reconnectTimeouts.clear();
+  }
 
   private handleError(agentId: string, error: { code: number; message: string }): void {
     console.error(`[Agent: ${agentId}] WebSocket error:`, error);

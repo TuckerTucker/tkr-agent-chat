@@ -44,3 +44,6 @@ build/
 api_gateway.log
 
 *storybook.log
+
+**/.claude/settings.local.json
+project_env

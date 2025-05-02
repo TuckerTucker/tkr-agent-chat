@@ -1,9 +1,13 @@
 import path from "path";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    svgr()
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src")
@@ -16,6 +20,12 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true, // Needed for virtual hosted sites, good practice
         secure: false      // Optional: If backend is not HTTPS
+      },
+      // Also proxy WebSocket requests
+      '/ws/v1': {
+        target: 'ws://localhost:8000',
+        ws: true,
+        changeOrigin: true,
       }
     }
   },
@@ -25,11 +35,21 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
         'src/test/setup.ts',
+        '**/*.d.ts',
       ]
+    },
+    // Mock browser WebSocket API for testing
+    deps: {
+      optimizer: {
+        web: {
+          include: ['vitest-websocket-mock']
+        }
+      }
     }
   }
 });

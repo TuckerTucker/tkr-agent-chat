@@ -10,9 +10,11 @@ Note: Message saving and real-time handling occur within the WebSocket route (`w
 """
 
 import uuid
+import os
 import logging
+import random
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 
 # --- ADK Imports ---
 print("DEBUG: Starting ADK imports in chat_service.py...")
@@ -132,19 +134,58 @@ class ChatService:
             except Exception as e:
                 logger.error(f"Error clearing ADK session {session_id}: {e}")
         self.active_adk_sessions.clear()
+        
+    def get_active_session_count(self) -> int:
+        """Returns the number of active ADK sessions."""
+        return len(self.active_adk_sessions)
 
     # --- Message Management (Database - Read Only Here) ---
-    def get_messages(self, session_id: str, skip: int = 0, limit: int = 1000) -> List[Dict]:
-        """Get messages for a specific session from the database."""
+    def get_messages(
+        self, 
+        session_id: str, 
+        skip: int = 0, 
+        limit: int = 100,
+        cursor: Optional[str] = None,
+        direction: str = "desc",
+        include_total: bool = False
+    ) -> Union[List[Dict], Dict[str, Any]]:
+        """
+        Get messages for a specific session from the database with pagination support.
+        
+        Args:
+            session_id: The chat session ID
+            skip: Number of messages to skip (for offset pagination)
+            limit: Maximum number of messages to return
+            cursor: Message UUID or timestamp for cursor-based pagination
+            direction: Sort direction, 'asc' (oldest first) or 'desc' (newest first)
+            include_total: Whether to count total messages
+            
+        Returns:
+            Either a list of messages or a dict with items and pagination metadata.
+        """
         # Ensure session exists first
         session = self.get_session(session_id)
         if not session:
             logger.warning(f"Attempted to get messages for non-existent session: {session_id}")
-            return []
+            return [] if not include_total else {"items": [], "pagination": {}}
 
-        messages = db_get_session_messages(session_id, skip, limit)
-        logger.debug(f"Retrieved {len(messages)} messages for session {session_id}.")
-        return messages
+        result = db_get_session_messages(
+            session_id=session_id, 
+            skip=skip, 
+            limit=limit,
+            cursor=cursor,
+            direction=direction,
+            include_total=include_total
+        )
+        
+        # Log appropriately based on return type
+        if isinstance(result, dict):
+            message_count = len(result.get("items", []))
+            logger.debug(f"Retrieved {message_count} messages for session {session_id} with pagination metadata.")
+        else:
+            logger.debug(f"Retrieved {len(result)} messages for session {session_id}.")
+            
+        return result
 
     # --- Message Saving (Helper for ws.py) ---
     def save_message(self, session_id: str, msg_type: MessageType, parts: List[Dict[str, Any]], agent_id: Optional[str] = None, message_metadata: Optional[Dict[str, Any]] = None) -> Dict:
@@ -164,6 +205,14 @@ class ChatService:
             if not agent_exists:
                 logger.error(f"{log_prefix} Agent {agent_id} not found in agent_instances")
                 raise ValueError(f"Agent not found: {agent_id}")
+        
+        # Limit message content size (prevent excessively large messages)
+        max_content_size = 32768  # 32KB max content size
+        for part in parts:
+            if 'content' in part and isinstance(part['content'], str) and len(part['content']) > max_content_size:
+                # Truncate long content and add indicator
+                part['content'] = part['content'][:max_content_size] + "\n\n[Message truncated due to size limits]"
+                logger.warning(f"{log_prefix} Message content truncated to {max_content_size} characters")
 
         message_data = {
             'session_id': session_id,
@@ -178,6 +227,17 @@ class ChatService:
         try:
             message = db_create_message(message_data)
             logger.info(f"{log_prefix} Successfully saved message UUID: {message['message_uuid']}")
+            
+            # Occasionally check if we need to trim messages
+            # Use random chance to avoid checking on every message
+            if random.random() < 0.1:  # 10% chance to check and trim
+                from ..db import trim_session_messages
+                # Get message count limit from environment or use default
+                max_messages = int(os.environ.get("MAX_SESSION_MESSAGES", "500"))
+                deleted_count = trim_session_messages(session_id, max_messages)
+                if deleted_count > 0:
+                    logger.info(f"{log_prefix} Trimmed {deleted_count} old messages from session {session_id}")
+            
             return message
         except Exception as e:
             logger.error(f"{log_prefix} Database error: {e}", exc_info=True)

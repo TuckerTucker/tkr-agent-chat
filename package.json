@@ -5,13 +5,21 @@
   "type": "module",
   "scripts": {
     "dev:client": "vite",
-    "dev:server": "source start_env && uvicorn api_gateway.src.main:app --host 0.0.0.0 --port 8000",
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:server": "source start_env && uvicorn api_gateway.src.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev": "echo \"🚀 Starting TKR Agent Chat development servers...\" && node -e \"if (!require('fs').existsSync('.env')) { console.log('\\x1b[33m⚠️  No .env file found. Running setup first...\\x1b[0m'); require('child_process').execSync('./setup.sh', {stdio: 'inherit'}); }\" && concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "db:init": "source start_env && python -m api_gateway.scripts.init_db",
-    "db:reset": "rm -f api_gateway/chats/chat_database.db && npm run db:init"
+    "db:reset": "rm -f api_gateway/chats/chat_database.db && npm run db:init",
+    "setup": "chmod +x ./setup.sh && ./setup.sh",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:backend": "cd api_gateway && python -m pytest src/tests/",
+    "test:all": "./run_tests.sh",
+    "test:load": "cd api_gateway && python load_test.py"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.3",
@@ -20,6 +28,10 @@
     "lucide-react": "^0.503.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
@@ -38,6 +50,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8.5.3",
     "postcss-nesting": "^13.0.1",
     "tailwind-scrollbar": "^3.1.0",

@@ -1,0 +1,99 @@
+# Project Definition for the Multi-Agent Chat System
+
+app:
+  name: "Tucker's Team - Multi-Agent Chat"
+  author: "Tucker"
+  role: "Developer"
+  description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK) and A2A protocol"
+  taskboard:
+    info: Taskboard is an mcp server for kanban management
+    Board: TKR Agent Chat Implementation Plan
+    ID: 124fbfb2-95e3-4622-a0ff-2aa21d2e60af
+  github:
+    user:"tuckertucker"
+    repo:"tkr-agent-chat"
+  version: "0.1.0"
+  metadata:
+    project_type: "multi_agent_chat_application"
+    framework: "react"
+    language: "typescript"
+    last_updated: "2025-04-12"
+  documentation_links:
+    ui_overview: "multiagent_chat_ui.md"
+    adk_docs: "adk_overview.md"
+    component_library: "https://storybook.js.org/"
+    api_docs: "agent_development_kit_documentation.md"
+    onboarding: "README.md"
+    design_system: "https://ui.shadcn.com"
+    architecture: "_planning/tkr-project.yaml"
+  venv: 
+    location: "/Volumes/tkr-riffic/tucker-home-folder/tkr-agent-chat/tkr_env"
+    start: "source start_env" # in project root
+  dev server: npm run dev # starts client and server concurrently
+
+database:
+  framework: "SQLite"
+  language: "SQL"
+  features:
+    - "JSON1 extension for complex data"
+    - "WAL mode for concurrency"
+    - "Built-in datetime functions"
+    - "Full-text search capabilities"
+  code_organization:
+    structure:
+      - "api_gateway/scripts/init_db.py"  # Direct SQL schema management
+      - "api_gateway/src/models/"         # Type definitions
+      - "api_gateway/src/database.py"     # Connection management
+    naming:
+      tables: "snake_case"
+      columns: "snake_case"
+      constraints: "SCREAMING_SNAKE_CASE"
+  schema_management:
+    approach: "Direct SQL with CREATE TABLE IF NOT EXISTS"
+    migrations: "Safe column additions with ALTER TABLE"
+    validation:
+      - "CHECK constraints for data integrity"
+      - "FOREIGN KEY constraints for relationships"
+      - "DEFAULT values for timestamps"
+      - "UNIQUE constraints where needed"
+  performance:
+    optimizations:
+      - "WAL journal mode"
+      - "Strategic indexing"
+      - "JSON1 optimization"
+      - "Efficient datetime comparisons"
+    settings:
+      - "PRAGMA foreign_keys=ON"
+      - "PRAGMA journal_mode=WAL"
+      - "PRAGMA synchronous=NORMAL"
+
+data_sources:
+  rest_endpoints:
+    agents: "/api/v1/agents"
+    chats: "/api/v1/chats"
+    library: "/api/v1/library"
+    sessions: "/api/v1/sessions"
+    metrics: "/api/v1/metrics"
+  websocket_endpoints:
+    chat: "/ws/v1/chat/{session_id}/{agent_id}"
+    status: "/ws/v1/status"
+  contracts:
+    message_send:
+      request: 
+        - session_id: string
+        - agent_id: string
+        - content: string
+      response:
+        - message_id: string
+        - status: "sent" | "error"
+    agent_list:
+      response:
+        - id: string
+        - name: string
+        - color: string
+        - capabilities: list
+  code_references:
+    backend: "api_gateway/src/routes/"
+    frontend: "src/services/api.ts, src/services/websocket.ts"
+
+[Rest of file content remains unchanged...]

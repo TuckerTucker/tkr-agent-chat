@@ -122,6 +122,7 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
   onDelete,
   onCopy,
   onDownload,
+  onRetry,
   status = "sent",
   className,
   isTyping = false,
@@ -217,11 +218,28 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
         );
       case "error":
         return (
-          <div className="flex items-center text-xs text-destructive" aria-label="Message failed">
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>Failed</span>
+          <div className="flex items-center gap-3" aria-label="Message failed">
+            <div className="flex items-center text-xs text-destructive">
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Failed</span>
+            </div>
+            {onRetry && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRetry();
+                }}
+                className="flex items-center text-xs text-primary hover:text-primary/80 transition-colors"
+                aria-label="Retry sending message"
+              >
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span>Retry</span>
+              </button>
+            )}
           </div>
         );
       default:

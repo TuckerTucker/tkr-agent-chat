@@ -6,7 +6,7 @@
 
 import { ChatSessionRead, MessageRead, AgentInfo } from '@/types/api'; // Assuming types are defined here
 
-const API_BASE_URL = 'http://localhost:8000/api/v1'; // API Gateway server URL
+const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1` : 'http://localhost:8000/api/v1';
 
 // Helper function for making API requests
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -59,14 +59,105 @@ export const createSession = async (title?: string): Promise<ChatSessionRead> =>
   });
 };
 
+/**
+ * Update a chat session (e.g. rename it)
+ * @param sessionId Session ID to update
+ * @param updates Object containing fields to update (currently only title)
+ * @returns Promise with updated session data
+ */
+export const updateSession = async (
+  sessionId: string, 
+  updates: { title: string }
+): Promise<ChatSessionRead> => {
+  if (!sessionId) throw new Error("Session ID is required");
+  return fetchApi<ChatSessionRead>(`/sessions/${sessionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  });
+};
+
+/**
+ * Delete a chat session
+ * @param sessionId Session ID to delete
+ * @returns Promise that resolves when deletion is complete
+ */
+export const deleteSession = async (sessionId: string): Promise<void> => {
+  if (!sessionId) throw new Error("Session ID is required");
+  return fetchApi<void>(`/sessions/${sessionId}`, {
+    method: 'DELETE',
+  });
+};
+
 // --- Messages API ---
 
-export const getMessages = async (sessionId: string): Promise<MessageRead[]> => {
+// Interface for pagination parameters
+export interface MessagePaginationParams {
+  skip?: number;
+  limit?: number; 
+  cursor?: string;
+  direction?: 'asc' | 'desc'; // asc = oldest first, desc = newest first
+  include_pagination?: boolean;
+  include_total?: boolean;
+}
+
+// Interface for paginated response
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: {
+    limit: number;
+    direction: string;
+    skip?: number;
+    cursor?: string;
+    total?: number;
+    next_cursor?: string;
+    prev_cursor?: string;
+  };
+}
+
+/**
+ * Get messages for a session with pagination support
+ * @param sessionId Session ID to get messages for
+ * @param paginationParams Optional pagination parameters
+ * @returns Promise with messages or paginated response
+ */
+export const getMessages = async (
+  sessionId: string, 
+  paginationParams?: MessagePaginationParams
+): Promise<MessageRead[] | PaginatedResponse<MessageRead>> => {
     if (!sessionId) {
         console.warn("getMessages called without sessionId, returning empty array.");
         return []; // Return empty array if no session ID
     }
-  return fetchApi<MessageRead[]>(`/sessions/${sessionId}/messages`);
+    
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    if (paginationParams) {
+      if (paginationParams.skip !== undefined) 
+        queryParams.append('skip', paginationParams.skip.toString());
+      
+      if (paginationParams.limit !== undefined) 
+        queryParams.append('limit', paginationParams.limit.toString());
+      
+      if (paginationParams.cursor) 
+        queryParams.append('cursor', paginationParams.cursor);
+      
+      if (paginationParams.direction) 
+        queryParams.append('direction', paginationParams.direction);
+      
+      if (paginationParams.include_pagination) 
+        queryParams.append('include_pagination', 'true');
+      
+      if (paginationParams.include_total) 
+        queryParams.append('include_total', 'true');
+    }
+    
+    // Build URL with query parameters
+    const queryString = queryParams.toString();
+    const url = `/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`;
+    
+    // Make the API request
+    return fetchApi<MessageRead[] | PaginatedResponse<MessageRead>>(url);
 };
 
 // --- Agents API ---

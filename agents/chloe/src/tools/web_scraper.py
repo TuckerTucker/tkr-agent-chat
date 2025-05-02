@@ -2,18 +2,29 @@
 Web Scraper Tool for Chloe Agent
 
 Fetches and extracts content from web pages, optionally using a CSS selector.
-Includes structured error handling and logging.
+Uses standardized error handling for consistent error responses.
 """
 
 import re
 import time
 import logging
-from typing import Optional, Dict, Any # Add imports
+from typing import Optional, Dict, Any
 from datetime import datetime
 from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
+
+# Import standardized tool error handling
+from agents.common.tool_errors import (
+    ToolErrorResponse, 
+    ToolErrorCategory,
+    ToolErrorCodes,
+    invalid_parameter_error,
+    timeout_error,
+    network_error,
+    rate_limit_error
+)
 
 # Configure logger
 logger = logging.getLogger("chloe.web_scraper")
@@ -23,6 +34,9 @@ if not logger.hasHandlers():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+# Tool name constant for error handling
+TOOL_NAME = "web_scraper"
 
 # Simple in-memory rate limit store
 _request_store = {}
@@ -51,16 +65,51 @@ def _clean_text(text):
     text = re.sub(r'\b(subscribe|sign up).*$', '', text, flags=re.IGNORECASE | re.MULTILINE)
     return text.strip()
 
-# Add explicit type hints
 def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip_rate_limit: bool = False) -> Dict[str, Any]:
+    """
+    Fetches and extracts content from a web page.
+    
+    Args:
+        url: The URL to scrape
+        selector: Optional CSS selector to extract specific elements
+        timeout: Request timeout in seconds
+        skip_rate_limit: Whether to bypass rate limiting
+        
+    Returns:
+        Dictionary with content or standardized error response
+    """
     logger.info(f"web_scraper called with url={url}, selector={selector}, timeout={timeout}, skip_rate_limit={skip_rate_limit}")
     start_time = time.time()
+    
     try:
+        # Validate URL parameter
+        if not url or not isinstance(url, str):
+            error = invalid_parameter_error(
+                param_name="url",
+                message="Please provide a valid URL as a string",
+                tool_name=TOOL_NAME,
+                received_value=url
+            )
+            logger.error(f"Invalid URL: {error['message']}")
+            return error
+            
         # Normalize URL
         if not url.startswith("http://") and not url.startswith("https://"):
             url = "https://" + url
 
-        domain = _extract_domain(url)
+        try:
+            domain = _extract_domain(url)
+        except ValueError as e:
+            error = invalid_parameter_error(
+                param_name="url",
+                message=str(e),
+                tool_name=TOOL_NAME,
+                received_value=url
+            )
+            logger.error(f"Invalid URL: {error['message']}")
+            return error
+            
+        # Mock response for example.com for testing
         if domain == "example.com":
             logger.info("Returning mock response for example.com")
             return {
@@ -68,35 +117,42 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
                 "url": url,
                 "mocked": True
             }
+            
+        # Rate limiting check
         if not skip_rate_limit and _should_rate_limit(domain):
             logger.warning(f"Rate limit exceeded for domain: {domain}")
-            return {
-                "error": f"Rate limit exceeded for domain: {domain}",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            error = rate_limit_error(
+                service_name=domain,
+                tool_name=TOOL_NAME,
+                retry_delay_seconds=2
+            )
+            return error
 
         headers = {
             "User-Agent": "Chloe-Agent/1.0"
         }
+        
         try:
             resp = requests.get(url, headers=headers, timeout=timeout)
             resp.raise_for_status()
             html = resp.text
         except requests.Timeout:
-            logger.error(f"Request timeout after {timeout}s for {url}")
-            return {
-                "error": f"Request timeout after {timeout}s",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            error = timeout_error(
+                service_name=f"Web request to {domain}",
+                timeout_seconds=timeout,
+                tool_name=TOOL_NAME
+            )
+            logger.error(f"Request timeout: {error['message']}")
+            return error
+            
         except requests.RequestException as e:
-            logger.error(f"HTTP error for {url}: {e}")
-            return {
-                "error": f"HTTP error: {e}",
-                "url": url,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            error = network_error(
+                service_name=f"Web request to {domain}",
+                error_details=str(e),
+                tool_name=TOOL_NAME
+            )
+            logger.error(f"HTTP error: {error['message']}")
+            return error
 
         soup = BeautifulSoup(html, "html.parser")
 
@@ -112,21 +168,30 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
             for el in soup.select(selector_rm):
                 el.decompose()
 
+        # Handle selector-based extraction
         if selector:
             elements = soup.select(selector)
             if not elements:
                 logger.info(f"No elements found matching selector: {selector}")
+                # This is not an error condition, just no matching elements
                 return {
                     "content": None,
                     "message": "No elements found matching selector",
                     "selector": selector,
-                    "url": url
+                    "url": url,
+                    "found_elements": False
                 }
             content = [el.get_text(strip=True) for el in elements]
             logger.info(f"Extracted {len(content)} elements for selector: {selector}")
-            return {"content": content, "selector": selector, "url": url}
+            return {
+                "content": content,
+                "selector": selector,
+                "url": url,
+                "found_elements": True,
+                "element_count": len(content)
+            }
 
-        # Try to get main content area
+        # General content extraction
         main_content = (
             soup.select_one("main, [role='main'], article, .content, #content") or soup.body
         )
@@ -148,11 +213,19 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
         content = "\n".join(paragraphs).strip()
         elapsed = time.time() - start_time
         logger.info(f"Scraping complete for {url} ({len(content)} chars, {elapsed:.2f}s)")
-        return {"content": content, "url": url}
-    except Exception as e:
-        logger.exception(f"Unexpected error in web_scraper: {e}")
+        
         return {
-            "error": str(e),
+            "content": content,
             "url": url,
-            "timestamp": datetime.utcnow().isoformat()
+            "elapsed_seconds": round(elapsed, 2),
+            "content_length": len(content)
         }
+        
+    except Exception as e:
+        error = ToolErrorResponse.from_exception(
+            exception=e,
+            tool_name=TOOL_NAME,
+            additional_details={"url": url, "selector": selector}
+        )
+        logger.exception(f"Unexpected error: {error['message']}")
+        return error

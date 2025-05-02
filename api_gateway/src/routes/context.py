@@ -4,7 +4,8 @@ API routes for shared context management.
 
 from typing import List, Optional, Dict
 from time import time
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timedelta, UTC
+from fastapi import APIRouter, HTTPException, Query
 
 from ..services.context_service import context_service
 from ..models.api import (
@@ -13,7 +14,17 @@ from ..models.api import (
     UpdateContextRequest,
     ExtendTTLRequest,
     FilterContextRequest,
-    BatchCleanupResponse
+    BatchCleanupResponse,
+    ContextStatsResponse,
+    ContextConfigResponse
+)
+
+# Import configuration constants
+from ..services.context_service import (
+    DEFAULT_MAX_CONTEXTS,
+    DEFAULT_CONTEXT_TTL_MINUTES,
+    DEFAULT_MIN_RELEVANCE_SCORE,
+    DEFAULT_CONTEXT_LIMIT_BYTES
 )
 
 router = APIRouter(prefix="/api/v1/context", tags=["context"])
@@ -40,14 +51,16 @@ def share_context(request: ShareContextRequest) -> Dict:
 def get_context(
     target_agent_id: str,
     session_id: Optional[str] = None,
-    source_agent_id: Optional[str] = None
+    source_agent_id: Optional[str] = None,
+    limit: Optional[int] = Query(None, gt=0, description="Maximum number of contexts to return")
 ) -> List[Dict]:
     """Get shared context for an agent."""
     try:
         contexts = context_service.get_shared_context(
             target_agent_id=target_agent_id,
             session_id=session_id,
-            source_agent_id=source_agent_id
+            source_agent_id=source_agent_id,
+            limit=limit if limit is not None else DEFAULT_MAX_CONTEXTS
         )
         return contexts
     except ValueError as e:
@@ -70,7 +83,8 @@ def filter_context(
         filtered = context_service.filter_relevant_context(
             contexts=contexts,
             query=request.query,
-            min_score=request.min_score
+            min_score=request.min_score,
+            max_contexts=request.max_contexts if request.max_contexts else DEFAULT_MAX_CONTEXTS
         )
         return [
             {**context["context"], "relevance_score": context["score"]}
@@ -90,7 +104,7 @@ def update_context(
     try:
         updates = {k: v for k, v in request.dict().items() if v is not None}
         if request.ttl_minutes is not None:
-            updates["expires_at"] = time() + (request.ttl_minutes * 60)
+            updates["expires_at"] = (datetime.now(UTC) + timedelta(minutes=request.ttl_minutes)).isoformat()
         
         context = context_service.update_context(
             context_id=context_id,
@@ -139,3 +153,49 @@ def cleanup_expired_contexts(batch_size: int = 100) -> Dict:
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{target_agent_id}/stats", response_model=ContextStatsResponse)
+def get_context_stats(
+    target_agent_id: str,
+    session_id: Optional[str] = None
+) -> Dict:
+    """Get statistics about an agent's contexts."""
+    try:
+        stats = context_service.get_agent_context_stats(
+            target_agent_id=target_agent_id,
+            session_id=session_id
+        )
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{target_agent_id}/prune", response_model=Dict[str, int])
+def prune_contexts(
+    target_agent_id: str,
+    session_id: Optional[str] = None,
+    max_contexts: Optional[int] = Query(None, gt=0, description="Maximum number of contexts to keep")
+) -> Dict[str, int]:
+    """Manually prune contexts for an agent to the specified limit."""
+    try:
+        before_count, removed_count = context_service._prune_contexts_if_needed(
+            target_agent_id=target_agent_id,
+            session_id=session_id,
+            max_contexts=max_contexts if max_contexts is not None else DEFAULT_MAX_CONTEXTS
+        )
+        return {
+            "before_count": before_count,
+            "removed_count": removed_count,
+            "after_count": before_count - removed_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/config", response_model=ContextConfigResponse)
+def get_context_config() -> Dict:
+    """Get the current context configuration settings."""
+    return ContextConfigResponse(
+        max_contexts_per_agent=DEFAULT_MAX_CONTEXTS,
+        default_ttl_minutes=DEFAULT_CONTEXT_TTL_MINUTES,
+        min_relevance_score=DEFAULT_MIN_RELEVANCE_SCORE,
+        context_limit_bytes=DEFAULT_CONTEXT_LIMIT_BYTES
+    )
