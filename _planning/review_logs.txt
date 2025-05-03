@@ -1,66 +1,422 @@
-Component unmounting, cleaning up all connections...
-socket-service.ts:1454 Cleaning up Socket.IO service
-App.tsx:329 Fetching messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
-App.tsx:329 Fetching messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
-App.tsx:392 Loading 12 messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
-App.tsx:231 Attempting initial connection for all agents for session 0e5e306d-ca35-441c-a197-219ca2971d6a...
-socket-service.ts:1440 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
-socket-service.ts:742 Received connection status: {connected: true, agent_id: 'chloe', session_id: '0e5e306d-ca35-441c-a197-219ca2971d6a', socket_id: 'vIzH3zfYaXB2NyXuAAAB', namespace: '/agents'}
-socket-service.ts:1440 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
-socket-service.ts:406 Socket.IO connected
-socket-service.ts:272 Connected to Socket.IO server, session: 0e5e306d-ca35-441c-a197-219ca2971d6a, agent: chloe
-App.tsx:254 Connected agent chloe to session 0e5e306d-ca35-441c-a197-219ca2971d6a
-socket-service.ts:1143 Disconnecting from Socket.IO server
-socket-service.ts:1440 Agent chloe status updated: {connection: 'disconnected', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'disconnected', activity: 'idle'}
-socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connecting', activity: 'idle'}
-App.tsx:186 [phil_connors] Status changed: {connection: 'connecting', activity: 'idle'}
-socket-service.ts:742 Received connection status: {connected: true, agent_id: 'phil_connors', session_id: '0e5e306d-ca35-441c-a197-219ca2971d6a', socket_id: 'RYZ2KUYQmcGjUEx9AAAD', namespace: '/agents'}
-socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connected', activity: 'idle'}
-App.tsx:186 [phil_connors] Status changed: {connection: 'connected', activity: 'idle'}
-socket-service.ts:406 Socket.IO connected
-socket-service.ts:272 Connected to Socket.IO server, session: 0e5e306d-ca35-441c-a197-219ca2971d6a, agent: phil_connors
-App.tsx:254 Connected agent phil_connors to session 0e5e306d-ca35-441c-a197-219ca2971d6a
-socket-service.ts:1143 Disconnecting from Socket.IO server
-socket-service.ts:1440 Agent phil_connors status updated: {connection: 'disconnected', activity: 'idle'}
-App.tsx:186 [phil_connors] Status changed: {connection: 'disconnected', activity: 'idle'}
-App.tsx:505 Switched to conversation: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
-2App.tsx:329 Fetching messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
-App.tsx:231 Attempting initial connection for all agents for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb...
-socket-service.ts:1440 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
-socket-service.ts:742 Received connection status: {connected: true, agent_id: 'chloe', session_id: '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', socket_id: 'Dp0B97E-d2VIaTj4AAAF', namespace: '/agents'}
-socket-service.ts:1440 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
-socket-service.ts:406 Socket.IO connected
-socket-service.ts:272 Connected to Socket.IO server, session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb, agent: chloe
-App.tsx:254 Connected agent chloe to session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
-socket-service.ts:1143 Disconnecting from Socket.IO server
-socket-service.ts:1440 Agent chloe status updated: {connection: 'disconnected', activity: 'idle'}
-App.tsx:186 [chloe] Status changed: {connection: 'disconnected', activity: 'idle'}
-socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connecting', activity: 'idle'}
-App.tsx:186 [phil_connors] Status changed: {connection: 'connecting', activity: 'idle'}
-socket-service.ts:742 Received connection status: {connected: true, agent_id: 'phil_connors', session_id: '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', socket_id: 'WHlfCyU1xuuAfu3rAAAH', namespace: '/agents'}
-socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connected', activity: 'idle'}
-App.tsx:186 [phil_connors] Status changed: {connection: 'connected', activity: 'idle'}
-socket-service.ts:406 Socket.IO connected
-socket-service.ts:272 Connected to Socket.IO server, session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb, agent: phil_connors
-App.tsx:254 Connected agent phil_connors to session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
-```
-
-Component unmounting, cleaning up all connections...
-socket-service.ts:1408 Cleaning up Socket.IO service
-App.tsx:224 Attempting initial connection for all agents...
-socket-service.ts:1394 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
-App.tsx:179 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
-socket-service.ts:185 Connection in progress, waiting...
-socket-service.ts:696 Received connection status: {connected: true, agent_id: 'chloe', session_id: '63399371-4b1d-4d73-be3c-c6a9e4abe707', socket_id: 'RarJiSIgqEvgiqr-AAAB', namespace: '/agents'}
-socket-service.ts:1394 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
-App.tsx:179 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
-socket-service.ts:406 Socket.IO connected
-socket-service.ts:272 Connected to Socket.IO server, session: 63399371-4b1d-4d73-be3c-c6a9e4abe707, agent: chloe
-socket-service.ts:1394 Agent chloe status updated: {connection: 'connected', activity: 'responding'}
-App.tsx:179 [chloe] Status changed: {connection: 'connected', activity: 'responding'}
-socket-service.ts:798 Message sent successfully: {status: 'received', timestamp: '2025-05-03T03:43:28.102209', message_id: 'msg_1746243808099_893'}
+e
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent chloe - 1047 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID b405bec7-86a1-41d6-b459-7d67d7e3eaf0
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 2a67bd75-8faa-4313-a382-7c9fa5cde993
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID 2a67bd75-8faa-4313-a382-7c9fa5cde993
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"b405bec7-86a1-41d6-b459-7d67d7e3eaf0","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254851364_66","timestamp":"2025-05-03T06:47:31.390649","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254851364_66","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"b405bec7-86a1-41d6-b459-7d67d7e3eaf0","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254851364_66","timestamp":"2025-05-03T06:47:31.390649","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254851364_66","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent chloe has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: hello...
+[1] [2025-05-03 00:47:31,398] INFO agents.base: Agent chloe generating response to message: hello...
+[1] INFO     [base_agent:556] Agent chloe generating response to message: hello...
+[1] [2025-05-03 00:47:31,505] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:47:32,101] INFO agents.base: Gemini direct API generated response for agent chloe: Hello! How can I help you today?
+[1] ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent chloe: Hello! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:784] Agent chloe generated response with generate_response: Hello! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:804] Response text generated: Hello! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': 'Hello! How can I help you today?\n'}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 4dd74058-b1fb-4925-8a03-d86c44a8e9c0
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 4dd74058-b1fb-4925-8a03-d86c44a8e9c0
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"b405bec7-86a1-41d6-b459-7d67d7e3eaf0","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Hello! How can I help you today?\n","in_reply_to":"msg_1746254851364_66","timestamp":"2025-05-03T06:47:31.390649","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hello! How can I help you today?\n","inReplyTo":"msg_1746254851364_66"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"b405bec7-86a1-41d6-b459-7d67d7e3eaf0","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Hello! How can I help you today?\n","in_reply_to":"msg_1746254851364_66","timestamp":"2025-05-03T06:47:31.390649","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hello! How can I help you today?\n","inReplyTo":"msg_1746254851364_66"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: Hello! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:873] Agent chloe generated and delivered response for message msg_1746254851364_66
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,1["message",{"id":"msg_1746254861902_955","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"Just testing messages","timestamp":"2025-05-03T06:47:41.902Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Just testing messages","toAgent":"chloe"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,1["message",{"id":"msg_1746254861902_955","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"Just testing messages","timestamp":"2025-05-03T06:47:41.902Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Just testing messages","toAgent":"chloe"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Just testing messages","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:41.908946"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Just testing messages","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:41.908946"}]
+[1] INFO     [socket_service:724] Message targets agent chloe, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for chloe
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,1[{"status":"received","timestamp":"2025-05-03T06:47:41.910277","message_id":"msg_1746254861902_955"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,1[{"status":"received","timestamp":"2025-05-03T06:47:41.910277","message_id":"msg_1746254861902_955"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent chloe for message msg_1746254861902_955 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=Just testing messages
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: chloe (chloe)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: Just testing messages...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254861902_955', 'timestamp': '2025-05-03T06:47:41.912202'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent chloe
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent chloe - 1047 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 349744ca-3224-431e-8569-7210f3fe9ebf
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: fadc6f00-558d-4a87-98c5-fea17444cf43
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID fadc6f00-558d-4a87-98c5-fea17444cf43
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"349744ca-3224-431e-8569-7210f3fe9ebf","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254861902_955","timestamp":"2025-05-03T06:47:41.922984","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254861902_955","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"349744ca-3224-431e-8569-7210f3fe9ebf","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254861902_955","timestamp":"2025-05-03T06:47:41.922984","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254861902_955","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent chloe has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: Just testing messages...
+[1] [2025-05-03 00:47:41,934] INFO agents.base: Agent chloe generating response to message: Just testing messages...
+[1] INFO     [base_agent:556] Agent chloe generating response to message: Just testing messages...
+[1] [2025-05-03 00:47:41,935] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:47:42,998] INFO agents.base: Gemini direct API generated response for agent chloe: Understood! I've received your test message. Let m...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent chloe: Understood! I've received your test message. Let m...
+[1] INFO     [socket_message_handler:784] Agent chloe generated response with generate_response: Understood! I've received your test message. Let m...
+[1] INFO     [socket_message_handler:804] Response text generated: Understood! I've received your test message. Let me know if there's anything else I can do for you.
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': "Understood! I've received your test message. Let me know if there's an...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 89c28c41-298a-4701-a5b8-47735bf4eafa
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 89c28c41-298a-4701-a5b8-47735bf4eafa
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"349744ca-3224-431e-8569-7210f3fe9ebf","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Understood! I've received your test message. Let me know if there's anything else I can do for you.\n","in_reply_to":"msg_1746254861902_955","timestamp":"2025-05-03T06:47:41.922984","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Understood! I've received your test message. Let me know if there's anything else I can do for you.\n","inReplyTo":"msg_1746254861902_955"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"349744ca-3224-431e-8569-7210f3fe9ebf","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Understood! I've received your test message. Let me know if there's anything else I can do for you.\n","in_reply_to":"msg_1746254861902_955","timestamp":"2025-05-03T06:47:41.922984","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Understood! I've received your test message. Let me know if there's anything else I can do for you.\n","inReplyTo":"msg_1746254861902_955"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: Understood! I've received your test message. Let m...
+[1] INFO     [socket_message_handler:873] Agent chloe generated and delivered response for message msg_1746254861902_955
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,2["message",{"id":"msg_1746254868662_804","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"phil_connors","content":"Hi","timestamp":"2025-05-03T06:47:48.662Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi","toAgent":"phil_connors"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,2["message",{"id":"msg_1746254868662_804","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"phil_connors","content":"Hi","timestamp":"2025-05-03T06:47:48.662Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi","toAgent":"phil_connors"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Hi","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:48.667397"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Hi","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:48.667397"}]
+[1] INFO     [socket_service:724] Message targets agent phil_connors, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for phil_connors
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,2[{"status":"received","timestamp":"2025-05-03T06:47:48.668725","message_id":"msg_1746254868662_804"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,2[{"status":"received","timestamp":"2025-05-03T06:47:48.668725","message_id":"msg_1746254868662_804"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent phil_connors for message msg_1746254868662_804 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=Hi
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: phil_connors (phil_connors)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: Hi...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254868662_804', 'timestamp': '2025-05-03T06:47:48.670404'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent phil_connors
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent phil_connors - 461 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 03d5c85b-beb8-4844-9711-fcb5229be55b
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Successfully saved message UUID: 72bf030b-c036-4283-9116-10b7a783d5ff
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID 72bf030b-c036-4283-9116-10b7a783d5ff
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"03d5c85b-beb8-4844-9711-fcb5229be55b","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"","in_reply_to":"msg_1746254868662_804","timestamp":"2025-05-03T06:47:48.681502","streaming":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254868662_804","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"03d5c85b-beb8-4844-9711-fcb5229be55b","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"","in_reply_to":"msg_1746254868662_804","timestamp":"2025-05-03T06:47:48.681502","streaming":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254868662_804","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent phil_connors has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: Hi...
+[1] [2025-05-03 00:47:48,693] INFO agents.base: Agent phil_connors generating response to message: Hi...
+[1] INFO     [base_agent:556] Agent phil_connors generating response to message: Hi...
+[1] [2025-05-03 00:47:48,693] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:47:49,620] INFO agents.base: Gemini direct API generated response for agent phil_connors: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent phil_connors: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:784] Agent phil_connors generated response with generate_response: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:804] Response text generated: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Attempting to save. Content snippet: '[{'type': 'text', 'content': 'Hi there! How can I help you today?\n'}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Successfully saved message UUID: 0ec48061-a016-49ab-b28f-5baa76f17230
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 0ec48061-a016-49ab-b28f-5baa76f17230
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"03d5c85b-beb8-4844-9711-fcb5229be55b","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"Hi there! How can I help you today?\n","in_reply_to":"msg_1746254868662_804","timestamp":"2025-05-03T06:47:48.681502","streaming":false,"turn_complete":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi there! How can I help you today?\n","inReplyTo":"msg_1746254868662_804"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"03d5c85b-beb8-4844-9711-fcb5229be55b","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"Hi there! How can I help you today?\n","in_reply_to":"msg_1746254868662_804","timestamp":"2025-05-03T06:47:48.681502","streaming":false,"turn_complete":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi there! How can I help you today?\n","inReplyTo":"msg_1746254868662_804"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:873] Agent phil_connors generated and delivered response for message msg_1746254868662_804
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,3["message",{"id":"msg_1746254875729_549","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"phil_connors","content":"what's your name","timestamp":"2025-05-03T06:47:55.729Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"what's your name","toAgent":"phil_connors"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,3["message",{"id":"msg_1746254875729_549","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"phil_connors","content":"what's your name","timestamp":"2025-05-03T06:47:55.729Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"what's your name","toAgent":"phil_connors"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"what's your name","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:55.731455"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"what's your name","agent_id":"phil_connors","timestamp":"2025-05-03T06:47:55.731455"}]
+[1] INFO     [socket_service:724] Message targets agent phil_connors, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for phil_connors
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,3[{"status":"received","timestamp":"2025-05-03T06:47:55.732495","message_id":"msg_1746254875729_549"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,3[{"status":"received","timestamp":"2025-05-03T06:47:55.732495","message_id":"msg_1746254875729_549"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent phil_connors for message msg_1746254875729_549 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=what's your name
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: phil_connors (phil_connors)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: what's your name...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254875729_549', 'timestamp': '2025-05-03T06:47:55.734035'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent phil_connors
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent phil_connors - 461 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 58206741-45c8-471e-b4a8-c9a719476df7
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Successfully saved message UUID: 0964823a-2368-4b4c-99a2-8ce1750c00a8
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID 0964823a-2368-4b4c-99a2-8ce1750c00a8
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"58206741-45c8-471e-b4a8-c9a719476df7","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"","in_reply_to":"msg_1746254875729_549","timestamp":"2025-05-03T06:47:55.742895","streaming":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254875729_549","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"58206741-45c8-471e-b4a8-c9a719476df7","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"","in_reply_to":"msg_1746254875729_549","timestamp":"2025-05-03T06:47:55.742895","streaming":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254875729_549","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent phil_connors has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: what's your name...
+[1] [2025-05-03 00:47:55,753] INFO agents.base: Agent phil_connors generating response to message: what's your name...
+[1] INFO     [base_agent:556] Agent phil_connors generating response to message: what's your name...
+[1] [2025-05-03 00:47:55,753] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:47:56,382] INFO agents.base: Gemini direct API generated response for agent phil_connors: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent phil_connors: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:784] Agent phil_connors generated response with generate_response: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:804] Response text generated: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Attempting to save. Content snippet: '[{'type': 'text', 'content': 'I am a large language model, trained by Google.\n'}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: phil_connors] Successfully saved message UUID: 05e15d65-0e9b-4fc4-9acc-62c1cff88eb9
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 05e15d65-0e9b-4fc4-9acc-62c1cff88eb9
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"58206741-45c8-471e-b4a8-c9a719476df7","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"I am a large language model, trained by Google.\n","in_reply_to":"msg_1746254875729_549","timestamp":"2025-05-03T06:47:55.742895","streaming":false,"turn_complete":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"I am a large language model, trained by Google.\n","inReplyTo":"msg_1746254875729_549"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"58206741-45c8-471e-b4a8-c9a719476df7","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"phil_connors","content":"I am a large language model, trained by Google.\n","in_reply_to":"msg_1746254875729_549","timestamp":"2025-05-03T06:47:55.742895","streaming":false,"turn_complete":true,"fromAgent":"phil_connors","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"I am a large language model, trained by Google.\n","inReplyTo":"msg_1746254875729_549"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:873] Agent phil_connors generated and delivered response for message msg_1746254875729_549
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,4["message",{"id":"msg_1746254886105_801","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"hi","timestamp":"2025-05-03T06:48:06.105Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"hi","toAgent":"chloe"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,4["message",{"id":"msg_1746254886105_801","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"hi","timestamp":"2025-05-03T06:48:06.105Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"hi","toAgent":"chloe"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hi","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:06.109287"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hi","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:06.109287"}]
+[1] INFO     [socket_service:724] Message targets agent chloe, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for chloe
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,4[{"status":"received","timestamp":"2025-05-03T06:48:06.110680","message_id":"msg_1746254886105_801"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,4[{"status":"received","timestamp":"2025-05-03T06:48:06.110680","message_id":"msg_1746254886105_801"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent chloe for message msg_1746254886105_801 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=hi
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: chloe (chloe)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: hi...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254886105_801', 'timestamp': '2025-05-03T06:48:06.113126'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent chloe
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent chloe - 1047 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 6d503e4b-c1e8-457b-a956-3dc5b4bbfaa8
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 0384c4c9-58ff-4631-9e89-5d38f7c52f34
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID 0384c4c9-58ff-4631-9e89-5d38f7c52f34
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"6d503e4b-c1e8-457b-a956-3dc5b4bbfaa8","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254886105_801","timestamp":"2025-05-03T06:48:06.124811","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254886105_801","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"6d503e4b-c1e8-457b-a956-3dc5b4bbfaa8","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254886105_801","timestamp":"2025-05-03T06:48:06.124811","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254886105_801","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent chloe has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: hi...
+[1] [2025-05-03 00:48:06,140] INFO agents.base: Agent chloe generating response to message: hi...
+[1] INFO     [base_agent:556] Agent chloe generating response to message: hi...
+[1] [2025-05-03 00:48:06,140] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:48:06,910] INFO agents.base: Gemini direct API generated response for agent chloe: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent chloe: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:784] Agent chloe generated response with generate_response: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:804] Response text generated: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': 'Hi there! How can I help you today?\n'}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: bb7ec858-69ac-4dc0-83c8-37f7061975b4
+[1] INFO     [socket_message_handler:833] Final message saved successfully: bb7ec858-69ac-4dc0-83c8-37f7061975b4
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"6d503e4b-c1e8-457b-a956-3dc5b4bbfaa8","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Hi there! How can I help you today?\n","in_reply_to":"msg_1746254886105_801","timestamp":"2025-05-03T06:48:06.124811","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi there! How can I help you today?\n","inReplyTo":"msg_1746254886105_801"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"6d503e4b-c1e8-457b-a956-3dc5b4bbfaa8","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"Hi there! How can I help you today?\n","in_reply_to":"msg_1746254886105_801","timestamp":"2025-05-03T06:48:06.124811","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Hi there! How can I help you today?\n","inReplyTo":"msg_1746254886105_801"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: Hi there! How can I help you today?
+[1] ...
+[1] INFO     [socket_message_handler:873] Agent chloe generated and delivered response for message msg_1746254886105_801
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,5["message",{"id":"msg_1746254890347_440","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"what's your name","timestamp":"2025-05-03T06:48:10.347Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"what's your name","toAgent":"chloe"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,5["message",{"id":"msg_1746254890347_440","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"what's your name","timestamp":"2025-05-03T06:48:10.347Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"what's your name","toAgent":"chloe"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"what's your name","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:10.350083"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"what's your name","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:10.350083"}]
+[1] INFO     [socket_service:724] Message targets agent chloe, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for chloe
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,5[{"status":"received","timestamp":"2025-05-03T06:48:10.351411","message_id":"msg_1746254890347_440"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,5[{"status":"received","timestamp":"2025-05-03T06:48:10.351411","message_id":"msg_1746254890347_440"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent chloe for message msg_1746254890347_440 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=what's your name
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: chloe (chloe)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: what's your name...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254890347_440', 'timestamp': '2025-05-03T06:48:10.353266'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent chloe
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent chloe - 1047 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 357251d8-9eaf-441e-8edc-e5b4e5e18d8a
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: e5025287-fe9d-44f5-b168-b1193c6e90d3
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID e5025287-fe9d-44f5-b168-b1193c6e90d3
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"357251d8-9eaf-441e-8edc-e5b4e5e18d8a","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254890347_440","timestamp":"2025-05-03T06:48:10.363740","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254890347_440","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"357251d8-9eaf-441e-8edc-e5b4e5e18d8a","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254890347_440","timestamp":"2025-05-03T06:48:10.363740","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254890347_440","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent chloe has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: what's your name...
+[1] [2025-05-03 00:48:10,378] INFO agents.base: Agent chloe generating response to message: what's your name...
+[1] INFO     [base_agent:556] Agent chloe generating response to message: what's your name...
+[1] [2025-05-03 00:48:10,378] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:48:11,006] INFO agents.base: Gemini direct API generated response for agent chloe: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent chloe: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:784] Agent chloe generated response with generate_response: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:804] Response text generated: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': 'I am a large language model, trained by Google.\n'}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 7ff96e45-7a1a-4ea5-88e8-94dd107b6036
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 7ff96e45-7a1a-4ea5-88e8-94dd107b6036
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"357251d8-9eaf-441e-8edc-e5b4e5e18d8a","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"I am a large language model, trained by Google.\n","in_reply_to":"msg_1746254890347_440","timestamp":"2025-05-03T06:48:10.363740","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"I am a large language model, trained by Google.\n","inReplyTo":"msg_1746254890347_440"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"357251d8-9eaf-441e-8edc-e5b4e5e18d8a","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"I am a large language model, trained by Google.\n","in_reply_to":"msg_1746254890347_440","timestamp":"2025-05-03T06:48:10.363740","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"I am a large language model, trained by Google.\n","inReplyTo":"msg_1746254890347_440"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: I am a large language model, trained by Google.
+[1] ...
+[1] INFO     [socket_message_handler:873] Agent chloe generated and delivered response for message msg_1746254890347_440
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 
+[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
+[1] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,6["message",{"id":"msg_1746254914935_453","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"Who is in the chat","timestamp":"2025-05-03T06:48:34.935Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Who is in the chat","toAgent":"chloe"}]
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet MESSAGE data 2/agents,6["message",{"id":"msg_1746254914935_453","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_user":true,"to_agent":"chloe","content":"Who is in the chat","timestamp":"2025-05-03T06:48:34.935Z","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"Who is in the chat","toAgent":"chloe"}]
+[1] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [async_server:594] received event "message" from 66dwAWYFnxOva9LCAAAD [/agents]
+[1] INFO     [socket_service:703] Received message from agent phil_connors in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Who is in the chat","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:34.938604"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"Who is in the chat","agent_id":"phil_connors","timestamp":"2025-05-03T06:48:34.938604"}]
+[1] INFO     [socket_service:724] Message targets agent chloe, generating agent response
+[1] INFO     [socket_service:739] Agent response generation task created for chloe
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,6[{"status":"received","timestamp":"2025-05-03T06:48:34.940902","message_id":"msg_1746254914935_453"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 3/agents,6[{"status":"received","timestamp":"2025-05-03T06:48:34.940902","message_id":"msg_1746254914935_453"}]
+[1] INFO     [socket_message_handler:642] ⭐ AGENT RESPONSE GENERATION STARTED ⭐
+[1] INFO     [socket_message_handler:643] Generating response from agent chloe for message msg_1746254914935_453 in session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:644] Message details: type=text, content=Who is in the chat
+[1] INFO     [socket_message_handler:645] Using namespace: /agents
+[1] INFO     [socket_message_handler:658] Successfully retrieved agent: chloe (chloe)
+[1] INFO     [chat_service:146] Clearing ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [chat_service:134] Creating new ADK session for app session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:667] Successfully created/retrieved ADK session for 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] INFO     [socket_message_handler:674] Using content from standardized message: Who is in the chat...
+[1] INFO     [socket_message_handler:693] Prepared template variables: {'session_id': '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', 'user_name': True, 'message_id': 'msg_1746254914935_453', 'timestamp': '2025-05-03T06:48:34.942653'}
+[1] DEBUG    [socket_message_handler:698] Getting system prompt for agent chloe
+[1] INFO     [socket_message_handler:700] Successfully retrieved system prompt for agent chloe - 1047 chars
+[1] INFO     [socket_message_handler:715] Creating initial empty response message with ID 57a7a604-a096-4247-b175-43b07301e0f4
+[1] DEBUG    [socket_message_handler:739] Storing initial empty message in database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': ''}]...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: e90415f3-8171-4794-93c6-d4315b1f0107
+[1] INFO     [socket_message_handler:746] Initial empty message stored successfully with ID e90415f3-8171-4794-93c6-d4315b1f0107
+[1] INFO     [socket_message_handler:750] Broadcasting initial empty message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"57a7a604-a096-4247-b175-43b07301e0f4","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254914935_453","timestamp":"2025-05-03T06:48:34.953633","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254914935_453","text":""}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"57a7a604-a096-4247-b175-43b07301e0f4","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"","in_reply_to":"msg_1746254914935_453","timestamp":"2025-05-03T06:48:34.953633","streaming":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","inReplyTo":"msg_1746254914935_453","text":""}]
+[1] INFO     [socket_message_handler:770] Initial empty message broadcast successfully
+[1] INFO     [socket_message_handler:777] Agent chloe has generate_response method, calling it
+[1] INFO     [socket_message_handler:778] Calling generate_response with message: Who is in the chat...
+[1] [2025-05-03 00:48:34,968] INFO agents.base: Agent chloe generating response to message: Who is in the chat...
+[1] INFO     [base_agent:556] Agent chloe generating response to message: Who is in the chat...
+[1] [2025-05-03 00:48:34,969] INFO agents.base: Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] INFO     [base_agent:618] Using Gemini model gemini-2.0-flash-exp for direct generation
+[1] [2025-05-03 00:48:35,890] INFO agents.base: Gemini direct API generated response for agent chloe: As a large language model, I don't have access to ...
+[1] INFO     [base_agent:669] Gemini direct API generated response for agent chloe: As a large language model, I don't have access to ...
+[1] INFO     [socket_message_handler:784] Agent chloe generated response with generate_response: As a large language model, I don't have access to ...
+[1] INFO     [socket_message_handler:804] Response text generated: As a large language model, I don't have access to information about who else might be using this int...
+[1] INFO     [socket_message_handler:815] Saving final message with content to database
+[1] INFO     [chat_service:224] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Attempting to save. Content snippet: '[{'type': 'text', 'content': "As a large language model, I don't have access to information about wh...'
+[1] INFO     [chat_service:259] [SaveMessage Session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb Type: AGENT Agent: chloe] Successfully saved message UUID: 5e8acd63-c3e1-4bba-a351-6cbbb436481b
+[1] INFO     [socket_message_handler:833] Final message saved successfully: 5e8acd63-c3e1-4bba-a351-6cbbb436481b
+[1] INFO     [socket_message_handler:838] Broadcasting final message to room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+[1] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"57a7a604-a096-4247-b175-43b07301e0f4","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"As a large language model, I don't have access to information about who else might be using this interface. I am a program, not a person, and I don't have access to your personal information or the identities of other users.\n","in_reply_to":"msg_1746254914935_453","timestamp":"2025-05-03T06:48:34.953633","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"As a large language model, I don't have access to information about who else might be using this interface. I am a program, not a person, and I don't have access to your personal information or the identities of other users.\n","inReplyTo":"msg_1746254914935_453"}]
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet MESSAGE data 2/agents,["message",{"id":"57a7a604-a096-4247-b175-43b07301e0f4","type":"text","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","from_agent":"chloe","content":"As a large language model, I don't have access to information about who else might be using this interface. I am a program, not a person, and I don't have access to your personal information or the identities of other users.\n","in_reply_to":"msg_1746254914935_453","timestamp":"2025-05-03T06:48:34.953633","streaming":false,"turn_complete":true,"fromAgent":"chloe","sessionId":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","text":"As a large language model, I don't have access to information about who else might be using this interface. I am a program, not a person, and I don't have access to your personal information or the identities of other users.\n","inReplyTo":"msg_1746254914935_453"}]
+[1] INFO     [socket_message_handler:867] Final message broadcast successful with content: As a large language model, I don't have access to ...
+[1] INFO     [socket_message_handler:873] Agent chloe generated and delivered response for message msg_1746254914935_453
+[1] INFO     [socket_message_handler:874] ⭐ AGENT RESPONSE GENERATION COMPLETED ⭐
+[1] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] INFO     [async_socket:77] fFbiL6jx_ecQY51KAAAC: Sending packet PING data None
+[1] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 
+[1] INFO     [async_socket:37] fFbiL6jx_ecQY51KAAAC: Received packet PONG data 

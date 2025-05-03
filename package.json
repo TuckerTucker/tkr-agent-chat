@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:client": "vite",
-    "dev:server": "source start_env && uvicorn api_gateway.src.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:server": "source start_env && lsof -ti:8000 | xargs kill -9 2>/dev/null || true && uvicorn api_gateway.src.main:app --reload --host 0.0.0.0 --port 8000",
     "dev": "echo \"🚀 Starting TKR Agent Chat development servers...\" && node -e \"if (!require('fs').existsSync('.env')) { console.log('\\x1b[33m⚠️  No .env file found. Running setup first...\\x1b[0m'); require('child_process').execSync('./setup.sh', {stdio: 'inherit'}); }\" && concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -19,7 +19,8 @@
     "test:coverage": "vitest run --coverage",
     "test:backend": "source start_env && cd api_gateway && python -m pytest src/tests/",
     "test:all": "source start_env && ./run_tests.sh",
-    "test:load": "cd api_gateway && python load_test.py"
+    "test:load": "cd api_gateway && python load_test.py",
+    "server:stop": "lsof -ti:8000 | xargs kill -9 2>/dev/null || echo 'No server running on port 8000'"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.2.3",

@@ -625,31 +625,26 @@ class BaseAgent(ADKAgentBase):
                 if not prompt_system:
                     prompt_system = f"You are {self.name}, {self.description}"
                 
-                # Create a properly structured chat session
-                chat = model.start_chat(history=[])
+                # Create messages with system prompt and user message
+                messages = [
+                    {
+                        "role": "user",
+                        "parts": [{"text": f"Instructions for you as an AI assistant: {prompt_system}"}]
+                    },
+                    {
+                        "role": "model",
+                        "parts": [{"text": "I understand and will act according to these instructions."}]
+                    },
+                    {
+                        "role": "user", 
+                        "parts": [{"text": message}]
+                    }
+                ]
                 
-                # Add system prompt as the first message
-                prompt_content = [{
-                    "role": "user",
-                    "parts": [{"text": f"Instructions for you as an AI assistant: {prompt_system}"}]
-                }]
-                
-                # API requires a response to the system message
-                prompt_content.append({
-                    "role": "model",
-                    "parts": [{"text": "I understand and will act according to these instructions."}]
-                })
-                
-                # Add the user's actual message
-                prompt_content.append({
-                    "role": "user", 
-                    "parts": [{"text": message}]
-                })
-                
-                # Send to the model with safety settings adjusted
+                # Use generate_content to ensure system prompt is included
                 response = await asyncio.to_thread(
-                    chat.send_message, 
-                    message,
+                    model.generate_content, 
+                    messages,
                     generation_config={
                         "temperature": 0.7,
                         "top_p": 0.9,
@@ -663,8 +658,19 @@ class BaseAgent(ADKAgentBase):
                     }
                 )
                 
-                # Extract text from response
-                response_text = response.text
+                # Extract text from response - handle different response formats
+                try:
+                    if hasattr(response, 'text'):
+                        response_text = response.text
+                    elif hasattr(response, 'parts') and len(response.parts) > 0:
+                        response_text = response.parts[0].text
+                    elif hasattr(response, 'candidates') and len(response.candidates) > 0 and len(response.candidates[0].content.parts) > 0:
+                        response_text = response.candidates[0].content.parts[0].text
+                    else:
+                        response_text = str(response)
+                except Exception as extract_err:
+                    logger.warning(f"Error extracting text from model response: {extract_err}")
+                    response_text = "I had trouble generating a response. Please try again."
                 
                 logger.info(f"Gemini direct API generated response for agent {self.id}: {response_text[:50]}...")
                 return response_text
