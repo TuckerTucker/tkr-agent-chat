@@ -30,6 +30,9 @@ type AgentStatusRecord = Record<string, {
   activity: AgentActivityStatus;
 }>;
 
+// Import agent components
+import '../agents/chloe/src/components';
+
 // Helper function to create UI messages with type safety
 const createUIMessage = (params: APIMessage): APIMessage => params;
 
@@ -74,6 +77,10 @@ function AppWithNotifications() {
   const { data: sessions = [] } = useQuery<ChatSessionRead[]>({
     queryKey: ["sessions"],
     queryFn: getSessions,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 3, // Retry failed requests 3 times
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   const { data: agents = [] } = useQuery<AgentInfo[]>({
@@ -348,10 +355,10 @@ function AppWithNotifications() {
   // Derived state for current conversation
   const currentMessages = useMemo(() => {
     if (!selectedSessionId) return [];
-    return localMessages.filter(msg =>
+    return messageState.messages.filter(msg =>
       msg.id && msg.content && (msg.role === 'user' || msg.role === 'agent')
     );
-  }, [localMessages, selectedSessionId]);
+  }, [messageState.messages, selectedSessionId]);
 
   const conversations = useMemo(() => sessions.map((session) => ({
     id: session.id,
@@ -639,6 +646,14 @@ function AppWithNotifications() {
       });
     }
   }, [selectedSessionId, sessions, addNotification]);
+
+  const handleDeleteConversation = (id: string) => {
+    deleteConversationMutation.mutate(id);
+  };
+
+  const handleUpdateTitle = (id: string, title: string) => {
+    updateTitleMutation.mutate({ id, title });
+  };
 
   return (
     <TooltipPrimitive.Provider>

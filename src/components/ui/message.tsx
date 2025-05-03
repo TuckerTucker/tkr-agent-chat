@@ -429,7 +429,8 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(({
                   </div>
                 ) : markdown ? (
                   <MarkdownRenderer 
-                    content={content} 
+                    content={typeof content === 'string' ? content : Array.isArray(content) ? content : 
+                      (content && typeof (content as any).toString === 'function') ? (content as any).toString() : String(content)}
                     agentColors={metadata.mentions?.reduce((acc: Record<string, string>, mention: { agentName: string; color: string }) => {
                       if (mention.color) {
                         acc[mention.agentName] = mention.color;

@@ -151,6 +151,49 @@ def list_sessions(skip: int = 0, limit: int = 100) -> List[Dict]:
         )
         return [row_to_dict(row) for row in cursor.fetchall()]
 
+def update_session(session_id: str, data: Dict) -> Optional[Dict]:
+    """Update a chat session."""
+    with get_connection() as conn:
+        # First verify the session exists
+        cursor = conn.execute("SELECT id FROM chat_sessions WHERE id = ?", (session_id,))
+        if not cursor.fetchone():
+            logger.warning(f"Attempted to update non-existent session: {session_id}")
+            return None
+
+        set_clause = ', '.join([f"{k} = ?" for k in data.keys()])
+        values = tuple(json.dumps(v) if isinstance(v, (dict, list)) else v for v in data.values())
+        cursor = conn.execute(
+            f"UPDATE chat_sessions SET {set_clause}, updated_at = ? WHERE id = ?",
+            values + (datetime.utcnow().isoformat(), session_id)
+        )
+        conn.commit()
+        return get_session(session_id) if cursor.rowcount > 0 else None
+
+def delete_session(session_id: str) -> bool:
+    """Delete a chat session and its associated messages."""
+    try:
+        with get_connection() as conn:
+            # First verify the session exists
+            cursor = conn.execute("SELECT id FROM chat_sessions WHERE id = ?", (session_id,))
+            if not cursor.fetchone():
+                logger.warning(f"Attempted to delete non-existent session: {session_id}")
+                return False
+
+            # Delete messages first due to foreign key constraint
+            conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+            
+            # Delete shared contexts associated with this session
+            conn.execute("DELETE FROM shared_contexts WHERE session_id = ?", (session_id,))
+            
+            # Finally delete the session
+            cursor = conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+            
+            logger.info(f"Successfully deleted session {session_id} and its associated data")
+            return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        logger.error(f"Database error while deleting session {session_id}: {e}", exc_info=True)
+        raise
+
 # --- Message Operations ---
 
 def create_message(data: Dict) -> Dict:

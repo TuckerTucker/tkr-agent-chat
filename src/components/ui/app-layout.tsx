@@ -1,7 +1,8 @@
-import { AppLayoutProps, Conversation } from './app-layout.d';
+import { AppLayoutProps } from './app-layout.d';
 import { ThemeProvider } from '../theme/theme-provider';
 import { ThemeSwitch} from '../theme/theme-switch'; 
 import { Button } from './button';
+import { ConversationList } from './conversation-list';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
@@ -55,17 +56,6 @@ export function AppLayout({
                 <ThemeSwitch showAgentIndicator={false} />
               </div>
             </div>
-            {/* New Chat button */}
-            <div className="px-8 py-4 border-b border-sidebar-border/50">
-              <Button 
-                onClick={onCreateConversation}
-                className="w-full justify-center font-medium text-base py-2.5"
-                variant="outline"
-              >
-                New Chat
-              </Button>
-            </div>
-            
             {/* Sidebar content: conversations */}
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">

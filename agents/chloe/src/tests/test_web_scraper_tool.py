@@ -4,8 +4,9 @@ Unit tests for the Web Scraper Tool in Chloe Agent.
 
 import unittest
 import logging
+import requests
 from unittest.mock import patch, MagicMock
-from ..tools.web_scraper import web_scraper, _extract_domain, _clean_text
+from ..tools.web_scraper import web_scraper
 
 class TestWebScraperTool(unittest.TestCase):
     """Test suite for the web_scraper tool."""
@@ -18,48 +19,51 @@ class TestWebScraperTool(unittest.TestCase):
         """Re-enable logging after tests."""
         logging.disable(logging.NOTSET)
 
-    def test_extract_domain(self):
-        """Test domain extraction from URL."""
-        self.assertEqual(_extract_domain("https://www.example.com/path"), "www.example.com")
-        self.assertEqual(_extract_domain("http://example.com"), "example.com")
-        with self.assertRaises(ValueError):
-            _extract_domain("invalid-url")
-
-    def test_clean_text(self):
-        """Test text cleaning function."""
-        text = "  Extra   spaces\n\nNewlines\r\n[Remove this] e-remove  © 2025 Subscribe now!  "
-        expected = "Extra spaces Newlines"
-        self.assertEqual(_clean_text(text), expected)
-
     @patch('requests.get')
     def test_web_scraper_success(self, mock_get):
         """Test successful scraping."""
         mock_response = MagicMock()
         mock_response.text = """
-            <html><body>
-                <header>Ignore</header>
-                <main>
-                    <h1>Title</h1>
-                    <p>First paragraph.</p>
-                    <p>Second paragraph with <a href="#">link</a>.</p>
-                    <ul><li>Item 1</li><li>Item 2</li></ul>
-                </main>
-                <footer>Ignore</footer>
-            </body></html>
+            <html>
+                <head><title>Test Title</title></head>
+                <body>
+                    <main>
+                        <p>First paragraph.</p>
+                        <p>Second paragraph.</p>
+                        <p>First paragraph.</p>
+                        <div>What's Hot Now</div>
+                        <p>Unwanted content</p>
+                        <p>Read More</p>
+                        <p>More unwanted content</p>
+                    </main>
+                </body>
+            </html>
         """
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
         result = web_scraper("https://test.com")
-        self.assertIn("content", result)
-        self.assertIn("Title", result["content"])
-        self.assertIn("First paragraph.", result["content"])
-        self.assertIn("Second paragraph with link.", result["content"])
-        self.assertIn("Item 1", result["content"])
-        self.assertNotIn("Ignore", result["content"])
+        self.assertNotIn("error", result)
+        self.assertEqual(result["title"], "Test Title")
         self.assertEqual(result["url"], "https://test.com")
+        
+        # Check that content is present
+        self.assertIn("First paragraph.", result["text"])
+        self.assertIn("Second paragraph.", result["text"])
+        
+        # Check that duplicates are removed
+        self.assertEqual(result["text"].count("First paragraph."), 1)
+        
+        # Check that unwanted content is removed
+        self.assertNotIn("What's Hot Now", result["text"])
+        self.assertNotIn("Unwanted content", result["text"])
+        self.assertNotIn("Read More", result["text"])
+        self.assertNotIn("More unwanted content", result["text"])
+        
         mock_get.assert_called_once_with(
-            "https://test.com", headers={"User-Agent": "Chloe-Agent/1.0"}, timeout=8
+            "https://test.com",
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"},
+            timeout=15
         )
 
     @patch('requests.get')
@@ -67,32 +71,23 @@ class TestWebScraperTool(unittest.TestCase):
         """Test scraping with a CSS selector."""
         mock_response = MagicMock()
         mock_response.text = """
-            <html><body>
-                <div class="content"><p>Target 1</p></div>
-                <div class="other"><p>Ignore</p></div>
-                <div class="content"><p>Target 2</p></div>
-            </body></html>
+            <html>
+                <head><title>Test Title</title></head>
+                <body>
+                    <div class="content"><p>Target content</p></div>
+                    <div class="other"><p>Ignore this</p></div>
+                </body>
+            </html>
         """
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = web_scraper("https://test.com", selector=".content p")
-        self.assertEqual(result["content"], ["Target 1", "Target 2"])
-        self.assertEqual(result["selector"], ".content p")
+        result = web_scraper("https://test.com", selectors={"content": ".content"})
+        self.assertNotIn("error", result)
+        self.assertEqual(result["title"], "Test Title")
         self.assertEqual(result["url"], "https://test.com")
-
-    @patch('requests.get')
-    def test_web_scraper_selector_not_found(self, mock_get):
-        """Test scraping when selector finds no elements."""
-        mock_response = MagicMock()
-        mock_response.text = "<html><body><p>Content</p></body></html>"
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
-
-        result = web_scraper("https://test.com", selector=".nonexistent")
-        self.assertIsNone(result["content"])
-        self.assertEqual(result["message"], "No elements found matching selector")
-        self.assertEqual(result["selector"], ".nonexistent")
+        self.assertIn("Target content", result["text"])
+        self.assertNotIn("Ignore this", result["text"])
 
     @patch('requests.get')
     def test_web_scraper_http_error(self, mock_get):
@@ -101,27 +96,22 @@ class TestWebScraperTool(unittest.TestCase):
 
         result = web_scraper("https://test.com")
         self.assertIn("error", result)
-        self.assertIn("HTTP error: HTTP Error", result["error"])
-        self.assertEqual(result["url"], "https://test.com")
+        self.assertEqual(result["error"], "Network error scraping 'https://test.com': HTTP Error")
 
     @patch('requests.get')
     def test_web_scraper_timeout(self, mock_get):
         """Test handling of request timeouts."""
         mock_get.side_effect = requests.Timeout("Timeout")
 
-        result = web_scraper("https://test.com", timeout=1)
+        result = web_scraper("https://test.com")
         self.assertIn("error", result)
-        self.assertIn("Request timeout after 1s", result["error"])
-        self.assertEqual(result["url"], "https://test.com")
+        self.assertEqual(result["error"], "Request timed out while scraping 'https://test.com'.")
 
-    @patch('agents.chloe.src.tools.web_scraper._should_rate_limit', return_value=True)
-    def test_web_scraper_rate_limit(self, mock_rate_limit):
-        """Test rate limiting behavior."""
-        result = web_scraper("https://ratelimited.com")
+    def test_invalid_url(self):
+        """Test handling of invalid URLs."""
+        result = web_scraper("")
         self.assertIn("error", result)
-        self.assertIn("Rate limit exceeded for domain: ratelimited.com", result["error"])
-        self.assertEqual(result["url"], "https://ratelimited.com")
-        mock_rate_limit.assert_called_once_with("ratelimited.com")
+        self.assertEqual(result["error"], "Invalid URL provided. Please provide a valid URL.")
 
 if __name__ == '__main__':
     unittest.main()

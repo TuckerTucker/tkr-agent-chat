@@ -37,7 +37,9 @@ from ..db import (
     get_session as db_get_session,
     list_sessions as db_list_sessions,
     create_message as db_create_message,
-    get_session_messages as db_get_session_messages
+    get_session_messages as db_get_session_messages,
+    delete_session as db_delete_session,
+    update_session as db_update_session
 )
 from ..models.messages import MessageType
 
@@ -86,29 +88,57 @@ class ChatService:
         logger.debug(f"Retrieved {len(sessions)} sessions.")
         return sessions
 
+    def update_session(self, session_id: str, title: str) -> Optional[Dict]:
+        """Update a chat session's title."""
+        try:
+            session = db_update_session(session_id, {'title': title})
+            if session:
+                logger.info(f"Updated session {session_id} title to: {title}")
+            else:
+                logger.warning(f"Session not found for update: {session_id}")
+            return session
+        except Exception as e:
+            logger.error(f"Error updating session {session_id}: {e}", exc_info=True)
+            raise
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a chat session and its associated data."""
+        try:
+            # Clear ADK session if it exists
+            self.clear_adk_session(session_id)
+            
+            # Delete from database
+            success = db_delete_session(session_id)
+            if success:
+                logger.info(f"Deleted session {session_id} from database.")
+            else:
+                logger.warning(f"Failed to delete session {session_id} - not found.")
+            return success
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}", exc_info=True)
+            raise
+
     # --- ADK Session Management ---
     def get_or_create_adk_session(self, session_id: str, user_id: Optional[str] = None) -> Optional[Session]:
         """
-        Retrieves an existing ADK Session for the given application session_id
-        or creates a new one if it doesn't exist.
+        Creates a new ADK Session for each connection to prevent context persistence.
         """
         if not self.adk_session_service:
             logger.error("ADK Session Service not available.")
             return None
 
-        if session_id in self.active_adk_sessions:
-            logger.debug(f"Reusing existing ADK session for app session {session_id}")
-            return self.active_adk_sessions[session_id]
-        else:
-            logger.info(f"Creating new ADK session for app session {session_id}")
-            # Use the application session_id also as the ADK session_id and user_id for simplicity
-            adk_session = self.adk_session_service.create_session(
-                app_name=APP_NAME,
-                user_id=user_id or session_id,  # Default user_id to session_id if not provided
-                session_id=session_id
-            )
-            self.active_adk_sessions[session_id] = adk_session
-            return adk_session
+        # Always clear any existing session first
+        self.clear_adk_session(session_id)
+
+        # Create a new session
+        logger.info(f"Creating new ADK session for app session {session_id}")
+        adk_session = self.adk_session_service.create_session(
+            app_name=APP_NAME,
+            user_id=user_id or session_id,  # Default user_id to session_id if not provided
+            session_id=session_id
+        )
+        self.active_adk_sessions[session_id] = adk_session
+        return adk_session
 
     def clear_adk_session(self, session_id: str):
         """Removes an ADK session from active management (e.g., on disconnect)."""

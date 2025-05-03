@@ -13,7 +13,10 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import requests
+import logging
+from typing import Dict, Any, Optional
 from bs4 import BeautifulSoup
+import re
 
 # Import standardized tool error handling
 from agents.common.tool_errors import (
@@ -27,13 +30,7 @@ from agents.common.tool_errors import (
 )
 
 # Configure logger
-logger = logging.getLogger("chloe.web_scraper")
-if not logger.hasHandlers():
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Tool name constant for error handling
 TOOL_NAME = "web_scraper"
@@ -41,15 +38,20 @@ TOOL_NAME = "web_scraper"
 # Simple in-memory rate limit store
 _request_store = {}
 
-def _should_rate_limit(domain):
-    now = time.time()
-    last_request = _request_store.get(domain)
-    if not last_request or (now - last_request) > 1.0:
-        _request_store[domain] = now
-        return False
-    return True
+    Args:
+        url: The URL to scrape
+        selectors: Optional CSS selectors to extract specific content
 
-def _extract_domain(url):
+    Returns:
+        A dictionary containing the scraped text content or an error message.
+    """
+    logger.info(f"Web scraper tool invoked for URL: '{url}'")
+    
+    if not url or not isinstance(url, str):
+        error_msg = "Invalid URL provided. Please provide a valid URL."
+        logger.error(error_msg)
+        return {"error": error_msg}
+
     try:
         return urlparse(url).hostname
     except Exception:
@@ -129,7 +131,7 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
             return error
 
         headers = {
-            "User-Agent": "Chloe-Agent/1.0"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
         
         try:
