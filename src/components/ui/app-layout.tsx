@@ -1,8 +1,6 @@
-import { AppLayoutProps } from './app-layout.d';
+import { AppLayoutProps, Conversation } from './app-layout.d';
 import { ThemeProvider } from '../theme/theme-provider';
-import { ThemeSwitch} from '../theme/theme-switch'; 
-import { Button } from './button';
-import { ConversationList } from './conversation-list';
+import { ThemeSwitch} from '../theme/theme-switch';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
@@ -18,7 +16,7 @@ export function AppLayout({
   conversations = [],
   currentConversation = null,
   onSendMessage = async () => Promise.resolve(),
-  onCreateConversation = () => {},
+  // onCreateConversation param not used in this component but included in props type
   onSelectConversation = () => {},
   onRenameConversation = async () => Promise.resolve(),
   onDeleteConversation = async () => Promise.resolve(),

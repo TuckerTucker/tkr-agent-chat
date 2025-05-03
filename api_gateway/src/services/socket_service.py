@@ -23,7 +23,7 @@ from socketio import AsyncNamespace
 
 from ..models.error_responses import (
     ErrorCodes, ErrorCategory, ErrorSeverity, 
-    WebSocketErrorResponse, create_websocket_error
+    SocketErrorResponse, create_socket_error
 )
 from ..services.logger_service import logger_service
 from ..services.error_service import error_service

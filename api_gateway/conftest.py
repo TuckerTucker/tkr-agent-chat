@@ -121,39 +121,58 @@ def mock_adk_session_service():
     """Provide a mock ADK session service."""
     return MockSessionService()
 
-# Mock WebSocket connection
+# Mock Socket.IO connection
 @pytest.fixture
-def mock_websocket():
-    """Create a mock WebSocket connection."""
-    class MockWebSocket:
+def mock_socketio():
+    """Create a mock Socket.IO connection."""
+    class MockSocketIO:
         def __init__(self):
             self.sent_messages = []
-            self.accepted = False
-            self.closed = False
-            self.close_code = None
+            self.events = {}
+            self.rooms = set()
+            self.namespace = '/'
+            self.sid = 'test-socket-id'
+            self.connected = True
+            self.disconnected = False
             
-        async def accept(self):
-            self.accepted = True
+        async def emit(self, event, data=None, room=None, namespace=None, skip_sid=None):
+            self.sent_messages.append({
+                'event': event,
+                'data': data,
+                'room': room,
+                'namespace': namespace,
+                'skip_sid': skip_sid
+            })
+            return True
             
-        async def close(self, code=1000):
-            self.closed = True
-            self.close_code = code
+        async def enter_room(self, sid, room):
+            self.rooms.add(room)
+            return True
             
-        async def send_text(self, data):
-            self.sent_messages.append(data)
+        async def leave_room(self, sid, room):
+            if room in self.rooms:
+                self.rooms.remove(room)
+            return True
             
-        async def send_json(self, data):
-            self.sent_messages.append(data)
+        def on(self, event, handler=None):
+            """Register an event handler."""
+            self.events[event] = handler
+            return self
             
-        async def receive_text(self):
-            # Mock implementation to return predefined messages if needed
-            return "{}"
+        async def trigger_event(self, event, data=None):
+            """Trigger a registered event handler."""
+            if event in self.events and self.events[event]:
+                if asyncio.iscoroutinefunction(self.events[event]):
+                    return await self.events[event](self.sid, data)
+                return self.events[event](self.sid, data)
+            return None
             
-        async def receive_json(self):
-            # Mock implementation to return predefined messages if needed
-            return {}
+        async def disconnect(self, sid=None):
+            self.connected = False
+            self.disconnected = True
+            return True
     
-    return MockWebSocket()
+    return MockSocketIO()
 
 # Mock test database
 @pytest.fixture
@@ -270,9 +289,15 @@ def cleanup():
     """Clean up after each test."""
     yield
     # Reset services
-    shared_state.clear_websockets()
     chat_service.clear_all_sessions()
     chat_service.agent_instances = {}
+    
+    # Reset Socket.IO connections if needed
+    from src.services.socket_service import active_connections, agent_rooms, session_rooms, task_subscribers
+    active_connections.clear()
+    agent_rooms.clear()
+    session_rooms.clear()
+    task_subscribers.clear()
 
 # For testing async code - Use the pytest_asyncio built-in event_loop fixture
 # Removing custom event_loop fixture to avoid the DeprecationWarning

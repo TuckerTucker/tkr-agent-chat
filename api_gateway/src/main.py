@@ -3,7 +3,7 @@ API Gateway for TKR Multi-Agent Chat System
 
 Provides:
 - REST endpoints for agent metadata and system info
-- WebSocket and Socket.IO endpoints for real-time agent communication
+- Socket.IO endpoints for real-time agent communication
 - Message routing between frontend and agents
 - Agent status and metadata management
 """
@@ -78,25 +78,6 @@ if not os.getenv("GOOGLE_API_KEY"):
 def signal_handler(sig, frame):
     """Handle shutdown signals gracefully."""
     logger.info(f"Received signal {sig}, shutting down gracefully...")
-    
-    # Clean up any active WebSocket connections - use a snapshot to avoid iterator modification
-    try:
-        # Get a copy of active websockets to iterate over
-        active_ws_snapshot = list(shared_state.active_websockets)
-        logger.info(f"Closing {len(active_ws_snapshot)} active WebSocket connections...")
-        
-        # Close each connection in the snapshot
-        for ws in active_ws_snapshot:
-            try:
-                ws.close()
-            except Exception as e:
-                logger.error(f"Error closing individual WebSocket: {e}")
-                
-        # Clear all connections after iterating
-        shared_state.clear_websockets()
-        logger.info("WebSocket connections cleared successfully")
-    except Exception as e:
-        logger.error(f"Error cleaning up WebSocket connections: {e}")
     
     # Clear any ADK sessions
     try:
@@ -455,8 +436,6 @@ async def startup_event():
 async def shutdown_event():
     """Clean up resources on shutdown."""
     try:
-        # Legacy WebSocket connections have been removed in favor of Socket.IO
-        
         # Clear ADK sessions
         session_count = chat_service.get_active_session_count()
         if session_count > 0:
@@ -556,8 +535,7 @@ async def health_check():
             "error_count": error_count,
             "statuses": agent_statuses
         },
-        "features": ["a2a", "websocket", "socket.io", "agents", "agent_health_monitoring"],
-        "active_websockets": shared_state.get_active_count(),
+        "features": ["a2a", "socket.io", "agents", "agent_health_monitoring"],
         "active_adk_sessions": len(chat_service.active_adk_sessions),
         "socket_io": socket_io_metrics
     }

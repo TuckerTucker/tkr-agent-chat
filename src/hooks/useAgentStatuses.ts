@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import socketService, { AgentStatus } from '@/services/socket-service'; // Import service and type
 
-// Hook to manage agent statuses from WebSocket service
+// Hook to manage agent statuses from Socket.IO service
 export const useAgentStatuses = (activeAgentIds: string[]) => {
   const [agentStatuses, setAgentStatuses] = useState<Map<string, AgentStatus>>(
     () => socketService.getAllAgentStatuses() // Initialize with current statuses
   );
 
-  // Callback handler for status changes from WebSocket
+  // Callback handler for status changes from Socket.IO
   const handleStatusChange = useCallback((agentId: string, status: AgentStatus) => {
     // Only update if the agent is currently active in the session
     // Or if we want to track all agents regardless, remove this check

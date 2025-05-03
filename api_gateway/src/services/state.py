@@ -1,80 +1,97 @@
 """
-LEGACY MODULE - Replaced by Socket.IO implementation
-This module is kept for backward compatibility only and should not be used
-for new development. All WebSocket functionality has moved to socket_service.py
-and socket_connection_manager.py.
+Thread pool executor service for running CPU-bound tasks outside the async event loop.
 """
 
 import logging
 import asyncio
-import threading
-from typing import Set, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
-class ThreadSafeSet(set):
-    """Thread-safe set implementation using a lock."""
-    def __init__(self, *args, **kwargs):
-        self._lock = threading.RLock()
-        super().__init__(*args, **kwargs)
+class ThreadExecutorService:
+    """
+    Thread pool executor for running CPU-bound or blocking operations.
+    This prevents blocking the main async event loop.
+    """
+    def __init__(self, max_workers=10):
+        """
+        Initialize the thread pool executor.
         
-    def add(self, item):
-        with self._lock:
-            super().add(item)
+        Args:
+            max_workers: Maximum number of worker threads in the pool
+        """
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._shutdown = False
+        logger.info(f"ThreadExecutorService initialized with {max_workers} workers")
+        
+    def run_in_executor(self, func, *args):
+        """
+        Run a function in the thread executor.
+        
+        Args:
+            func: The function to execute
+            args: Arguments to pass to the function
             
-    def remove(self, item):
-        with self._lock:
-            super().remove(item)
+        Returns:
+            A concurrent.futures.Future representing the execution
+        """
+        if self._shutdown:
+            raise RuntimeError("ThreadExecutorService has been shut down")
+        
+        return self.executor.submit(func, *args)
+    
+    async def run_async(self, func, *args):
+        """
+        Run a function in the thread executor and await its result.
+        
+        Args:
+            func: The function to execute
+            args: Arguments to pass to the function
             
-    def __contains__(self, item):
-        with self._lock:
-            return super().__contains__(item)
-            
-    def __len__(self):
-        with self._lock:
-            return super().__len__()
-            
-    def clear(self):
-        with self._lock:
-            super().clear()
+        Returns:
+            The result of the function
+        """
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self.executor, func, *args)
+    
+    def shutdown(self, wait=True):
+        """
+        Shutdown the thread executor.
+        
+        Args:
+            wait: Whether to wait for scheduled tasks to complete
+        """
+        self._shutdown = True
+        self.executor.shutdown(wait=wait)
+        logger.info("ThreadExecutorService shut down")
 
+# For backward compatibility
 class SharedState:
     """
-    DEPRECATED: This class is kept for backward compatibility only.
-    All WebSocket management has moved to Socket.IO implementation.
+    Service provider for thread executor functionality.
+    Maintained for backward compatibility.
     """
     def __init__(self):
-        self.active_websockets = ThreadSafeSet()
-        self._websocket_locks = {}
-        self._locks_lock = threading.RLock()  # Lock for the locks dict itself
-        self.executor = ThreadPoolExecutor(max_workers=10)
-
-    def add_websocket(self, websocket: Any):
-        """Legacy method - not used with Socket.IO implementation"""
-        logger.warning("SharedState.add_websocket called - this is deprecated")
-        pass
-
-    def remove_websocket(self, websocket: Any):
-        """Legacy method - not used with Socket.IO implementation"""
-        logger.warning("SharedState.remove_websocket called - this is deprecated")
-        pass
-
-    def get_websocket_lock(self, websocket: Any):
-        """Legacy method - not used with Socket.IO implementation"""
-        logger.warning("SharedState.get_websocket_lock called - this is deprecated")
-        return asyncio.Lock()  # Return a dummy lock
-
-    def clear_websockets(self):
-        """Legacy method - not used with Socket.IO implementation"""
-        logger.warning("SharedState.clear_websockets called - this is deprecated")
-        self.active_websockets.clear()
-        with self._locks_lock:
-            self._websocket_locks.clear()
-            
+        """Initialize with a thread executor service."""
+        self._executor_service = ThreadExecutorService()
+    
     def run_in_executor(self, func, *args):
-        """Run a function in a thread executor"""
-        return self.executor.submit(func, *args)
+        """
+        Run a function in the thread executor.
+        
+        Args:
+            func: The function to execute
+            args: Arguments to pass to the function
+            
+        Returns:
+            A concurrent.futures.Future representing the execution
+        """
+        return self._executor_service.run_in_executor(func, *args)
+    
+    # Backward-compatibility method - does nothing
+    def clear_websockets(self):
+        """No-op method kept for backward compatibility."""
+        pass
 
 # Create a singleton instance
 shared_state = SharedState()

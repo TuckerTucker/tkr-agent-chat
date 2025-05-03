@@ -1,7 +1,7 @@
 """
 Standardized error response models for the TKR Multi-Agent Chat API Gateway.
 
-These models ensure consistent error handling and responses across all API and WebSocket endpoints.
+These models ensure consistent error handling and responses across all API and Socket.IO endpoints.
 """
 
 from typing import Optional, Dict, Any, List, Union
@@ -29,7 +29,7 @@ class ErrorCategory(str, Enum):
     DATABASE = "database"           # Database errors
     CONTEXT = "context"             # Context-handling errors
     GENERAL = "general"             # General application errors
-    WEBSOCKET = "websocket"         # WebSocket-specific errors
+    SOCKET = "socket"               # Socket.IO-specific errors
     TASK = "task"                   # Task-handling errors
 
 
@@ -92,9 +92,9 @@ class StandardErrorResponse(BaseModel):
         }
 
 
-class WebSocketErrorResponseModel(StandardErrorResponse):
+class SocketErrorResponseModel(StandardErrorResponse):
     """
-    WebSocket-specific error response model with additional fields.
+    Socket.IO-specific error response model with additional fields.
     Extends the standard error response model.
     """
     reconnect_suggested: bool = Field(
@@ -107,23 +107,23 @@ class WebSocketErrorResponseModel(StandardErrorResponse):
     )
     session_id: Optional[str] = Field(
         default=None, 
-        description="The session ID associated with this WebSocket connection"
+        description="The session ID associated with this Socket.IO connection"
     )
     agent_id: Optional[str] = Field(
         default=None,
-        description="The agent ID associated with this WebSocket connection"
+        description="The agent ID associated with this Socket.IO connection"
     )
 
-class WebSocketErrorResponse(Exception):
+class SocketErrorResponse(Exception):
     """
-    Exception class for WebSocket errors that properly inherits from BaseException.
+    Exception class for Socket.IO errors that properly inherits from BaseException.
     Contains a response model with detailed error information.
     """
     def __init__(
         self,
         error_code: str,
         message: str,
-        category: ErrorCategory = ErrorCategory.WEBSOCKET,
+        category: ErrorCategory = ErrorCategory.SOCKET,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         details: Optional[Dict[str, Any]] = None,
         request_id: Optional[str] = None,
@@ -132,7 +132,7 @@ class WebSocketErrorResponse(Exception):
         session_id: Optional[str] = None,
         agent_id: Optional[str] = None
     ):
-        self.model = WebSocketErrorResponseModel(
+        self.model = SocketErrorResponseModel(
             error_code=error_code,
             message=message,
             category=category,
@@ -157,9 +157,9 @@ class WebSocketErrorResponse(Exception):
     class Config:
         schema_extra = {
             "example": {
-                "error_code": "WS_CONNECTION_TIMEOUT",
-                "message": "WebSocket connection timed out",
-                "category": "websocket",
+                "error_code": "SOCKET_CONNECTION_TIMEOUT",
+                "message": "Socket.IO connection timed out",
+                "category": "socket",
                 "severity": "error",
                 "details": {
                     "timeout_seconds": 60
@@ -222,10 +222,10 @@ class ErrorCodes:
     ADK_AGENT_NOT_FOUND = "ADK_AGENT_NOT_FOUND"
     ADK_RUNNER_ERROR = "ADK_RUNNER_ERROR"
     
-    # WebSocket errors
-    WS_CONNECTION_ERROR = "WS_CONNECTION_ERROR"
-    WS_MESSAGE_ERROR = "WS_MESSAGE_ERROR"
-    WS_TIMEOUT = "WS_TIMEOUT"
+    # Socket.IO errors
+    SOCKET_CONNECTION_ERROR = "SOCKET_CONNECTION_ERROR"
+    SOCKET_MESSAGE_ERROR = "SOCKET_MESSAGE_ERROR"
+    SOCKET_TIMEOUT = "SOCKET_TIMEOUT"
     
     # A2A errors
     A2A_TASK_ERROR = "A2A_TASK_ERROR"
@@ -252,7 +252,7 @@ def create_not_found_error(resource_type: str, resource_id: str) -> StandardErro
     )
 
 
-def create_websocket_error(
+def create_socket_error(
     error_code: str,
     message: str,
     session_id: Optional[str] = None,
@@ -261,12 +261,12 @@ def create_websocket_error(
     reconnect_suggested: bool = True,
     close_connection: bool = False,
     severity: ErrorSeverity = ErrorSeverity.ERROR
-) -> WebSocketErrorResponse:
-    """Create a standardized WebSocket error response."""
-    return WebSocketErrorResponse(
+) -> SocketErrorResponse:
+    """Create a standardized Socket.IO error response."""
+    return SocketErrorResponse(
         error_code=error_code,
         message=message,
-        category=ErrorCategory.WEBSOCKET,
+        category=ErrorCategory.SOCKET,
         severity=severity,
         details=details,
         session_id=session_id,

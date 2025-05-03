@@ -63,8 +63,8 @@ export interface MessageRead {
 }
 
 
-// WebSocket Message Format
-export interface WebSocketMessage {
+// Socket.IO Message Format
+export interface SocketMessage {
   type: MessageType;
   agent_id?: string;
   content: string;
@@ -95,7 +95,7 @@ export interface AddAgentToSessionParams {
 }
 
 // A2A Protocol Types
-export interface A2AMessage extends WebSocketMessage {
+export interface A2AMessage extends SocketMessage {
   type: 'a2a';
   from_agent: string;
   to_agent: string;

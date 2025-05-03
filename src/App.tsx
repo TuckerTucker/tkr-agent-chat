@@ -155,8 +155,8 @@ function AppWithNotifications() {
     showError: true
   });
 
-  // WebSocket callbacks
-  const handleWebSocketPacket = useCallback((agentId: string, packet: { 
+  // Socket.IO callbacks
+  const handleSocketPacket = useCallback((agentId: string, packet: { 
     message?: string; 
     turn_complete?: boolean; 
     interrupted?: boolean; 
@@ -168,11 +168,11 @@ function AppWithNotifications() {
     setLocalMessages(prev => [...prev, newMessage]);
   }, [agentMetadata]);
 
-  const handleWebSocketError = useCallback((agentId: string, error: { 
+  const handleSocketError = useCallback((agentId: string, error: { 
     code: number; 
     message: string 
   }) => {
-    console.error(`[${agentId}] WebSocket error:`, error);
+    console.error(`[${agentId}] Socket.IO error:`, error);
     setAgentStatuses(prev => ({
       ...prev,
       [agentId]: { connection: 'error', activity: 'error' }
@@ -190,11 +190,11 @@ function AppWithNotifications() {
     }));
   }, []);
   
-  // Set up WebSocket callbacks
+  // Set up Socket.IO callbacks
   useEffect(() => {
     const callbacks = {
-      onPacket: handleWebSocketPacket,
-      onError: handleWebSocketError,
+      onPacket: handleSocketPacket,
+      onError: handleSocketError,
       onStatusChange: handleStatusChange
     };
 
@@ -208,9 +208,9 @@ function AppWithNotifications() {
         onStatusChange: () => {}
       });
     };
-  }, [handleWebSocketPacket, handleWebSocketError, handleStatusChange]);
+  }, [handleSocketPacket, handleSocketError, handleStatusChange]);
 
-  // WebSocket connection management
+  // Socket.IO connection management
   useEffect(() => {
     if (!selectedSessionId || !availableAgents.length) return;
 
@@ -322,13 +322,13 @@ function AppWithNotifications() {
     if (!messages.length) return;
     
     // Create a stable representation of messages for comparison
-    const messageIds = messages.map(msg => msg.message_uuid).join(',');
+    const messageIds = messages.map((msg: MessageRead) => msg.message_uuid).join(',');
     
     // Only update if messages have changed
     if (messageIds !== prevMessagesRef.current) {
       prevMessagesRef.current = messageIds;
       
-      const uiMessages = messages.map(msg => createUIMessage({
+      const uiMessages = messages.map((msg: MessageRead) => createUIMessage({
         id: msg.message_uuid,
         role: msg.type === 'user' ? 'user' : 'agent',
         content: msg.parts[0]?.content || '',
@@ -355,10 +355,10 @@ function AppWithNotifications() {
   // Derived state for current conversation
   const currentMessages = useMemo(() => {
     if (!selectedSessionId) return [];
-    return messageState.messages.filter(msg =>
+    return localMessages.filter((msg) =>
       msg.id && msg.content && (msg.role === 'user' || msg.role === 'agent')
     );
-  }, [messageState.messages, selectedSessionId]);
+  }, [localMessages, selectedSessionId]);
 
   const conversations = useMemo(() => sessions.map((session) => ({
     id: session.id,
@@ -406,7 +406,7 @@ function AppWithNotifications() {
       const newSession = await createSession();
       setSelectedSessionId(newSession.id);
       
-      // Reset WebSocket connections for new session
+      // Reset Socket.IO connections for new session
       isInitialConnect.current = false;
     } catch (error) {
       console.error("Failed to create conversation:", error);
@@ -416,7 +416,7 @@ function AppWithNotifications() {
   const handleSelectConversation = useCallback((conv: { id: string }) => {
     if (conv.id !== selectedSessionId) {
       setSelectedSessionId(conv.id);
-      // Reset WebSocket connections when switching sessions
+      // Reset Socket.IO connections when switching sessions
       isInitialConnect.current = false;
     }
   }, [selectedSessionId]);
@@ -458,7 +458,7 @@ function AppWithNotifications() {
 
     // Find and update the message status
     setLocalMessages(prevMessages => {
-      return prevMessages.map(msg => {
+      return prevMessages.map((msg: APIMessage) => {
         if (msg.id === messageId) {
           return {
             ...msg,
@@ -481,9 +481,9 @@ function AppWithNotifications() {
       // Re-send the message
       await socketService.sendTextMessage(agentId, content);
       
-      // Update message to sent status (the agent's response will come through the WebSocket)
+      // Update message to sent status (the agent's response will come through Socket.IO)
       setLocalMessages(prevMessages => {
-        return prevMessages.map(msg => {
+        return prevMessages.map((msg: APIMessage) => {
           if (msg.id === messageId) {
             return {
               ...msg,
@@ -498,7 +498,7 @@ function AppWithNotifications() {
       
       // Mark as error again
       setLocalMessages(prevMessages => {
-        return prevMessages.map(msg => {
+        return prevMessages.map((msg: APIMessage) => {
           if (msg.id === messageId) {
             return {
               ...msg,
@@ -540,11 +540,11 @@ function AppWithNotifications() {
       // If we get results, process them
       if ('items' in olderMessages && olderMessages.items.length > 0) {
         // Merge with existing messages
-        const oldMessageIds = new Set(localMessages.map(msg => msg.id));
-        const newItems = olderMessages.items.filter(msg => !oldMessageIds.has(msg.message_uuid));
+        const oldMessageIds = new Set(localMessages.map((msg: APIMessage) => msg.id));
+        const newItems = olderMessages.items.filter((msg: MessageRead) => !oldMessageIds.has(msg.message_uuid));
         
         // Create UI messages from the new items
-        const newUIMessages = newItems.map(msg => createUIMessage({
+        const newUIMessages = newItems.map((msg: MessageRead) => createUIMessage({
           id: msg.message_uuid,
           role: msg.type === 'user' ? 'user' : 'agent',
           content: msg.parts[0]?.content || '',
@@ -647,13 +647,6 @@ function AppWithNotifications() {
     }
   }, [selectedSessionId, sessions, addNotification]);
 
-  const handleDeleteConversation = (id: string) => {
-    deleteConversationMutation.mutate(id);
-  };
-
-  const handleUpdateTitle = (id: string, title: string) => {
-    updateTitleMutation.mutate({ id, title });
-  };
 
   return (
     <TooltipPrimitive.Provider>

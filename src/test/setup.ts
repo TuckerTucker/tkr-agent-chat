@@ -9,7 +9,6 @@ if (matchers) {
 }
 
 // Mock Socket.IO client for tests
-// This replaces the previous WebSocket mock
 vi.mock('socket.io-client', () => {
   const mockSocket = {
     on: vi.fn(),

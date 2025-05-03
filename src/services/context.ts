@@ -148,7 +148,7 @@ export const contextApi = {
     },
 };
 
-// React Query hooks with WebSocket support
+// React Query hooks with Socket.IO support
 export const useSharedContext = (
     targetAgentId: string,
     sessionId?: string,
@@ -157,7 +157,7 @@ export const useSharedContext = (
     const queryClient = useQueryClient();
     const ws = socketService;
 
-    // Subscribe to context updates via WebSocket callbacks
+    // Subscribe to context updates via Socket.IO callbacks
     React.useEffect(() => {
         if (!ws) return;
 

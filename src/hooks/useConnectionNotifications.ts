@@ -19,7 +19,7 @@ export interface ConnectionNotificationsConfig {
 }
 
 /**
- * Hook to handle WebSocket connection status changes and show notifications
+ * Hook to handle Socket.IO connection status changes and show notifications
  */
 export function useConnectionNotifications(config: ConnectionNotificationsConfig = {}) {
   const {
@@ -95,7 +95,7 @@ export function useConnectionNotifications(config: ConnectionNotificationsConfig
     }
   }, [addNotification, getAgentName, showConnected, showDisconnected, showConnecting, showReconnecting, showError, successDuration, infoDuration, errorDuration]);
 
-  const handleWebSocketError = useCallback((agentId: string, error: {
+  const handleSocketError = useCallback((agentId: string, error: {
     code: number;
     message: string;
   }) => {
@@ -117,7 +117,7 @@ export function useConnectionNotifications(config: ConnectionNotificationsConfig
     // Set up our notification callbacks
     const notificationCallbacks = {
       onStatusChange: handleStatusChange,
-      onError: handleWebSocketError
+      onError: handleSocketError
     };
 
     // Get the current callbacks from the service by creating a fresh callback with our handlers
@@ -131,5 +131,5 @@ export function useConnectionNotifications(config: ConnectionNotificationsConfig
         onError: undefined
       });
     };
-  }, [handleStatusChange, handleWebSocketError]);
+  }, [handleStatusChange, handleSocketError]);
 }

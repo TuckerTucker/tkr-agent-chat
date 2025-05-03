@@ -2,7 +2,7 @@
 Error handling service for the TKR Multi-Agent Chat API Gateway.
 
 This service provides utilities for standardized error handling, logging,
-and response creation across REST API and WebSocket endpoints.
+and response creation across REST API and Socket.IO endpoints.
 """
 
 import json
@@ -11,18 +11,18 @@ import traceback
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional, Union, Type
-from fastapi import WebSocket, HTTPException, status
+from fastapi import HTTPException, status
 from pydantic import ValidationError
 
 from ..models.error_responses import (
     StandardErrorResponse, 
-    WebSocketErrorResponse,
-    WebSocketErrorResponseModel,
+    SocketErrorResponse,
+    SocketErrorResponseModel,
     TaskErrorResponse,
     ErrorCodes,
     ErrorCategory,
     ErrorSeverity,
-    create_websocket_error,
+    create_socket_error,
     create_adk_error,
     create_task_error,
     create_not_found_error
@@ -39,53 +39,55 @@ class ErrorService:
     """Service for standardized error handling across the application."""
     
     @staticmethod
-    async def send_websocket_error(
-        websocket: WebSocket,
-        error: Union[WebSocketErrorResponse, WebSocketErrorResponseModel, StandardErrorResponse, Exception],
+    async def send_socket_error(
+        sio: any,
+        sid: str,
+        error: Union[SocketErrorResponse, SocketErrorResponseModel, StandardErrorResponse, Exception],
         log_error: bool = True,
         close_connection: bool = False,
-        close_code: int = 1011  # Internal server error
+        namespace: str = '/'
     ) -> None:
         """
-        Send a standardized error response over a WebSocket connection.
+        Send a standardized error response over a Socket.IO connection.
         
         Args:
-            websocket: The WebSocket connection to send the error to
-            error: The error to send (can be a WebSocketErrorResponse, WebSocketErrorResponseModel, StandardErrorResponse, or Exception)
+            sio: The Socket.IO server instance
+            sid: The Socket.IO session ID
+            error: The error to send (can be a SocketErrorResponse, SocketErrorResponseModel, StandardErrorResponse, or Exception)
             log_error: Whether to log the error
-            close_connection: Whether to close the WebSocket connection after sending the error
-            close_code: The WebSocket close code to use if closing the connection
+            close_connection: Whether to close the Socket.IO connection after sending the error
+            namespace: The Socket.IO namespace to use
         """
         # The response model that will be sent to the client
-        error_model: Union[WebSocketErrorResponseModel, StandardErrorResponse]
+        error_model: Union[SocketErrorResponseModel, StandardErrorResponse]
         
         # Generate a request ID for tracking
         request_id = str(uuid.uuid4())
         
         # Handle different error types
-        if isinstance(error, WebSocketErrorResponse):
-            # For our custom WebSocketErrorResponse exception, use its model
+        if isinstance(error, SocketErrorResponse):
+            # For our custom SocketErrorResponse exception, use its model
             error_model = error.model
             # Update request ID if not present
             if not error_model.request_id:
                 error_model.request_id = request_id
                 
-        elif isinstance(error, (StandardErrorResponse, WebSocketErrorResponseModel)):
+        elif isinstance(error, (StandardErrorResponse, SocketErrorResponseModel)):
             error_model = error
             # Update request ID if not present
             if not error_model.request_id:
                 error_model.request_id = request_id
                 
-            # If StandardErrorResponse was passed but we need WebSocketErrorResponseModel features
-            if isinstance(error, StandardErrorResponse) and not isinstance(error, WebSocketErrorResponseModel):
-                # Convert to WebSocketErrorResponseModel
-                error_model = WebSocketErrorResponseModel(
+            # If StandardErrorResponse was passed but we need SocketErrorResponseModel features
+            if isinstance(error, StandardErrorResponse) and not isinstance(error, SocketErrorResponseModel):
+                # Convert to SocketErrorResponseModel
+                error_model = SocketErrorResponseModel(
                     **error.dict(),
                     close_connection=close_connection
                 )
         
         elif isinstance(error, Exception):
-            # Create a WebSocketErrorResponseModel from the exception
+            # Create a SocketErrorResponseModel from the exception
             error_message = str(error)
             error_code = ErrorCodes.INTERNAL_ERROR
             category = ErrorCategory.GENERAL
@@ -99,7 +101,7 @@ class ErrorService:
                 error_message = "Validation error in request data"
                 details["validation_errors"] = error.errors()
             
-            error_model = WebSocketErrorResponseModel(
+            error_model = SocketErrorResponseModel(
                 error_code=error_code,
                 message=error_message,
                 category=category,
@@ -112,26 +114,28 @@ class ErrorService:
         # Log the error if requested
         if log_error:
             logger.error(
-                f"WebSocket Error [{error_model.error_code}]: {error_model.message} "
+                f"Socket.IO Error [{error_model.error_code}]: {error_model.message} "
                 f"(request_id: {error_model.request_id})", 
                 extra={
                     "error_details": error_model.details,
-                    "request_id": error_model.request_id
+                    "request_id": error_model.request_id,
+                    "socket_id": sid,
+                    "namespace": namespace
                 }
             )
-            if isinstance(error, Exception) and not isinstance(error, (WebSocketErrorResponse, StandardErrorResponse, WebSocketErrorResponseModel)):
+            if isinstance(error, Exception) and not isinstance(error, (SocketErrorResponse, StandardErrorResponse, SocketErrorResponseModel)):
                 logger.error(f"Exception details: {traceback.format_exc()}")
         
-        # Send the error response
+        # Send the error response using Socket.IO
         try:
-            await websocket.send_text(json.dumps(error_model.dict()))
+            await sio.emit('error', error_model.dict(), room=sid, namespace=namespace)
             
             # Close the connection if requested
             if close_connection or getattr(error_model, 'close_connection', False):
-                await websocket.close(code=close_code)
+                await sio.disconnect(sid, namespace=namespace)
         except Exception as send_error:
-            logger.error(f"Failed to send error over WebSocket: {send_error}")
-    
+            logger.error(f"Failed to send error over Socket.IO: {send_error}")
+
     @staticmethod
     def create_http_exception(
         error: Union[StandardErrorResponse, Exception],
@@ -187,7 +191,7 @@ class ErrorService:
     
     @staticmethod
     def log_error(
-        error: Union[StandardErrorResponse, WebSocketErrorResponse, WebSocketErrorResponseModel, Exception],
+        error: Union[StandardErrorResponse, SocketErrorResponse, SocketErrorResponseModel, Exception],
         level: str = "error",
         include_traceback: bool = True,
         extra: Optional[Dict[str, Any]] = None,
@@ -220,7 +224,7 @@ class ErrorService:
             context.update(extra)
         
         # Add detailed error information based on error type
-        if isinstance(error, WebSocketErrorResponse):
+        if isinstance(error, SocketErrorResponse):
             # For our custom exception class, use its model field
             model = error.model
             log_message = f"[{model.error_code}] {model.message}"
@@ -233,7 +237,7 @@ class ErrorService:
                 "recoverable": model.recoverable,
                 "reconnect_suggested": model.reconnect_suggested,
                 "close_connection": model.close_connection,
-                "error_type": "websocket_exception"
+                "error_type": "socket_exception"
             })
             
         elif isinstance(error, StandardErrorResponse):
@@ -248,12 +252,12 @@ class ErrorService:
                 "error_type": "structured"
             })
             
-            # Add WebSocketResponseModel-specific fields if applicable
-            if isinstance(error, WebSocketErrorResponseModel):
+            # Add SocketResponseModel-specific fields if applicable
+            if isinstance(error, SocketErrorResponseModel):
                 context.update({
                     "reconnect_suggested": error.reconnect_suggested,
                     "close_connection": error.close_connection,
-                    "error_type": "websocket_model"
+                    "error_type": "socket_model"
                 })
                 
             # Add Task-specific fields if applicable
@@ -278,11 +282,11 @@ class ErrorService:
             level=level,
             message=log_message,
             context=context,
-            exc_info=error if include_traceback and not isinstance(error, (StandardErrorResponse, WebSocketErrorResponse)) else None
+            exc_info=error if include_traceback and not isinstance(error, (StandardErrorResponse, SocketErrorResponse)) else None
         )
         
         # Additionally log the full traceback at debug level if requested
-        if include_traceback and isinstance(error, Exception) and not isinstance(error, (StandardErrorResponse, WebSocketErrorResponse)):
+        if include_traceback and isinstance(error, Exception) and not isinstance(error, (StandardErrorResponse, SocketErrorResponse)):
             logger_service.log_with_context(
                 logger=logger,
                 level="debug",

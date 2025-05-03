@@ -21,9 +21,9 @@ export default defineConfig({
         changeOrigin: true, // Needed for virtual hosted sites, good practice
         secure: false      // Optional: If backend is not HTTPS
       },
-      // Also proxy WebSocket requests
-      '/ws/v1': {
-        target: 'ws://localhost:8000',
+      // Proxy Socket.IO requests
+      '/socket.io': {
+        target: 'http://localhost:8000',
         ws: true,
         changeOrigin: true,
       }
@@ -43,11 +43,11 @@ export default defineConfig({
         '**/*.d.ts',
       ]
     },
-    // Mock browser WebSocket API for testing
+    // Test dependencies
     deps: {
       optimizer: {
         web: {
-          include: ['vitest-websocket-mock']
+          include: ['socket.io-client']
         }
       }
     }

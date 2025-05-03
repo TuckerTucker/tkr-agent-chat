@@ -6,7 +6,7 @@ Handles:
 - Message retrieval from the database.
 - Loading and providing access to agent instances.
 
-Note: Message saving and real-time handling occur within the WebSocket route (`ws.py`).
+Note: Message saving and real-time handling occur within the Socket.IO service.
 """
 
 import uuid
@@ -217,9 +217,9 @@ class ChatService:
             
         return result
 
-    # --- Message Saving (Helper for ws.py) ---
+    # --- Message Saving (Helper for Socket.IO service) ---
     def save_message(self, session_id: str, msg_type: MessageType, parts: List[Dict[str, Any]], agent_id: Optional[str] = None, message_metadata: Optional[Dict[str, Any]] = None) -> Dict:
-        """Saves a message to the database. Called from WebSocket handler."""
+        """Saves a message to the database. Called from Socket.IO message handler."""
         log_prefix = f"[SaveMessage Session: {session_id} Type: {msg_type.name} Agent: {agent_id or 'N/A'}]"
         logger.info(f"{log_prefix} Attempting to save. Content snippet: '{str(parts)[:100]}...'")
 

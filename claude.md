@@ -74,9 +74,9 @@ data_sources:
     library: "/api/v1/library"
     sessions: "/api/v1/sessions"
     metrics: "/api/v1/metrics"
-  websocket_endpoints:
-    chat: "/ws/v1/chat/{session_id}/{agent_id}"
-    status: "/ws/v1/status"
+  socket_io_endpoints:
+    chat: "/socket.io/agents"
+    status: "/socket.io/status"
   contracts:
     message_send:
       request: 
@@ -94,6 +94,6 @@ data_sources:
         - capabilities: list
   code_references:
     backend: "api_gateway/src/routes/"
-    frontend: "src/services/api.ts, src/services/websocket.ts"
+    frontend: "src/services/api.ts, src/services/socket-service.ts"
 
 [Rest of file content remains unchanged...]
