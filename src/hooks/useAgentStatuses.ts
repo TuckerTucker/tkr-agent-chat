@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import webSocketService, { AgentStatus } from '@/services/websocket'; // Import service and type
+import socketService, { AgentStatus } from '@/services/socket-service'; // Import service and type
 
 // Hook to manage agent statuses from WebSocket service
 export const useAgentStatuses = (activeAgentIds: string[]) => {
   const [agentStatuses, setAgentStatuses] = useState<Map<string, AgentStatus>>(
-    () => webSocketService.getAllAgentStatuses() // Initialize with current statuses
+    () => socketService.getAllAgentStatuses() // Initialize with current statuses
   );
 
   // Callback handler for status changes from WebSocket
@@ -33,7 +33,7 @@ export const useAgentStatuses = (activeAgentIds: string[]) => {
   useEffect(() => {
     // Set up callbacks when the hook mounts or activeAgentIds change
     // Register only the onStatusChange callback using the public method
-    webSocketService.setCallbacks({
+    socketService.setCallbacks({
       onStatusChange: handleStatusChange,
       // If other callbacks (like onPacket) are needed by other parts
       // of the app, they should be registered separately or managed
@@ -44,7 +44,7 @@ export const useAgentStatuses = (activeAgentIds: string[]) => {
     // Initialize statuses for currently active agents
     const initialStatuses = new Map<string, AgentStatus>();
     activeAgentIds.forEach(id => {
-        initialStatuses.set(id, webSocketService.getAgentStatus(id));
+        initialStatuses.set(id, socketService.getAgentStatus(id));
     });
     setAgentStatuses(initialStatuses);
 
@@ -54,8 +54,8 @@ export const useAgentStatuses = (activeAgentIds: string[]) => {
     // For simplicity, we don't remove the callback here.
     // If multiple components used this hook, managing callbacks would need care.
     // return () => {
-    //   webSocketService.setCallbacks({
-    //      ...webSocketService.callbacks,
+    //   socketService.setCallbacks({
+    //      ...socketService.callbacks,
     //      onStatusChange: undefined, // Remove callback on unmount?
     //   });
     // };

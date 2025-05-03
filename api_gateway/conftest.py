@@ -15,12 +15,12 @@ from contextlib import asynccontextmanager
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 # Import required modules
-from main import app as fastapi_app
-from services.chat_service import chat_service
-from services.state import shared_state
-from services.error_service import error_service
-from models.chat_sessions import ChatSession
-from models.messages import MessageType
+from src.main import app as fastapi_app
+from src.services.chat_service import chat_service
+from src.services.state import shared_state
+from src.services.error_service import error_service
+from src.models.chat_sessions import ChatSession
+from src.models.messages import MessageType
 
 # Mock ADK session fixtures
 class MockSession:
@@ -192,12 +192,12 @@ def mock_db(monkeypatch):
         return [m for m in db['messages'] if m['session_id'] == session_id]
         
     # Apply monkeypatches
-    from src import db
-    monkeypatch.setattr(db, 'create_session', mock_create_session)
-    monkeypatch.setattr(db, 'get_session', mock_get_session)
-    monkeypatch.setattr(db, 'list_sessions', mock_list_sessions)
-    monkeypatch.setattr(db, 'create_message', mock_create_message)
-    monkeypatch.setattr(db, 'get_session_messages', mock_get_session_messages)
+    import src.db as db_module
+    monkeypatch.setattr(db_module, 'create_session', mock_create_session)
+    monkeypatch.setattr(db_module, 'get_session', mock_get_session)
+    monkeypatch.setattr(db_module, 'list_sessions', mock_list_sessions)
+    monkeypatch.setattr(db_module, 'create_message', mock_create_message)
+    monkeypatch.setattr(db_module, 'get_session_messages', mock_get_session_messages)
     
     return db
 
@@ -274,10 +274,6 @@ def cleanup():
     chat_service.clear_all_sessions()
     chat_service.agent_instances = {}
 
-# For testing async code
-@pytest.fixture
-def event_loop():
-    """Create an instance of the default event loop for each test."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# For testing async code - Use the pytest_asyncio built-in event_loop fixture
+# Removing custom event_loop fixture to avoid the DeprecationWarning
+# The loop scope is now controlled by asyncio_default_fixture_loop_scope in pytest.ini

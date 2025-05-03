@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import websocketService, { WebSocketCallbacks, A2AMessage } from './websocket';
+import socketService, { A2AMessage } from './socket-service';
 
 export interface SharedContext {
     id: string;

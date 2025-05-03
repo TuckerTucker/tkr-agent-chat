@@ -13,7 +13,7 @@ import {
   deleteSession,
   PaginatedResponse 
 } from "./services/api";
-import webSocketService from "./services/websocket";
+import socketService from "./services/socket-service";
 import { AgentInfo, ChatSessionRead, MessageRead } from "./types/api";
 import chloeAvatar from "../agents/chloe/src/assets/chloe.svg";
 import philConnorsAvatar from "../agents/phil_connors/src/assets/phil-connors.svg";
@@ -191,11 +191,11 @@ function AppWithNotifications() {
       onStatusChange: handleStatusChange
     };
 
-    webSocketService.setCallbacks(callbacks);
+    socketService.setCallbacks(callbacks);
 
     return () => {
       // Clean up callbacks
-      webSocketService.setCallbacks({
+      socketService.setCallbacks({
         onPacket: () => {},
         onError: () => {},
         onStatusChange: () => {}
@@ -231,7 +231,10 @@ function AppWithNotifications() {
               connection: 'connecting' 
             }
           }));
-          webSocketService.connect(selectedSessionId, agentId);
+          socketService.connect({
+            sessionId: selectedSessionId,
+            agentId: agentId
+          });
         });
         isInitialConnect.current = true;
       }
@@ -253,7 +256,7 @@ function AppWithNotifications() {
   useEffect(() => {
     return () => {
       console.log("Component unmounting, cleaning up all connections...");
-      webSocketService.cleanup();
+      socketService.cleanup();
       isInitialConnect.current = false;
     };
   }, []);
@@ -381,7 +384,7 @@ function AppWithNotifications() {
         }
       }));
       
-      await webSocketService.sendTextMessage(agentId, message);
+      await socketService.sendTextMessage(agentId, message);
     } catch (error) {
       console.error("Failed to send message:", error);
       setAgentStatuses(prev => ({
@@ -429,10 +432,13 @@ function AppWithNotifications() {
       }));
       
       // First disconnect to clean up any lingering state
-      webSocketService.disconnect(agentId, false);
+      socketService.disconnect();
       
       // Then reconnect with current session
-      webSocketService.connect(selectedSessionId, agentId);
+      socketService.connect({
+        sessionId: selectedSessionId,
+        agentId: agentId
+      });
     }
   }, [selectedSessionId]);
 
@@ -466,7 +472,7 @@ function AppWithNotifications() {
       });
 
       // Re-send the message
-      await webSocketService.sendTextMessage(agentId, content);
+      await socketService.sendTextMessage(agentId, content);
       
       // Update message to sent status (the agent's response will come through the WebSocket)
       setLocalMessages(prevMessages => {

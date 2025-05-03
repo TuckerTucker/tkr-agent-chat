@@ -3,7 +3,7 @@ API Gateway for TKR Multi-Agent Chat System
 
 Provides:
 - REST endpoints for agent metadata and system info
-- WebSocket endpoint for real-time agent communication
+- WebSocket and Socket.IO endpoints for real-time agent communication
 - Message routing between frontend and agents
 - Agent status and metadata management
 """
@@ -26,14 +26,15 @@ from agents.chloe.src.index import get_agent as get_chloe_agent
 from agents.phil_connors.src.index import get_agent as get_phil_connors_agent
 
 # Import routes and services
-from .routes import api, ws, agents, a2a, ws_a2a, context
+from .routes import api, agents, a2a, context
 from .services.chat_service import chat_service
 from .services.a2a_service import A2AService
-from .services.state import shared_state
+from .services.state import shared_state  # Legacy module, but still used for executor
 from .services.logger_service import logger_service
 from .services.error_service import error_service
 from .services.context_service import context_service
 from .services.agent_health_service import agent_health_service
+from .services import socket_service  # Import Socket.IO service
 from .models.error_responses import StandardErrorResponse, ErrorCodes, ErrorCategory, ErrorSeverity
 from .db import init_database  # Import our new direct SQL database module
 from dotenv import load_dotenv
@@ -435,6 +436,17 @@ async def startup_event():
         
         asyncio.create_task(agent_health_monitoring_task())
         logger.info("Agent health monitoring background task started")
+        
+        # Initialize Socket.IO connection manager
+        from .services.socket_connection_manager import get_connection_manager
+        connection_manager = get_connection_manager(socket_service.sio)
+        connection_manager.register_connection_events()
+        asyncio.create_task(connection_manager.start_monitoring())
+        logger.info("Socket.IO connection manager initialized")
+        
+        # Start Socket.IO background tasks
+        await socket_service.start_background_tasks()
+        logger.info("Socket.IO background tasks started")
     except Exception as e:
         logger.error(f"Startup error: {e}")
         raise
@@ -443,18 +455,7 @@ async def startup_event():
 async def shutdown_event():
     """Clean up resources on shutdown."""
     try:
-        # Close all active WebSocket connections - use a snapshot for safety
-        active_ws = list(shared_state.active_websockets)
-        logger.info(f"Shutdown: Closing {len(active_ws)} active WebSocket connections...")
-        for ws in active_ws:
-            try:
-                await ws.close()
-            except Exception as e:
-                logger.error(f"Error closing WebSocket during shutdown: {e}")
-        
-        # Clear the WebSocket tracking
-        shared_state.clear_websockets()
-        logger.info("Shutdown: WebSocket connections cleared")
+        # Legacy WebSocket connections have been removed in favor of Socket.IO
         
         # Clear ADK sessions
         session_count = chat_service.get_active_session_count()
@@ -462,6 +463,17 @@ async def shutdown_event():
             logger.info(f"Shutdown: Clearing {session_count} ADK sessions...")
             chat_service.clear_all_sessions()
             logger.info("Shutdown: ADK sessions cleared")
+            
+        # Clean up Socket.IO connections
+        logger.info("Shutdown: Cleaning up Socket.IO connections...")
+        try:
+            # Get active connection count from metrics
+            socket_metrics = socket_service.get_socket_metrics()
+            active_count = socket_metrics.get("active_connections", 0)
+            logger.info(f"Shutdown: Closing {active_count} Socket.IO connections...")
+            # Socket.IO will handle disconnections automatically
+        except Exception as e:
+            logger.error(f"Error cleaning up Socket.IO connections: {e}")
         
         logger.info("Cleanup completed during shutdown")
     except Exception as e:
@@ -481,13 +493,6 @@ app.include_router(
     tags=["agents"]
 )
 
-# WebSocket Routes
-app.include_router(
-    ws.router,
-    prefix="/ws/v1",
-    tags=["websocket"]
-)
-
 # A2A Protocol Routes
 app.include_router(
     a2a.router,
@@ -495,18 +500,16 @@ app.include_router(
     tags=["a2a"]
 )
 
-# A2A WebSocket Routes
-app.include_router(
-    ws_a2a.router,
-    prefix="/ws/v1",
-    tags=["a2a", "websocket"]
-)
-
 # Context Routes
 app.include_router(
     context.router,
     tags=["context"]
 )
+
+# Mount Socket.IO app
+socketio_app = socket_service.initialize()
+app.mount('/socket.io', socketio_app)
+logger.info("Socket.IO server mounted at /socket.io")
 
 # Health Check
 @app.get("/health")
@@ -532,6 +535,9 @@ async def health_check():
         hung_count = -1
         error_count = -1
     
+    # Get Socket.IO metrics
+    socket_io_metrics = socket_service.get_socket_metrics()
+    
     # Create a JSON-serializable response
     return {
         "status": "healthy",
@@ -550,9 +556,10 @@ async def health_check():
             "error_count": error_count,
             "statuses": agent_statuses
         },
-        "features": ["a2a", "websocket", "agents", "agent_health_monitoring"],
+        "features": ["a2a", "websocket", "socket.io", "agents", "agent_health_monitoring"],
         "active_websockets": shared_state.get_active_count(),
-        "active_adk_sessions": len(chat_service.active_adk_sessions)
+        "active_adk_sessions": len(chat_service.active_adk_sessions),
+        "socket_io": socket_io_metrics
     }
 
 if __name__ == "__main__":

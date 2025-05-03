@@ -7,8 +7,8 @@ app:
   description: "A web-based chat interface for interacting with multiple specialized AI agents using the Agent Development Kit (ADK) and A2A protocol"
   taskboard:
     info: Taskboard is an mcp server for kanban management
-    Board: TKR Agent Chat Implementation Plan
-    ID: 124fbfb2-95e3-4622-a0ff-2aa21d2e60af
+    Board: Socket.IO Implementation Plan
+    ID: 9a124ce4-02fb-425b-957e-a4541d1da363
   github:
     user:"tuckertucker"
     repo:"tkr-agent-chat"

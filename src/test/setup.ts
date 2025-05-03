@@ -8,76 +8,56 @@ if (matchers) {
   expect.extend(matchers);
 }
 
-// Mock WebSocket API for tests
-class MockWebSocket {
-  static instances: any[] = [];
-  url: string;
-  readyState: number;
-  onopen: ((event: any) => void) | null;
-  onmessage: ((event: any) => void) | null;
-  onclose: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
-  send: any;
-  close: any;
+// Mock Socket.IO client for tests
+// This replaces the previous WebSocket mock
+vi.mock('socket.io-client', () => {
+  const mockSocket = {
+    on: vi.fn(),
+    off: vi.fn(),
+    emit: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    connected: false,
+    timeout: vi.fn(() => ({
+      emit: vi.fn((event, data, callback) => {
+        if (callback) callback(null, { status: 'success' });
+        return true;
+      })
+    }))
+  };
   
-  constructor(url: string) {
-    this.url = url;
-    this.readyState = MockWebSocket.CONNECTING;
-    this.onopen = null;
-    this.onmessage = null;
-    this.onclose = null;
-    this.onerror = null;
-    this.send = vi.fn();
-    this.close = vi.fn(() => {
-      this.readyState = MockWebSocket.CLOSED;
-      if (this.onclose) this.onclose({ code: 1000, reason: "Test close", wasClean: true });
+  // Track instances for testing
+  const mockInstances = [];
+  
+  const mockIO = vi.fn(() => {
+    mockInstances.push(mockSocket);
+    return mockSocket;
+  });
+  
+  // Helper to get the latest instance
+  mockIO.getLastInstance = () => mockInstances[mockInstances.length - 1];
+  
+  // Helper to reset all instances
+  mockIO.resetMocks = () => {
+    mockInstances.length = 0;
+    Object.values(mockSocket).forEach(method => {
+      if (typeof method === 'function' && method.mockReset) {
+        method.mockReset();
+      }
     });
-    
-    // Store instance for test access
-    MockWebSocket.instances.push(this);
-    
-    // Auto-connect after short timeout (simulates async connection)
-    setTimeout(() => {
-      this.readyState = MockWebSocket.OPEN;
-      if (this.onopen) this.onopen({ target: this });
-    }, 0);
-  }
+  };
   
-  // Helper method to simulate receiving a message
-  mockReceiveMessage(data: any) {
-    if (this.onmessage) {
-      this.onmessage({ data: typeof data === 'object' ? JSON.stringify(data) : data });
-    }
-  }
-  
-  // Helper to simulate errors
-  mockError(error: any) {
-    if (this.onerror) {
-      this.onerror({ error });
-    }
-  }
-  
-  // Constants from the WebSocket API
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-  
-  // Reset all instances (call between tests)
-  static resetMocks() {
-    MockWebSocket.instances = [];
-  }
-}
-
-// Install the mock
-global.WebSocket = MockWebSocket as any;
-
-// Make sure the mock is available in the global scope for tests
-(global as any).MockWebSocket = MockWebSocket;
+  return { io: mockIO };
+});
 
 // Cleanup after each test
 afterEach(() => {
   cleanup();
-  MockWebSocket.resetMocks();
   vi.clearAllMocks();
+  
+  // Reset Socket.IO mocks
+  const { io } = require('socket.io-client');
+  if (io.resetMocks) {
+    io.resetMocks();
+  }
 });

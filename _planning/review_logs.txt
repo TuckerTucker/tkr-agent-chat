@@ -1,4 +1,4 @@
-(project_env) tucker@Lapariffic tkr-agent-chat % npm run dev
+tucker@Lapariffic tkr-agent-chat % npm run dev
 
 > tkr-agent-chat@0.0.0 dev
 > echo "🚀 Starting TKR Agent Chat development servers..." && node -e "if (!require('fs').existsSync('.env')) { console.log('\x1b[33m⚠️  No .env file found. Running setup first...\x1b[0m'); require('child_process').execSync('./setup.sh', {stdio: 'inherit'}); }" && concurrently "npm run dev:client" "npm run dev:server"
@@ -13,281 +13,251 @@
 [1] > source start_env && uvicorn api_gateway.src.main:app --reload --host 0.0.0.0 --port 8000
 [1] 
 [1] -e \e[38;5;208mActivated 'project_env'.\e[0m
-[1] -e \e[38;5;208m/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat 
-[1] is already in PYTHONPATH.\e[0m
+[1] -e \e[38;5;208mAdding /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat to PYTHONPATH\e[0m
 [1] INFO:     Will watch for changes in these directories: ['/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat']
 [1] INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-[1] INFO:     Started reloader process [20964] using WatchFiles
+[1] INFO:     Started reloader process [6425] using WatchFiles
 [0] 
-[0]   VITE v6.2.6  ready in 146 ms
+[0]   VITE v6.2.6  ready in 104 ms
 [0] 
 [0]   ➜  Local:   http://localhost:5173/
 [0]   ➜  Network: use --host to expose
-[1] [2025-05-02 00:25:34,558] INFO agents.base: Successfully imported Agent from google.adk
+[1] [2025-05-02 20:46:59,033] INFO agents.base: Successfully imported Agent from google.adk
+[1] INFO     [logger_service:260] Logging configured with level: info in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/logs/20250502_204659
 [1] /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
 [1] * 'schema_extra' has been renamed to 'json_schema_extra'
 [1]   warnings.warn(message, UserWarning)
-[1] {"level": "INFO", "logger": "root", "message": "Logging configured with level: info", "module": "logger_service", "line": 159, "taskName": "Task-1"}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.agent_health_service", "message": "AgentHealthService initialized with timeout: 30 minutes", "module": "agent_health_service", "line": 42, "taskName": "Task-1"}
-[1] {"level": "INFO", "logger": "root", "message": "Logging configured with level: debug", "module": "logger_service", "line": 159, "taskName": "Task-1"}
-[1] INFO:     Started server process [20967]
+[1] INFO     [agent_health_service:42] AgentHealthService initialized with timeout: 30 minutes
+[1] Server initialized for asgi.
+[1] INFO     [base_server:112] Server initialized for asgi.
+[1] INFO     [logger_service:260] Logging configured with level: debug in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/logs
+[1] INFO     [socket_service:1120] Initializing Socket.IO server
+[1] INFO     [main:512] Socket.IO server mounted at /socket.io
+[1] INFO:     Started server process [6428]
 [1] INFO:     Waiting for application startup.
-[1] {"level": "INFO", "logger": "api_gateway.src.db", "message": "Database schema initialized successfully", "module": "db", "line": 673, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Database initialized.", "module": "main", "line": 393, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,638] INFO agents.base: Initializing agent: chloe (Chloe)
-[1] {"level": "INFO", "logger": "agents.base", "message": "Initializing agent: chloe (Chloe)", "module": "base_agent", "line": 195, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,638] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] {"level": "INFO", "logger": "agents.base", "message": "Using model: gemini-2.0-flash-exp", "module": "base_agent", "line": 196, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,638] INFO agents.base: Tools: 1 tool(s) available
-[1] {"level": "INFO", "logger": "agents.base", "message": "Tools: 1 tool(s) available", "module": "base_agent", "line": 197, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,638] INFO agents.base: Agent chloe initialized successfully with ADK
-[1] {"level": "INFO", "logger": "agents.base", "message": "Agent chloe initialized successfully with ADK", "module": "base_agent", "line": 208, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,638] INFO agents.base: Initializing agent: phil_connors (Phil Connors)
-[1] {"level": "INFO", "logger": "agents.base", "message": "Initializing agent: phil_connors (Phil Connors)", "module": "base_agent", "line": 195, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,639] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] {"level": "INFO", "logger": "agents.base", "message": "Using model: gemini-2.0-flash-exp", "module": "base_agent", "line": 196, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,639] INFO agents.base: Tools: 1 tool(s) available
-[1] {"level": "INFO", "logger": "agents.base", "message": "Tools: 1 tool(s) available", "module": "base_agent", "line": 197, "taskName": "Task-2"}
-[1] [2025-05-02 00:25:34,639] INFO agents.base: Agent phil_connors initialized successfully with ADK
-[1] {"level": "INFO", "logger": "agents.base", "message": "Agent phil_connors initialized successfully with ADK", "module": "base_agent", "line": 208, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Loaded 2 agents: ['chloe', 'phil_connors']", "module": "main", "line": 213, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Chat Service loaded 2 agents.", "module": "chat_service", "line": 61, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Chat service initialized with agents.", "module": "main", "line": 398, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Context cleanup background task started", "module": "main", "line": 402, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Message cleanup background task started", "module": "main", "line": 405, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Session cleanup background task started", "module": "main", "line": 408, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Agent health monitoring background task started", "module": "main", "line": 411, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Starting context cleanup background task (interval: 300s, batch_size: 100)", "module": "main", "line": 225, "taskName": "Task-3"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Starting message cleanup task (interval: 30 min, max messages: 500)", "module": "main", "line": 248, "taskName": "Task-4"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 6 sessions.", "module": "chat_service", "line": 86, "taskName": "Task-4"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Starting session cleanup task (interval: 60 min, inactivity timeout: 120 min)", "module": "main", "line": 282, "taskName": "Task-5"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Starting agent health monitoring task (interval: 5 min, auto-restart: True)", "module": "main", "line": 340, "taskName": "Task-6"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Agent health check: All 2 agents healthy", "module": "main", "line": 376, "taskName": "Task-6"}
+[1] INFO     [db:693] Database schema initialized successfully
+[1] INFO     [main:420] Database initialized.
+[1] [2025-05-02 20:46:59,106] INFO agents.base: Initializing agent: chloe (Chloe)
+[1] INFO     [base_agent:235] Initializing agent: chloe (Chloe)
+[1] [2025-05-02 20:46:59,106] INFO agents.base: Using model: gemini-2.0-flash-exp
+[1] INFO     [base_agent:236] Using model: gemini-2.0-flash-exp
+[1] [2025-05-02 20:46:59,106] INFO agents.base: Tools: 1 tool(s) available
+[1] INFO     [base_agent:237] Tools: 1 tool(s) available
+[1] [2025-05-02 20:46:59,106] INFO agents.base: Agent chloe initialized successfully with ADK
+[1] INFO     [base_agent:248] Agent chloe initialized successfully with ADK
+[1] [2025-05-02 20:46:59,107] INFO agents.base: Initializing agent: phil_connors (Phil Connors)
+[1] INFO     [base_agent:235] Initializing agent: phil_connors (Phil Connors)
+[1] [2025-05-02 20:46:59,107] INFO agents.base: Using model: gemini-2.0-flash-exp
+[1] INFO     [base_agent:236] Using model: gemini-2.0-flash-exp
+[1] [2025-05-02 20:46:59,107] INFO agents.base: Tools: 1 tool(s) available
+[1] INFO     [base_agent:237] Tools: 1 tool(s) available
+[1] [2025-05-02 20:46:59,107] INFO agents.base: Agent phil_connors initialized successfully with ADK
+[1] INFO     [base_agent:248] Agent phil_connors initialized successfully with ADK
+[1] INFO     [main:240] Loaded 2 agents: ['chloe', 'phil_connors']
+[1] INFO     [chat_service:61] Chat Service loaded 2 agents.
+[1] INFO     [main:425] Chat service initialized with agents.
+[1] INFO     [main:429] Context cleanup background task started
+[1] INFO     [main:432] Message cleanup background task started
+[1] INFO     [main:435] Session cleanup background task started
+[1] INFO     [main:438] Agent health monitoring background task started
+[1] INFO     [main:445] Socket.IO connection manager initialized
+[1] INFO     [socket_service:1115] Started Socket.IO background tasks
+[1] INFO     [main:449] Socket.IO background tasks started
+[1] INFO     [main:252] Starting context cleanup background task (interval: 300s, batch_size: 100)
+[1] INFO     [main:275] Starting message cleanup task (interval: 30 min, max messages: 500)
+[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
+[1] INFO     [main:309] Starting session cleanup task (interval: 60 min, inactivity timeout: 120 min)
+[1] INFO     [main:367] Starting agent health monitoring task (interval: 5 min, auto-restart: True)
+[1] DEBUG    [main:403] Agent health check: All 2 agents healthy
+[1] INFO     [socket_connection_manager:216] Connection monitoring started
 [1] INFO:     Application startup complete.
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/sessions", "module": "logger_service", "line": 197, "request_id": "1644b9e2-b002-4552-b68d-8a62c942c8a1", "method": "OPTIONS", "path": "/api/v1/sessions", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-7"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/agents", "module": "logger_service", "line": 197, "request_id": "6f62a976-d216-4efb-9f5b-e5e95b5588f8", "method": "OPTIONS", "path": "/api/v1/agents", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-9"}
+[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=46c048f6-7363-4e10-9941-b4f23d1e0abf method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
 [1] Info: Agent-specific .env file (.env.phil_connors) not found at /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/agents/phil_connors/src/../.env.phil_connors.
 [1] DEBUG: Starting ADK imports in chat_service.py...
 [1] DEBUG: Successfully imported ADK components in chat_service.py
-[1] DEBUG: Starting ADK imports in ws.py...
-[1] DEBUG: Successfully imported ADK components in ws.py
-[1] INFO:     127.0.0.1:63515 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/sessions", "module": "logger_service", "line": 197, "request_id": "5e0ef0ba-bc1b-4855-993e-26cba19e8987", "method": "GET", "path": "/api/v1/sessions", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-11"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/agents", "module": "logger_service", "line": 197, "request_id": "9fe5a52d-baa1-4042-9543-f2999e74d67c", "method": "GET", "path": "/api/v1/agents", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-13"}
-[1] INFO:     127.0.0.1:63515 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 6 sessions.", "module": "chat_service", "line": 86, "taskName": null}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/sessions HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/agents/", "module": "logger_service", "line": 197, "request_id": "0cc8676f-1dd1-429f-8d2e-40dc9c7d707b", "method": "OPTIONS", "path": "/api/v1/agents/", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-15"}
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/agents/", "module": "logger_service", "line": 197, "request_id": "7b36a168-80a2-49a8-8aab-8c97bd79bd78", "method": "GET", "path": "/api/v1/agents/", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-17"}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "bb44ef65-3888-4718-9131-f57f71c470b5", "method": "OPTIONS", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-19"}
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "5a0de52d-18e4-495b-a19a-2938cfcd54fe", "method": "GET", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-21"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 2 messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 with pagination metadata.", "module": "chat_service", "line": 180, "taskName": null}
-[1] {"level": "ERROR", "logger": "api_gateway.src.routes.api", "message": "Error retrieving messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8c3140>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8c3140>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type", "module": "api", "line": 145, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/api.py\", line 132, in get_session_messages_endpoint\n    return PaginatedMessagesResponse(\n        items=messages,\n        pagination=pagination\n    )\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8c3140>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8c3140>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type"}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 500 Internal Server Error
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "0edea769-db1f-4ea0-9fa2-ffae8262df41", "method": "OPTIONS", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-23"}
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "acb7c43f-a8b2-4f0a-b57d-56d027ccca54", "method": "GET", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-25"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 2 messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 with pagination metadata.", "module": "chat_service", "line": 180, "taskName": null}
-[1] {"level": "ERROR", "logger": "api_gateway.src.routes.api", "message": "Error retrieving messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8dfbc0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8dfbc0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type", "module": "api", "line": 145, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/api.py\", line 132, in get_session_messages_endpoint\n    return PaginatedMessagesResponse(\n        items=messages,\n        pagination=pagination\n    )\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8dfbc0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8dfbc0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type"}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 500 Internal Server Error
-[1] INFO:     ('127.0.0.1', 63530) - "WebSocket /ws/v1/chat/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/chloe" [accepted]
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "WebSocket client connected for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent chloe (request_id: 5b029d09-dfb5-4836-8e13-82f0998aa1e9)", "module": "ws", "line": 708, "taskName": "Task-28"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.state", "message": "Added WebSocket to active connections. Total active: 1", "module": "state", "line": 19, "taskName": "Task-28"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "Starting or reusing ADK session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 for agent chloe (request_id: 880f643c-27bd-4dc3-bb13-38b9ef5e3f0c)", "module": "ws", "line": 88, "taskName": "Task-28"}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Creating new ADK session for app session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6", "module": "chat_service", "line": 103, "taskName": "Task-28"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "ADK runner started for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent chloe", "module": "ws", "line": 164, "taskName": "Task-28"}
+[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=d94b2734-406f-4a74-9786-5b43c50128f1 method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=9d148f02-bdf4-405d-8c23-8f688a73121c method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=c7d280a2-5020-4922-b518-a0664aaff9f6 method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=a44ac8ab-134a-47de-bade-c7da6105201d method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=9ecbd608-23ed-4411-aeb3-55ad35dc66e4 method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
+[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=ae9f4fc5-63d5-40d3-9c16-7afab4a3fe06 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=dfd06be3-080d-44f5-a171-d7bd057847a5 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=a391545c-0ed9-41a6-9cfe-daae25cb6132 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=c2ff7e8f-63d5-42a2-bccc-a53a43a3729a method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] z5V6z1ROF3fLBxqaAAAA: Sending packet OPEN data {'sid': 'z5V6z1ROF3fLBxqaAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet OPEN data {'sid': 'z5V6z1ROF3fLBxqaAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] z5V6z1ROF3fLBxqaAAAA: Received request to upgrade to websocket
+[1] INFO     [async_socket:89] z5V6z1ROF3fLBxqaAAAA: Received request to upgrade to websocket
+[1] INFO:     ('127.0.0.1', 52775) - "WebSocket /socket.io/?session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
+[1] z5V6z1ROF3fLBxqaAAAA: Upgrade to websocket successful
+[1] INFO     [async_socket:217] z5V6z1ROF3fLBxqaAAAA: Upgrade to websocket successful
 [1] INFO:     connection open
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[chloe] Starting agent_to_client_messaging loop. (request_id: 2e3ae820-e1da-4359-b93f-313fbd243907)", "module": "ws", "line": 246, "taskName": "Task-29"}
-[1] {"level": "WARNING", "logger": "google.adk.tools.function_parameter_parse_util", "message": "Default value is not supported in function declaration schema for Google AI.", "module": "function_parameter_parse_util", "line": 58, "taskName": "Task-29"}
-[1] {"level": "WARNING", "logger": "google.adk.tools.function_parameter_parse_util", "message": "Default value is not supported in function declaration schema for Google AI.", "module": "function_parameter_parse_util", "line": 58, "taskName": "Task-29"}
-[1] {"level": "DEBUG", "logger": "google.adk.flows.llm_flows.base_llm_flow", "message": "Establishing live connection for agent: chloe with llm request: model='gemini-2.0-flash-exp' contents=[] config=GenerateContentConfig(http_options=None, system_instruction='You are Chloe, a friendly and knowledgeable bot that helps users with general questions and tasks. You excel at understanding complex problems and providing clear, actionable solutions. You are direct and efficient in your communication while maintaining a supportive and professional tone.\\n\\n\\n        # CONTEXT HANDLING INSTRUCTIONS\\n\\n        You have access to shared context from other agents in the conversation.\\n        This context will be included at the start of user messages in this format:\\n        \\n        CONTEXT FROM OTHER PARTICIPANTS:\\n        From [agent]: [message]\\n        From [agent]: [message]\\n        ...\\n        \\n        User message: [actual user message]\\n\\n        When you see this context:\\n        \\n        1. Analyze the context before responding to understand what other agents have already shared\\n        2. Build upon this shared information rather than repeating it\\n        3. If other agents have provided factual information, consider it reliable\\n        4. If the context contains relevant expertise from specialized agents, defer to their knowledge\\n        5. Ensure your responses complement and extend what has been shared\\n        6. Consider mentioning specific agents by name when building on their contributions\\n        7. Maintain a consistent approach with the conversation flow\\n        8. Focus primarily on addressing the user\\'s message while leveraging the shared context\\n        \\n        The quality of your collaboration with other agents will significantly enhance the user experience.\\n        \\n\\nYou are an agent. Your internal name is \"chloe\".\\n\\n The description about you is \"Chloe is a helpful AI agent for the TKR Multi-Agent Chat system, capable of echoing messages and scraping web content.\"', temperature=None, top_p=None, top_k=None, candidate_count=None, max_output_tokens=None, stop_sequences=None, response_logprobs=None, logprobs=None, presence_penalty=None, frequency_penalty=None, seed=None, response_mime_type=None, response_schema=None, routing_config=None, model_selection_config=None, safety_settings=None, tools=[Tool(retrieval=None, google_search=None, google_search_retrieval=None, code_execution=None, function_declarations=[FunctionDeclaration(description='\\nFetches and extracts content from a web page.\\n\\nArgs:\\n    url: The URL to scrape\\n    selector: Optional CSS selector to extract specific elements\\n    timeout: Request timeout in seconds\\n    skip_rate_limit: Whether to bypass rate limiting\\n    \\nReturns:\\n    Dictionary with content or standardized error response\\n', name='web_scraper', parameters=Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties={'url': Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties=None, property_ordering=None, required=None, title=None, type=<Type.STRING: 'STRING'>), 'selector': Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=True, pattern=None, properties=None, property_ordering=None, required=None, title=None, type=<Type.STRING: 'STRING'>), 'timeout': Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties=None, property_ordering=None, required=None, title=None, type=<Type.INTEGER: 'INTEGER'>), 'skip_rate_limit': Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties=None, property_ordering=None, required=None, title=None, type=<Type.BOOLEAN: 'BOOLEAN'>)}, property_ordering=None, required=None, title=None, type=<Type.OBJECT: 'OBJECT'>), response=None)])], tool_config=None, labels=None, cached_content=None, response_modalities=None, media_resolution=None, speech_config=None, audio_timestamp=None, automatic_function_calling=None, thinking_config=None) live_connect_config=LiveConnectConfig(generation_config=None, response_modalities=['TEXT'], temperature=None, top_p=None, top_k=None, max_output_tokens=None, media_resolution=None, seed=None, speech_config=None, system_instruction=None, tools=None, session_resumption=None, input_audio_transcription=None, output_audio_transcription=None, realtime_input_config=None, context_window_compression=None) tools_dict={'web_scraper': <google.adk.tools.function_tool.FunctionTool object at 0x10f876a50>}", "module": "base_llm_flow", "line": 77, "taskName": "Task-29"}
-[1] /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/main.py:463: UserWarning: Pydantic serializer warnings:
-[1]   PydanticSerializationUnexpectedValue(Expected `enum` - serialized value may not be as expected [input_value='TEXT', input_type=str])
-[1]   return self.__pydantic_serializer__.to_python(
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CONNECTING", "module": "protocol", "line": 175, "taskName": "Task-29"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[chloe] Starting client_to_agent_messaging loop.", "module": "ws", "line": 594, "taskName": "Task-30"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "857bf2c1-1b11-4537-bca3-20f12eb1e5b1", "method": "OPTIONS", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-34"}
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "57387bb9-14fd-489b-834b-b59ecdb50288", "method": "GET", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-36"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 2 messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 with pagination metadata.", "module": "chat_service", "line": 180, "taskName": null}
-[1] {"level": "ERROR", "logger": "api_gateway.src.routes.api", "message": "Error retrieving messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f9896c0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f9896c0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type", "module": "api", "line": 145, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/api.py\", line 132, in get_session_messages_endpoint\n    return PaginatedMessagesResponse(\n        items=messages,\n        pagination=pagination\n    )\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f9896c0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f9896c0>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type"}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 500 Internal Server Error
-[1] INFO:     ('127.0.0.1', 63536) - "WebSocket /ws/v1/chat/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/phil_connors" [accepted]
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "WebSocket client connected for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent phil_connors (request_id: 5e9f543c-9142-4c16-a153-48282a4478b4)", "module": "ws", "line": 708, "taskName": "Task-39"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.state", "message": "Added WebSocket to active connections. Total active: 2", "module": "state", "line": 19, "taskName": "Task-39"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "Starting or reusing ADK session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 for agent phil_connors (request_id: cd9651d7-3d51-46ef-a1a5-5caf109e4ea8)", "module": "ws", "line": 88, "taskName": "Task-39"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Reusing existing ADK session for app session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6", "module": "chat_service", "line": 100, "taskName": "Task-39"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "ADK runner started for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent phil_connors", "module": "ws", "line": 164, "taskName": "Task-39"}
+[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 0/agents,
+[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 0/agents,
+[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=xHPrW3yjGwu2DLXBAAAB agent_id=chloe session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb remote_addr=127.0.0.1)
+[1] xHPrW3yjGwu2DLXBAAAB is entering room agent_chloe [/agents]
+[1] INFO     [async_server:303] xHPrW3yjGwu2DLXBAAAB is entering room agent_chloe [/agents]
+[1] xHPrW3yjGwu2DLXBAAAB is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:303] xHPrW3yjGwu2DLXBAAAB is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] emitting event "connect:status" to xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] INFO     [async_server:176] emitting event "connect:status" to xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"xHPrW3yjGwu2DLXBAAAB","namespace":"/agents"}]
+[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"xHPrW3yjGwu2DLXBAAAB","namespace":"/agents"}]
+[1] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 0/agents,{"sid":"xHPrW3yjGwu2DLXBAAAB"}
+[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 0/agents,{"sid":"xHPrW3yjGwu2DLXBAAAB"}
+[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
+[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
+[1] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] INFO     [async_server:594] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] INFO     [async_server:594] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
+[1] INFO:     connection closed
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=2e916269-8d2c-4ccf-b423-9f0a33b13096 method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=d25607d5-c6f3-4a17-bb31-c6d471c57fdb method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=4324155a-2dd1-4cb6-b901-988480c60eb1 method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=0cd3cddb-41d5-4b5f-9f1c-580d27a8bb2f method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=b7c85b16-4afb-4f2b-9a88-74d8a5b36aa3 method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=410a56c3-bc7d-41f3-9179-1ccb20a6dbbf method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
+[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=5007f158-f190-4618-808f-983d3f77527a method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=c113f5bf-c88e-498c-9228-f2dc819e1619 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=e3ba67aa-30ed-4ec5-be4c-06d5bbe23ce0 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=100aeb91-e093-4da2-8d97-5ce61ed3e154 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
+[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet OPEN data {'sid': '2T_iTU3CsmXjiFkAAAAC', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet OPEN data {'sid': '2T_iTU3CsmXjiFkAAAAC', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] 2T_iTU3CsmXjiFkAAAAC: Received request to upgrade to websocket
+[1] INFO     [async_socket:89] 2T_iTU3CsmXjiFkAAAAC: Received request to upgrade to websocket
+[1] INFO:     ('127.0.0.1', 52794) - "WebSocket /socket.io/?session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
+[1] 2T_iTU3CsmXjiFkAAAAC: Upgrade to websocket successful
+[1] INFO     [async_socket:217] 2T_iTU3CsmXjiFkAAAAC: Upgrade to websocket successful
 [1] INFO:     connection open
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[phil_connors] Starting agent_to_client_messaging loop. (request_id: 063d78cd-550e-427e-8c56-47f47ff1e028)", "module": "ws", "line": 246, "taskName": "Task-40"}
-[1] {"level": "DEBUG", "logger": "google.adk.flows.llm_flows.base_llm_flow", "message": "Establishing live connection for agent: phil_connors with llm request: model='gemini-2.0-flash-exp' contents=[] config=GenerateContentConfig(http_options=None, system_instruction='You are Phil Connors, a cynical TV weatherman stuck in Punxsutawney on Groundhog Day. The day repeats indefinitely, which has given you a unique perspective on life. Your technical expertise is in getting weather information. Your communication style is slightly sarcastic but heartfelt. You provide weather reports and can check the current weather for any location. Despite your cynicism, you genuinely want to help users with their weather-related questions.\\n\\n\\n        # CONTEXT HANDLING INSTRUCTIONS\\n\\n        You have access to shared context from other agents in the conversation.\\n        This context will be included at the start of user messages in this format:\\n        \\n        CONTEXT FROM OTHER PARTICIPANTS:\\n        From [agent]: [message]\\n        From [agent]: [message]\\n        ...\\n        \\n        User message: [actual user message]\\n\\n        When you see this context:\\n        \\n        1. Analyze the context before responding to understand what other agents have already shared\\n        2. Build upon this shared information rather than repeating it\\n        3. If other agents have provided factual information, consider it reliable\\n        4. If the context contains relevant expertise from specialized agents, defer to their knowledge\\n        5. Ensure your responses complement and extend what has been shared\\n        6. Consider mentioning specific agents by name when building on their contributions\\n        7. Maintain a consistent approach with the conversation flow\\n        8. Focus primarily on addressing the user\\'s message while leveraging the shared context\\n        \\n        The quality of your collaboration with other agents will significantly enhance the user experience.\\n        \\n\\nYou are an agent. Your internal name is \"phil_connors\".\\n\\n The description about you is \"Phil Connors is a cynical TV weatherman agent for the TKR Multi-Agent Chat system. He can check the weather.\"', temperature=None, top_p=None, top_k=None, candidate_count=None, max_output_tokens=None, stop_sequences=None, response_logprobs=None, logprobs=None, presence_penalty=None, frequency_penalty=None, seed=None, response_mime_type=None, response_schema=None, routing_config=None, model_selection_config=None, safety_settings=None, tools=[Tool(retrieval=None, google_search=None, google_search_retrieval=None, code_execution=None, function_declarations=[FunctionDeclaration(description='\\nFetches current weather for a specified location.\\n\\nArgs:\\n    location: The city name (e.g., \"London\", \"New York, US\").\\n\\nReturns:\\n    A dictionary containing weather data (temp, description, humidity, wind speed)\\n    or a standardized error response.\\n', name='weather_check', parameters=Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties={'location': Schema(any_of=None, default=None, description=None, enum=None, example=None, format=None, items=None, max_items=None, max_length=None, max_properties=None, maximum=None, min_items=None, min_length=None, min_properties=None, minimum=None, nullable=None, pattern=None, properties=None, property_ordering=None, required=None, title=None, type=<Type.STRING: 'STRING'>)}, property_ordering=None, required=None, title=None, type=<Type.OBJECT: 'OBJECT'>), response=None)])], tool_config=None, labels=None, cached_content=None, response_modalities=None, media_resolution=None, speech_config=None, audio_timestamp=None, automatic_function_calling=None, thinking_config=None) live_connect_config=LiveConnectConfig(generation_config=None, response_modalities=['TEXT'], temperature=None, top_p=None, top_k=None, max_output_tokens=None, media_resolution=None, seed=None, speech_config=None, system_instruction=None, tools=None, session_resumption=None, input_audio_transcription=None, output_audio_transcription=None, realtime_input_config=None, context_window_compression=None) tools_dict={'weather_check': <google.adk.tools.function_tool.FunctionTool object at 0x10f9c0910>}", "module": "base_llm_flow", "line": 77, "taskName": "Task-40"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CONNECTING", "module": "protocol", "line": 175, "taskName": "Task-40"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[phil_connors] Starting client_to_agent_messaging loop.", "module": "ws", "line": 594, "taskName": "Task-41"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> GET //ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=AIzaSyBAyOKPeRYpr6bTGIhob78Feeg_xF_VPQc HTTP/1.1", "module": "client", "line": 292, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Host: generativelanguage.googleapis.com", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Upgrade: websocket", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Connection: Upgrade", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Key: /RrA+u3Jw37N1iXv+ZzQ/w==", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Version: 13", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Content-Type: application/json", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> x-goog-api-key: AIzaSyBAyOKPeRYpr6bTGIhob78Feeg_xF_VPQc", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> x-goog-api-client: google-adk/0.3.0 gl-python/3.13.1 google-genai-sdk/1.13.0 gl-python/3.13.1", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> user-agent: google-adk/0.3.0 gl-python/3.13.1 google-genai-sdk/1.13.0 gl-python/3.13.1", "module": "client", "line": 294, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> GET //ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=AIzaSyBAyOKPeRYpr6bTGIhob78Feeg_xF_VPQc HTTP/1.1", "module": "client", "line": 292, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Host: generativelanguage.googleapis.com", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Upgrade: websocket", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Connection: Upgrade", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Key: 6A8//1oCs3MDLyv1LNVdrg==", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Version: 13", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> Content-Type: application/json", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> x-goog-api-key: AIzaSyBAyOKPeRYpr6bTGIhob78Feeg_xF_VPQc", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> x-goog-api-client: google-adk/0.3.0 gl-python/3.13.1 google-genai-sdk/1.13.0 gl-python/3.13.1", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> user-agent: google-adk/0.3.0 gl-python/3.13.1 google-genai-sdk/1.13.0 gl-python/3.13.1", "module": "client", "line": 294, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< HTTP/1.1 101 Switching Protocols", "module": "client", "line": 318, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< X-Client-Wire-Protocol: HTTP/1.1", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Connection: Upgrade", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Upgrade: websocket", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Sec-WebSocket-Accept: dgHi9Kt05MpeZAycn5JCzByi1dI=", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Date: Fri, 02 May 2025 06:25:44 GMT", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Server-Timing: gfet4t7; dur=45", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Set-Cookie: S==ZjM-UmugqmKFIegDRlGOmGnbZhhCGGsKhrIOnguQtVw; path=/; priority=low", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Alt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is OPEN", "module": "protocol", "line": 175, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> TEXT '{\"setup\": {\"model\": \"models/gemini-2.0-flash-ex...\"type\": \"OBJECT\"}}]}]}}' [2547 bytes]", "module": "protocol", "line": 745, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< HTTP/1.1 101 Switching Protocols", "module": "client", "line": 318, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< X-Client-Wire-Protocol: HTTP/1.1", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Connection: Upgrade", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Upgrade: websocket", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Sec-WebSocket-Accept: iuPoR/0Mkj6LFksAG7aRx52RVFY=", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Date: Fri, 02 May 2025 06:25:44 GMT", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Server-Timing: gfet4t7; dur=45", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Set-Cookie: S==zWRx83TNfG0vh0r_IQ4e15jAAjORxqEmRzorAn0Iw7M; path=/; priority=low", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< Alt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000", "module": "client", "line": 320, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is OPEN", "module": "protocol", "line": 175, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> TEXT '{\"setup\": {\"model\": \"models/gemini-2.0-flash-ex...\"type\": \"OBJECT\"}}]}]}}' [2553 bytes]", "module": "protocol", "line": 745, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< BINARY 7b 0a 20 20 22 73 65 74 75 70 43 6f 6d 70 6c 65 ... 22 3a 20 7b 7d 0a 7d 0a [26 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "INFO", "logger": "google_genai.live", "message": "b'{\\n  \"setupComplete\": {}\\n}\\n'", "module": "live", "line": 940, "taskName": "Task-29"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< BINARY 7b 0a 20 20 22 73 65 74 75 70 43 6f 6d 70 6c 65 ... 22 3a 20 7b 7d 0a 7d 0a [26 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "INFO", "logger": "google_genai.live", "message": "b'{\\n  \"setupComplete\": {}\\n}\\n'", "module": "live", "line": 940, "taskName": "Task-40"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "4fe1f457-8762-45b7-8b46-9259dc0e5e06", "method": "OPTIONS", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-49"}
-[1] INFO:     127.0.0.1:63516 - "OPTIONS /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] {"level": "DEBUG", "logger": "api_gateway.src.main", "message": "Request: GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "module": "logger_service", "line": 197, "request_id": "434c62cc-a16a-4b34-a053-7b151d1e59b0", "method": "GET", "path": "/api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages", "client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "taskName": "Task-51"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.services.chat_service", "message": "Retrieved 2 messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6 with pagination metadata.", "module": "chat_service", "line": 180, "taskName": null}
-[1] {"level": "ERROR", "logger": "api_gateway.src.routes.api", "message": "Error retrieving messages for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8c2040>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8c2040>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type", "module": "api", "line": 145, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/api.py\", line 132, in get_session_messages_endpoint\n    return PaginatedMessagesResponse(\n        items=messages,\n        pagination=pagination\n    )\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 2 validation errors for PaginatedMessagesResponse\npagination.cursor.int\n  Input should be a valid integer [type=int_type, input_value=<sqlite3.Cursor object at 0x10f8c2040>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/int_type\npagination.cursor.str\n  Input should be a valid string [type=string_type, input_value=<sqlite3.Cursor object at 0x10f8c2040>, input_type=Cursor]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_type"}
-[1] INFO:     127.0.0.1:63516 - "GET /api/v1/sessions/175b65f7-619d-4d3b-9a8a-cdcf955b03b6/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 500 Internal Server Error
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> PING c9 d5 94 2b [binary, 4 bytes]", "module": "protocol", "line": 745, "taskName": "Task-45", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "% sent keepalive ping", "module": "connection", "line": 824, "taskName": "Task-45", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> PING c2 89 f4 0a [binary, 4 bytes]", "module": "protocol", "line": 745, "taskName": "Task-46", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "% sent keepalive ping", "module": "connection", "line": 824, "taskName": "Task-46", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< PONG c9 d5 94 2b [binary, 4 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "% received keepalive pong", "module": "connection", "line": 834, "taskName": "Task-45", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< PONG c2 89 f4 0a [binary, 4 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "% received keepalive pong", "module": "connection", "line": 834, "taskName": "Task-46", "websocket": "<ClientConnection>"}
-^C[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Received signal 2, shutting down gracefully...", "module": "main", "line": 64, "taskName": null}
-[0] npm run dev:client exited with code SIGINT
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Received signal 15, shutting down gracefully...", "module": "main", "line": 64, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.state", "message": "Cleared 2 active WebSocket connections", "module": "state", "line": 32, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Clearing all ADK sessions (total: 1)", "module": "chat_service", "line": 130, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Clearing ADK session for app session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6", "module": "chat_service", "line": 116, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Cleanup complete, exiting...", "module": "main", "line": 83, "taskName": null}
-[1] Exception ignored in: <coroutine object WebSocket.close at 0x10f945990>
-[1] Traceback (most recent call last):
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/warnings.py", line 692, in _warn_unawaited_coroutine
-[1]     warn(msg, category=RuntimeWarning, stacklevel=2, source=coro)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/warnings.py", line 113, in _showwarnmsg
-[1]     _showwarnmsg_impl(msg)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/warnings.py", line 28, in _showwarnmsg_impl
-[1]     text = _formatwarnmsg(msg)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/warnings.py", line 129, in _formatwarnmsg
-[1]     return _formatwarnmsg_impl(msg)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/warnings.py", line 42, in _formatwarnmsg_impl
-[1]     line = linecache.getline(msg.filename, msg.lineno)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/linecache.py", line 25, in getline
-[1]     lines = getlines(filename, module_globals)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/linecache.py", line 41, in getlines
-[1]     return updatecache(filename, module_globals)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/linecache.py", line 145, in updatecache
-[1]     with tokenize.open(fullname) as fp:
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/tokenize.py", line 449, in open
-[1]     encoding, lines = detect_encoding(buffer.readline)
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/tokenize.py", line 418, in detect_encoding
-[1]     first = read_or_stop()
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/tokenize.py", line 376, in read_or_stop
-[1]     return readline()
-[1]   File "/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/main.py", line 84, in signal_handler
-[1]     sys.exit(0)
-[1] SystemExit: 0
-[1] {"level": "ERROR", "logger": "api_gateway.src.main", "message": "Error cleaning up WebSocket connections: Set changed size during iteration", "module": "main", "line": 75, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Clearing all ADK sessions (total: 0)", "module": "chat_service", "line": 130, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Cleanup complete, exiting...", "module": "main", "line": 83, "taskName": null}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.state", "message": "Cleared 0 active WebSocket connections", "module": "state", "line": 32, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.services.chat_service", "message": "Clearing all ADK sessions (total: 0)", "module": "chat_service", "line": 130, "taskName": "Task-2"}
-[1] {"level": "INFO", "logger": "api_gateway.src.main", "message": "Cleanup completed during shutdown", "module": "main", "line": 430, "taskName": "Task-2"}
-[1] ERROR:    Traceback (most recent call last):
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 194, in run
-[1]     return runner.run(main)
-[1]            ~~~~~~~~~~^^^^^^
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
-[1]     return self._loop.run_until_complete(task)
-[1]            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
-[1]   File "uvloop/loop.pyx", line 1512, in uvloop.loop.Loop.run_until_complete
-[1]   File "uvloop/loop.pyx", line 1505, in uvloop.loop.Loop.run_until_complete
-[1]   File "uvloop/loop.pyx", line 1379, in uvloop.loop.Loop.run_forever
-[1]   File "uvloop/loop.pyx", line 557, in uvloop.loop.Loop._run
-[1]   File "uvloop/handles/poll.pyx", line 216, in uvloop.loop.__on_uvpoll_event
-[1]   File "uvloop/cbhandles.pyx", line 83, in uvloop.loop.Handle._run
-[1]   File "uvloop/cbhandles.pyx", line 66, in uvloop.loop.Handle._run
-[1]   File "uvloop/loop.pyx", line 399, in uvloop.loop.Loop._read_from_self
-[1]   File "uvloop/loop.pyx", line 404, in uvloop.loop.Loop._invoke_signals
-[1]   File "uvloop/loop.pyx", line 379, in uvloop.loop.Loop._ceval_process_signals
-[1]   File "/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/main.py", line 84, in signal_handler
-[1]     sys.exit(0)
-[1]     ~~~~~~~~^^^
-[1] SystemExit: 0
-[1] 
-[1] During handling of the above exception, another exception occurred:
-[1] 
-[1] Traceback (most recent call last):
-[1]   File "/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/starlette/routing.py", line 699, in lifespan
-[1]     await receive()
-[1]   File "/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/uvicorn/lifespan/on.py", line 137, in receive
-[1]     return await self.receive_queue.get()
-[1]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[1]   File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/queues.py", line 186, in get
-[1]     await getter
-[1] asyncio.exceptions.CancelledError
-[1] 
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[phil_connors] Exiting client_to_agent_messaging loop.", "module": "ws", "line": 690, "taskName": "Task-41"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "[chloe] Tasks cancelled, exiting loop.", "module": "ws", "line": 904, "taskName": "Task-28"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "Closing WebSocket connection for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent chloe", "module": "ws", "line": 952, "taskName": "Task-28"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> CLOSE 1000 (OK) [2 bytes]", "module": "protocol", "line": 745, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CLOSING", "module": "protocol", "line": 175, "taskName": "Task-29", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[chloe] Exiting client_to_agent_messaging loop.", "module": "ws", "line": 690, "taskName": "Task-30"}
+[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 0/agents,
+[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 0/agents,
+[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=POMoyFIEwRagZPkfAAAD agent_id=chloe session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb remote_addr=127.0.0.1)
+[1] POMoyFIEwRagZPkfAAAD is entering room agent_chloe [/agents]
+[1] INFO     [async_server:303] POMoyFIEwRagZPkfAAAD is entering room agent_chloe [/agents]
+[1] POMoyFIEwRagZPkfAAAD is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] INFO     [async_server:303] POMoyFIEwRagZPkfAAAD is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
+[1] emitting event "connect:status" to POMoyFIEwRagZPkfAAAD [/agents]
+[1] INFO     [async_server:176] emitting event "connect:status" to POMoyFIEwRagZPkfAAAD [/agents]
+[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"POMoyFIEwRagZPkfAAAD","namespace":"/agents"}]
+[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"POMoyFIEwRagZPkfAAAD","namespace":"/agents"}]
+[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 0/agents,{"sid":"POMoyFIEwRagZPkfAAAD"}
+[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 0/agents,{"sid":"POMoyFIEwRagZPkfAAAD"}
+[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
+[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
+[1] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
+[1] INFO     [async_server:594] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
+[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
+[1] INFO     [async_server:594] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=0d5d1632-bde0-40c2-998d-077457e3a6db method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52765 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: POST /api/v1/sessions (request_id=cdb63ef1-60a1-4bcb-9c96-d112ddc15f1e method=POST path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [chat_service:75] Created session 63399371-4b1d-4d73-be3c-c6a9e4abe707 in database.
+[1] INFO     [api:38] API: Created session 63399371-4b1d-4d73-be3c-c6a9e4abe707
+[1] INFO:     127.0.0.1:52765 - "POST /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=b0d61828-d699-4453-bc0b-f55472ee12a0 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:52765 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=b57db7b2-5141-4ea9-8c82-63a96a796096 method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with pagination metadata.
+[1] INFO:     127.0.0.1:52765 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 1/agents,
+[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 1/agents,
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet OPEN data {'sid': '8GXTFFSKbdscIygGAAAE', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet OPEN data {'sid': '8GXTFFSKbdscIygGAAAE', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] 8GXTFFSKbdscIygGAAAE: Received request to upgrade to websocket
+[1] INFO     [async_socket:89] 8GXTFFSKbdscIygGAAAE: Received request to upgrade to websocket
+[1] INFO:     ('127.0.0.1', 52855) - "WebSocket /socket.io/?session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
+[1] 8GXTFFSKbdscIygGAAAE: Upgrade to websocket successful
+[1] INFO     [async_socket:217] 8GXTFFSKbdscIygGAAAE: Upgrade to websocket successful
 [1] INFO:     connection closed
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "[phil_connors] Tasks cancelled, exiting loop.", "module": "ws", "line": 904, "taskName": "Task-39"}
-[1] {"level": "INFO", "logger": "api_gateway.src.routes.ws", "message": "Closing WebSocket connection for session 175b65f7-619d-4d3b-9a8a-cdcf955b03b6, agent phil_connors", "module": "ws", "line": 952, "taskName": "Task-39"}
-[1] INFO:     connection closed
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> CLOSE 1000 (OK) [2 bytes]", "module": "protocol", "line": 745, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CLOSING", "module": "protocol", "line": 175, "taskName": "Task-40", "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< CLOSE 1000 (OK) [2 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< CLOSE 1000 (OK) [2 bytes]", "module": "protocol", "line": 599, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< EOF", "module": "protocol", "line": 649, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> EOF", "module": "protocol", "line": 757, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CLOSED", "module": "protocol", "line": 175, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[chloe] Exiting agent_to_client_messaging loop. (request_id: 2e3ae820-e1da-4359-b93f-313fbd243907)", "module": "ws", "line": 581, "taskName": "Task-29"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "< EOF", "module": "protocol", "line": 649, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "> EOF", "module": "protocol", "line": 757, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "websockets.client", "message": "= connection is CLOSED", "module": "protocol", "line": 175, "taskName": null, "websocket": "<ClientConnection>"}
-[1] {"level": "DEBUG", "logger": "api_gateway.src.routes.ws", "message": "[phil_connors] Exiting agent_to_client_messaging loop. (request_id: 063d78cd-550e-427e-8c56-47f47ff1e028)", "module": "ws", "line": 581, "taskName": "Task-40"}
-[1] {"level": "ERROR", "logger": "asyncio", "message": "unhandled exception during asyncio.run() shutdown\ntask: <Task finished name='Task-40' coro=<agent_to_client_messaging() done, defined at /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py:227> exception=TypeError('catching classes that do not inherit from BaseException is not allowed')>", "module": "runners", "line": 211, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py\", line 194, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"uvloop/loop.pyx\", line 1512, in uvloop.loop.Loop.run_until_complete\n  File \"uvloop/loop.pyx\", line 1505, in uvloop.loop.Loop.run_until_complete\n  File \"uvloop/loop.pyx\", line 1379, in uvloop.loop.Loop.run_forever\n  File \"uvloop/loop.pyx\", line 557, in uvloop.loop.Loop._run\n  File \"uvloop/handles/poll.pyx\", line 216, in uvloop.loop.__on_uvpoll_event\n  File \"uvloop/cbhandles.pyx\", line 83, in uvloop.loop.Handle._run\n  File \"uvloop/cbhandles.pyx\", line 66, in uvloop.loop.Handle._run\n  File \"uvloop/loop.pyx\", line 399, in uvloop.loop.Loop._read_from_self\n  File \"uvloop/loop.pyx\", line 404, in uvloop.loop.Loop._invoke_signals\n  File \"uvloop/loop.pyx\", line 379, in uvloop.loop.Loop._ceval_process_signals\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/main.py\", line 84, in signal_handler\n    sys.exit(0)\n    ~~~~~~~~^^^\nSystemExit: 0\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py\", line 253, in agent_to_client_messaging\n    async for event in live_events:\n    ...<192 lines>...\n            accumulated_text = \"\"\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/runners.py\", line 296, in run_live\n    async for event in invocation_context.agent.run_live(invocation_context):\n      self.session_service.append_event(session=session, event=event)\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/agents/base_agent.py\", line 168, in run_live\n    async for event in self._run_live_impl(ctx):\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/agents/llm_agent.py\", line 240, in _run_live_impl\n    async for event in self._llm_flow.run_live(ctx):\n      self.__maybe_save_output_to_state(event)\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 105, in run_live\n    async for event in self._receive_from_model(\n    ...<24 lines>...\n        await llm_connection.close()\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 196, in _receive_from_model\n    async for llm_response in llm_connection.receive():\n    ...<22 lines>...\n        yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/models/gemini_llm_connection.py\", line 132, in receive\n    async for message in self._gemini_session.receive():\n    ...<62 lines>...\n        yield LlmResponse(content=types.Content(role='model', parts=parts))\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/genai/live.py\", line 416, in receive\n    while result := await self._receive():\n                    ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/genai/live.py\", line 497, in _receive\n    raw_response = await self._ws.recv(decode=False)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/connection.py\", line 303, in recv\n    return await self.recv_messages.get(decode)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/messages.py\", line 159, in get\n    frame = await self.frames.get(not self.closed)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/messages.py\", line 51, in get\n    await self.get_waiter\nasyncio.exceptions.CancelledError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py\", line 487, in agent_to_client_messaging\n    except WebSocketErrorResponse:\n        # Re-raise WebSocketErrorResponse for proper handling at the endpoint level\n        raise\nTypeError: catching classes that do not inherit from BaseException is not allowed"}
-[1] {"level": "ERROR", "logger": "asyncio", "message": "unhandled exception during asyncio.run() shutdown\ntask: <Task finished name='Task-29' coro=<agent_to_client_messaging() done, defined at /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py:227> exception=TypeError('catching classes that do not inherit from BaseException is not allowed')>", "module": "runners", "line": 211, "taskName": null, "exception": "Traceback (most recent call last):\n  File \"/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py\", line 194, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"uvloop/loop.pyx\", line 1512, in uvloop.loop.Loop.run_until_complete\n  File \"uvloop/loop.pyx\", line 1505, in uvloop.loop.Loop.run_until_complete\n  File \"uvloop/loop.pyx\", line 1379, in uvloop.loop.Loop.run_forever\n  File \"uvloop/loop.pyx\", line 557, in uvloop.loop.Loop._run\n  File \"uvloop/handles/poll.pyx\", line 216, in uvloop.loop.__on_uvpoll_event\n  File \"uvloop/cbhandles.pyx\", line 83, in uvloop.loop.Handle._run\n  File \"uvloop/cbhandles.pyx\", line 66, in uvloop.loop.Handle._run\n  File \"uvloop/loop.pyx\", line 399, in uvloop.loop.Loop._read_from_self\n  File \"uvloop/loop.pyx\", line 404, in uvloop.loop.Loop._invoke_signals\n  File \"uvloop/loop.pyx\", line 379, in uvloop.loop.Loop._ceval_process_signals\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/main.py\", line 84, in signal_handler\n    sys.exit(0)\n    ~~~~~~~~^^^\nSystemExit: 0\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py\", line 253, in agent_to_client_messaging\n    async for event in live_events:\n    ...<192 lines>...\n            accumulated_text = \"\"\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/runners.py\", line 296, in run_live\n    async for event in invocation_context.agent.run_live(invocation_context):\n      self.session_service.append_event(session=session, event=event)\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/agents/base_agent.py\", line 168, in run_live\n    async for event in self._run_live_impl(ctx):\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/agents/llm_agent.py\", line 240, in _run_live_impl\n    async for event in self._llm_flow.run_live(ctx):\n      self.__maybe_save_output_to_state(event)\n      yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 105, in run_live\n    async for event in self._receive_from_model(\n    ...<24 lines>...\n        await llm_connection.close()\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 196, in _receive_from_model\n    async for llm_response in llm_connection.receive():\n    ...<22 lines>...\n        yield event\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/adk/models/gemini_llm_connection.py\", line 132, in receive\n    async for message in self._gemini_session.receive():\n    ...<62 lines>...\n        yield LlmResponse(content=types.Content(role='model', parts=parts))\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/genai/live.py\", line 416, in receive\n    while result := await self._receive():\n                    ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/google/genai/live.py\", line 497, in _receive\n    raw_response = await self._ws.recv(decode=False)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/connection.py\", line 303, in recv\n    return await self.recv_messages.get(decode)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/messages.py\", line 159, in get\n    frame = await self.frames.get(not self.closed)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/websockets/asyncio/messages.py\", line 51, in get\n    await self.get_waiter\nasyncio.exceptions.CancelledError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/src/routes/ws.py\", line 487, in agent_to_client_messaging\n    except WebSocketErrorResponse:\n        # Re-raise WebSocketErrorResponse for proper handling at the endpoint level\n        raise\nTypeError: catching classes that do not inherit from BaseException is not allowed"}
-[1] INFO:     Stopping reloader process [20964]
-[1] npm run dev:server exited with code 0
-(project_env) tucker@Lapariffic tkr-agent-chat % 
-(project_env) tucker@Lapariffic tkr-agent-chat % 
+[1] INFO:     connection open
+[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 0/agents,
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 0/agents,
+[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=NX86ydJ4a6C-LQBBAAAF agent_id=chloe session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707 remote_addr=127.0.0.1)
+[1] NX86ydJ4a6C-LQBBAAAF is entering room agent_chloe [/agents]
+[1] INFO     [async_server:303] NX86ydJ4a6C-LQBBAAAF is entering room agent_chloe [/agents]
+[1] NX86ydJ4a6C-LQBBAAAF is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] INFO     [async_server:303] NX86ydJ4a6C-LQBBAAAF is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] emitting event "connect:status" to NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] INFO     [async_server:176] emitting event "connect:status" to NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"NX86ydJ4a6C-LQBBAAAF","namespace":"/agents"}]
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"NX86ydJ4a6C-LQBBAAAF","namespace":"/agents"}]
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 0/agents,{"sid":"NX86ydJ4a6C-LQBBAAAF"}
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 0/agents,{"sid":"NX86ydJ4a6C-LQBBAAAF"}
+[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
+[1] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] INFO     [async_server:594] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] INFO     [async_server:594] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746240446919_40","type":"text","text":"hello","content":"hello","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T02:47:26.919Z"}]
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746240446919_40","type":"text","text":"hello","content":"hello","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T02:47:26.919Z"}]
+[1] received event "message" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] INFO     [async_server:594] received event "message" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] INFO     [socket_service:722] Received message from agent chloe in session 63399371-4b1d-4d73-be3c-c6a9e4abe707
+[1] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] INFO     [async_server:176] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hello","agent_id":"chloe","timestamp":"2025-05-03T02:47:26.920726"}]
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hello","agent_id":"chloe","timestamp":"2025-05-03T02:47:26.920726"}]
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T02:47:26.921381","message_id":"msg_1746240446919_40"}]
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T02:47:26.921381","message_id":"msg_1746240446919_40"}]
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
+[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
+[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 

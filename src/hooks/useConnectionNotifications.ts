@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useNotifications } from '../components/ui/notification-center';
-import webSocketService from '../services/websocket';
+import socketService from '../services/socket-service';
 import type { AgentInfo } from '../types/api';
 
 export interface ConnectionNotificationsConfig {
@@ -121,12 +121,12 @@ export function useConnectionNotifications(config: ConnectionNotificationsConfig
     };
 
     // Get the current callbacks from the service by creating a fresh callback with our handlers
-    webSocketService.setCallbacks(notificationCallbacks);
+    socketService.setCallbacks(notificationCallbacks);
 
     // Clean up by removing our callbacks
     return () => {
       // Simply remove our callbacks to avoid conflicts
-      webSocketService.setCallbacks({
+      socketService.setCallbacks({
         onStatusChange: undefined,
         onError: undefined
       });

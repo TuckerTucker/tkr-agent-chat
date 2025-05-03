@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, patch
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from ...routes.context import router
-from ...services.context_service import context_service
-from ...models.shared_context import SharedContext
+from src.routes.context import router
+from src.services.context_service import context_service
+from src.models.shared_context import SharedContext
 
 @pytest.fixture
 def app():
