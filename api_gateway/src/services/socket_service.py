@@ -362,39 +362,20 @@ class ChatNamespace(socketio.AsyncNamespace):
             }
     
     async def handle_text_message(self, sid, data, connection_data):
-        """Process a text message from a client or agent."""
-        # To be implemented with ADK integration
-        # For now, just broadcast to the appropriate room
+        """
+        Process a text message from a client or agent.
+        Note: This method is deprecated - socket_message_handler.py is used instead via process_message.
+        """
+        logger.warning("handle_text_message called directly - this is deprecated in favor of process_message")
+        
         session_id = connection_data.get('session_id')
         agent_id = connection_data.get('agent_id')
         
-        # Echo message back (temporary)
-        await self.emit(
-            'message',
-            {
-                'type': 'text',
-                'message': f"Echo: {data.get('text', '')}",
-                'agent_id': agent_id,
-                'timestamp': datetime.utcnow().isoformat()
-            },
-            room=sid
-        )
+        # Only redirect this to the message handler if needed
+        from ..services.socket_message_handler import process_message
+        await process_message(sio, sid, data, self.namespace)
         
-        # Broadcast to session room if available
-        if session_id:
-            socket_metrics.message_sent()
-            await self.emit(
-                'message',
-                {
-                    'type': 'text',
-                    'message': data.get('text', ''),
-                    'agent_id': agent_id,
-                    'timestamp': datetime.utcnow().isoformat(),
-                    'sender_sid': sid  # Include sender SID to skip sender when broadcasting
-                },
-                room=f'session_{session_id}',
-                skip_sid=sid  # Skip the sender
-            )
+        logger.info("Redirected message to socket_message_handler.process_message")
     
     async def handle_a2a_message(self, sid, data, connection_data):
         """Process an agent-to-agent message."""
@@ -736,6 +717,27 @@ class AgentNamespace(socketio.AsyncNamespace):
                     'agent_id': agent_id,
                     'timestamp': datetime.utcnow().isoformat()
                 }, room=f'session_{session_id}')
+                
+                # Check if this message targets a specific agent and needs a response
+                target_agent_id = data.get('toAgent')
+                if target_agent_id:
+                    logger.info(f"Message targets agent {target_agent_id}, generating agent response")
+                    
+                    # Import the generate_agent_response function
+                    from ..services.socket_message_handler import generate_agent_response
+                    
+                    # Trigger agent response generation
+                    asyncio.create_task(
+                        generate_agent_response(
+                            sio=sio,
+                            session_id=session_id,
+                            agent_id=target_agent_id,
+                            message=data,
+                            namespace=self.namespace
+                        )
+                    )
+                    logger.info(f"Agent response generation task created for {target_agent_id}")
+                
             elif msg_type == 'task_update':
                 # Handle task updates
                 task_id = data.get('task_id')

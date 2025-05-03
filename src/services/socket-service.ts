@@ -10,7 +10,7 @@
  * - Error handling and recovery
  */
 
-import { io, Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 import EventEmitter from 'eventemitter3';
 
 // Environment variables using Vite
@@ -86,6 +86,7 @@ export interface SocketIOCallbacks {
   onA2AMessage?: (message: A2AMessage) => void;
   onTaskEvent?: (event: TaskEvent) => void;
   onContextUpdate?: (event: ContextEvent) => void;
+  onPacket?: (agentId: string, packet: AgentStreamingPacket) => void;
 }
 
 // Define the structure for agent status
@@ -126,7 +127,7 @@ interface ConnectionOptions {
 }
 
 class SocketService extends EventEmitter {
-  private socket: Socket | null = null;
+  private socket: any | null = null;
   private connected: boolean = false;
   private connecting: boolean = false;
   private reconnecting: boolean = false;
@@ -530,6 +531,52 @@ class SocketService extends EventEmitter {
    * Handle incoming message
    */
   private handleMessage(data: any) {
+    console.log('Socket.IO message received:', data);
+    
+    // Skip echoed user messages - if there's no fromAgent, and data has toAgent, it's an echo of the user's message
+    if (!data.fromAgent && data.toAgent && data.type === 'text') {
+      console.log('Ignoring echoed user message:', data);
+      return;
+    }
+    
+    // First, handle agent messages in the new format from Socket.IO
+    if (data.fromAgent && data.content) {
+      const agentId = data.fromAgent;
+      const messageText = data.content;
+      const isError = data.type === 'error';
+      const isStreaming = !!data.streaming;
+      
+      // Determine agent activity status
+      let activity: AgentActivityStatus = isStreaming ? 'responding' : 'idle';
+      
+      if (isError) {
+        activity = 'error';
+        this.callbacks.onError?.(agentId, { 
+          code: 500, 
+          message: typeof messageText === 'string' ? messageText : 'Unknown error'
+        });
+      }
+      
+      // Update agent status
+      this.updateAgentStatus(agentId, { connection: 'connected', activity });
+      
+      // Create packet for callback
+      const packet: AgentStreamingPacket = {
+        message: messageText,
+        turn_complete: !isStreaming, // If not streaming, message is complete
+        interrupted: false,
+        error: isError ? messageText : undefined
+      };
+      
+      // Call message handler callback if provided
+      this.callbacks.onPacket?.(agentId, packet);
+      
+      // Emit message event to local listeners
+      this.emit('message', { agentId, packet });
+      return;
+    }
+    
+    // Handle legacy format messages
     const agentId = data.agent_id || this.lastAgentId;
     const messageText = data.message || '';
     const turnComplete = data.turn_complete || false;

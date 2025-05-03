@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import socketService, { A2AMessage } from './socket-service';
+import socketService, { A2AMessage, SocketIOCallbacks } from './socket-service';
 
 export interface SharedContext {
     id: string;
@@ -155,13 +155,13 @@ export const useSharedContext = (
     sourceAgentId?: string
 ) => {
     const queryClient = useQueryClient();
-    const ws = websocketService;
+    const ws = socketService;
 
     // Subscribe to context updates via WebSocket callbacks
     React.useEffect(() => {
         if (!ws) return;
 
-        const callbacks: WebSocketCallbacks = {
+        const callbacks: SocketIOCallbacks = {
             onA2AMessage: (message: A2AMessage) => {
                 if (message.type === 'context_update' && message.content?.target_agent_id === targetAgentId) {
                     queryClient.invalidateQueries({
@@ -173,8 +173,13 @@ export const useSharedContext = (
 
         ws.setCallbacks(callbacks);
 
-        // Connect to A2A WebSocket for context updates
-        ws.connectA2A(targetAgentId);
+        // Connect to session using agent ID
+        if (sessionId) {
+            ws.connect({
+                sessionId: sessionId,
+                agentId: targetAgentId
+            });
+        }
 
         return () => {
             // Reset callbacks on cleanup

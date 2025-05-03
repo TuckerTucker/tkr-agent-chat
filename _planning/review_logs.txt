@@ -16,14 +16,14 @@ tucker@Lapariffic tkr-agent-chat % npm run dev
 [1] -e \e[38;5;208mAdding /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat to PYTHONPATH\e[0m
 [1] INFO:     Will watch for changes in these directories: ['/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat']
 [1] INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-[1] INFO:     Started reloader process [6425] using WatchFiles
+[1] INFO:     Started reloader process [9877] using WatchFiles
 [0] 
-[0]   VITE v6.2.6  ready in 104 ms
+[0]   VITE v6.2.6  ready in 152 ms
 [0] 
 [0]   ➜  Local:   http://localhost:5173/
 [0]   ➜  Network: use --host to expose
-[1] [2025-05-02 20:46:59,033] INFO agents.base: Successfully imported Agent from google.adk
-[1] INFO     [logger_service:260] Logging configured with level: info in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/logs/20250502_204659
+[1] [2025-05-02 21:43:20,034] INFO agents.base: Successfully imported Agent from google.adk
+[1] INFO     [logger_service:260] Logging configured with level: info in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/logs/20250502_214320
 [1] /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
 [1] * 'schema_extra' has been renamed to 'json_schema_extra'
 [1]   warnings.warn(message, UserWarning)
@@ -33,26 +33,26 @@ tucker@Lapariffic tkr-agent-chat % npm run dev
 [1] INFO     [logger_service:260] Logging configured with level: debug in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/logs
 [1] INFO     [socket_service:1120] Initializing Socket.IO server
 [1] INFO     [main:512] Socket.IO server mounted at /socket.io
-[1] INFO:     Started server process [6428]
+[1] INFO:     Started server process [9880]
 [1] INFO:     Waiting for application startup.
 [1] INFO     [db:693] Database schema initialized successfully
 [1] INFO     [main:420] Database initialized.
-[1] [2025-05-02 20:46:59,106] INFO agents.base: Initializing agent: chloe (Chloe)
-[1] INFO     [base_agent:235] Initializing agent: chloe (Chloe)
-[1] [2025-05-02 20:46:59,106] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] INFO     [base_agent:236] Using model: gemini-2.0-flash-exp
-[1] [2025-05-02 20:46:59,106] INFO agents.base: Tools: 1 tool(s) available
-[1] INFO     [base_agent:237] Tools: 1 tool(s) available
-[1] [2025-05-02 20:46:59,106] INFO agents.base: Agent chloe initialized successfully with ADK
-[1] INFO     [base_agent:248] Agent chloe initialized successfully with ADK
-[1] [2025-05-02 20:46:59,107] INFO agents.base: Initializing agent: phil_connors (Phil Connors)
-[1] INFO     [base_agent:235] Initializing agent: phil_connors (Phil Connors)
-[1] [2025-05-02 20:46:59,107] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] INFO     [base_agent:236] Using model: gemini-2.0-flash-exp
-[1] [2025-05-02 20:46:59,107] INFO agents.base: Tools: 1 tool(s) available
-[1] INFO     [base_agent:237] Tools: 1 tool(s) available
-[1] [2025-05-02 20:46:59,107] INFO agents.base: Agent phil_connors initialized successfully with ADK
-[1] INFO     [base_agent:248] Agent phil_connors initialized successfully with ADK
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Initializing agent: chloe (Chloe)
+[1] INFO     [base_agent:291] Initializing agent: chloe (Chloe)
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Using model: gemini-2.0-flash-exp
+[1] INFO     [base_agent:292] Using model: gemini-2.0-flash-exp
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Tools: 1 tool(s) available
+[1] INFO     [base_agent:293] Tools: 1 tool(s) available
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Agent chloe initialized successfully with ADK
+[1] INFO     [base_agent:304] Agent chloe initialized successfully with ADK
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Initializing agent: phil_connors (Phil Connors)
+[1] INFO     [base_agent:291] Initializing agent: phil_connors (Phil Connors)
+[1] [2025-05-02 21:43:20,136] INFO agents.base: Using model: gemini-2.0-flash-exp
+[1] INFO     [base_agent:292] Using model: gemini-2.0-flash-exp
+[1] [2025-05-02 21:43:20,137] INFO agents.base: Tools: 1 tool(s) available
+[1] INFO     [base_agent:293] Tools: 1 tool(s) available
+[1] [2025-05-02 21:43:20,137] INFO agents.base: Agent phil_connors initialized successfully with ADK
+[1] INFO     [base_agent:304] Agent phil_connors initialized successfully with ADK
 [1] INFO     [main:240] Loaded 2 agents: ['chloe', 'phil_connors']
 [1] INFO     [chat_service:61] Chat Service loaded 2 agents.
 [1] INFO     [main:425] Chat service initialized with agents.
@@ -65,199 +65,96 @@ tucker@Lapariffic tkr-agent-chat % npm run dev
 [1] INFO     [main:449] Socket.IO background tasks started
 [1] INFO     [main:252] Starting context cleanup background task (interval: 300s, batch_size: 100)
 [1] INFO     [main:275] Starting message cleanup task (interval: 30 min, max messages: 500)
-[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
+[1] DEBUG    [chat_service:86] Retrieved 9 sessions.
 [1] INFO     [main:309] Starting session cleanup task (interval: 60 min, inactivity timeout: 120 min)
 [1] INFO     [main:367] Starting agent health monitoring task (interval: 5 min, auto-restart: True)
 [1] DEBUG    [main:403] Agent health check: All 2 agents healthy
 [1] INFO     [socket_connection_manager:216] Connection monitoring started
 [1] INFO:     Application startup complete.
 [1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=46c048f6-7363-4e10-9941-b4f23d1e0abf method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=ef91bf5d-f12b-4faf-a870-5fc37625c4fe method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=0f6488df-c2aa-49b3-8c8a-5b4e8df394a9 method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
 [1] Info: Agent-specific .env file (.env.phil_connors) not found at /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/agents/phil_connors/src/../.env.phil_connors.
 [1] DEBUG: Starting ADK imports in chat_service.py...
 [1] DEBUG: Successfully imported ADK components in chat_service.py
-[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=d94b2734-406f-4a74-9786-5b43c50128f1 method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=9d148f02-bdf4-405d-8c23-8f688a73121c method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=c7d280a2-5020-4922-b518-a0664aaff9f6 method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=a44ac8ab-134a-47de-bade-c7da6105201d method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=9ecbd608-23ed-4411-aeb3-55ad35dc66e4 method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
-[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=ae9f4fc5-63d5-40d3-9c16-7afab4a3fe06 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=dfd06be3-080d-44f5-a171-d7bd057847a5 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=a391545c-0ed9-41a6-9cfe-daae25cb6132 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=c2ff7e8f-63d5-42a2-bccc-a53a43a3729a method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] z5V6z1ROF3fLBxqaAAAA: Sending packet OPEN data {'sid': 'z5V6z1ROF3fLBxqaAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet OPEN data {'sid': 'z5V6z1ROF3fLBxqaAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] z5V6z1ROF3fLBxqaAAAA: Received request to upgrade to websocket
-[1] INFO     [async_socket:89] z5V6z1ROF3fLBxqaAAAA: Received request to upgrade to websocket
-[1] INFO:     ('127.0.0.1', 52775) - "WebSocket /socket.io/?session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
-[1] z5V6z1ROF3fLBxqaAAAA: Upgrade to websocket successful
-[1] INFO     [async_socket:217] z5V6z1ROF3fLBxqaAAAA: Upgrade to websocket successful
-[1] INFO:     connection open
-[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 0/agents,
-[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 0/agents,
-[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=xHPrW3yjGwu2DLXBAAAB agent_id=chloe session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb remote_addr=127.0.0.1)
-[1] xHPrW3yjGwu2DLXBAAAB is entering room agent_chloe [/agents]
-[1] INFO     [async_server:303] xHPrW3yjGwu2DLXBAAAB is entering room agent_chloe [/agents]
-[1] xHPrW3yjGwu2DLXBAAAB is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
-[1] INFO     [async_server:303] xHPrW3yjGwu2DLXBAAAB is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
-[1] emitting event "connect:status" to xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] INFO     [async_server:176] emitting event "connect:status" to xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"xHPrW3yjGwu2DLXBAAAB","namespace":"/agents"}]
-[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"xHPrW3yjGwu2DLXBAAAB","namespace":"/agents"}]
-[1] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 0/agents,{"sid":"xHPrW3yjGwu2DLXBAAAB"}
-[1] INFO     [async_socket:77] z5V6z1ROF3fLBxqaAAAA: Sending packet MESSAGE data 0/agents,{"sid":"xHPrW3yjGwu2DLXBAAAB"}
-[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
-[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
-[1] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] INFO     [async_server:594] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] INFO     [async_socket:37] z5V6z1ROF3fLBxqaAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] INFO     [async_server:594] received event "join" from xHPrW3yjGwu2DLXBAAAB [/agents]
-[1] INFO:     connection closed
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=2e916269-8d2c-4ccf-b423-9f0a33b13096 method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=d25607d5-c6f3-4a17-bb31-c6d471c57fdb method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
-[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=4324155a-2dd1-4cb6-b901-988480c60eb1 method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=0cd3cddb-41d5-4b5f-9f1c-580d27a8bb2f method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=b7c85b16-4afb-4f2b-9a88-74d8a5b36aa3 method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=410a56c3-bc7d-41f3-9179-1ccb20a6dbbf method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52767 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
-[1] DEBUG    [chat_service:86] Retrieved 8 sessions.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=5007f158-f190-4618-808f-983d3f77527a method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=c113f5bf-c88e-498c-9228-f2dc819e1619 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=e3ba67aa-30ed-4ec5-be4c-06d5bbe23ce0 method=OPTIONS path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52769 - "OPTIONS /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages (request_id=100aeb91-e093-4da2-8d97-5ce61ed3e154 method=GET path=/api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb with pagination metadata.
-[1] INFO:     127.0.0.1:52769 - "GET /api/v1/sessions/3b9af753-7da3-4d21-a6f8-8f10fba0e2eb/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet OPEN data {'sid': '2T_iTU3CsmXjiFkAAAAC', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet OPEN data {'sid': '2T_iTU3CsmXjiFkAAAAC', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] 2T_iTU3CsmXjiFkAAAAC: Received request to upgrade to websocket
-[1] INFO     [async_socket:89] 2T_iTU3CsmXjiFkAAAAC: Received request to upgrade to websocket
-[1] INFO:     ('127.0.0.1', 52794) - "WebSocket /socket.io/?session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
-[1] 2T_iTU3CsmXjiFkAAAAC: Upgrade to websocket successful
-[1] INFO     [async_socket:217] 2T_iTU3CsmXjiFkAAAAC: Upgrade to websocket successful
-[1] INFO:     connection open
-[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 0/agents,
-[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 0/agents,
-[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=POMoyFIEwRagZPkfAAAD agent_id=chloe session_id=3b9af753-7da3-4d21-a6f8-8f10fba0e2eb remote_addr=127.0.0.1)
-[1] POMoyFIEwRagZPkfAAAD is entering room agent_chloe [/agents]
-[1] INFO     [async_server:303] POMoyFIEwRagZPkfAAAD is entering room agent_chloe [/agents]
-[1] POMoyFIEwRagZPkfAAAD is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
-[1] INFO     [async_server:303] POMoyFIEwRagZPkfAAAD is entering room session_3b9af753-7da3-4d21-a6f8-8f10fba0e2eb [/agents]
-[1] emitting event "connect:status" to POMoyFIEwRagZPkfAAAD [/agents]
-[1] INFO     [async_server:176] emitting event "connect:status" to POMoyFIEwRagZPkfAAAD [/agents]
-[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"POMoyFIEwRagZPkfAAAD","namespace":"/agents"}]
-[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb","socket_id":"POMoyFIEwRagZPkfAAAD","namespace":"/agents"}]
-[1] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 0/agents,{"sid":"POMoyFIEwRagZPkfAAAD"}
-[1] INFO     [async_socket:77] 2T_iTU3CsmXjiFkAAAAC: Sending packet MESSAGE data 0/agents,{"sid":"POMoyFIEwRagZPkfAAAD"}
-[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
-[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"3b9af753-7da3-4d21-a6f8-8f10fba0e2eb"}]
-[1] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
-[1] INFO     [async_server:594] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
-[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
-[1] INFO     [async_server:594] received event "join" from POMoyFIEwRagZPkfAAAD [/agents]
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=0d5d1632-bde0-40c2-998d-077457e3a6db method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52765 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: POST /api/v1/sessions (request_id=cdb63ef1-60a1-4bcb-9c96-d112ddc15f1e method=POST path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [chat_service:75] Created session 63399371-4b1d-4d73-be3c-c6a9e4abe707 in database.
-[1] INFO     [api:38] API: Created session 63399371-4b1d-4d73-be3c-c6a9e4abe707
-[1] INFO:     127.0.0.1:52765 - "POST /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=b0d61828-d699-4453-bc0b-f55472ee12a0 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:52765 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=b57db7b2-5141-4ea9-8c82-63a96a796096 method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:51611 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=6ad1eba0-63fa-4a81-82bb-8ac1eb6844d9 method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=5ab87657-d749-42a4-adf2-026dbe551e5b method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:51611 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=89a0c36b-252d-465f-9c44-a368127afcbe method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] DEBUG    [chat_service:86] Retrieved 9 sessions.
+[1] INFO:     127.0.0.1:51611 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
+[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=5dcf2274-e951-4297-9537-861a354e0e3c method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:51610 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=58fd8d2a-6643-4598-b2dd-06a00d2e1e57 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=7bf3d2b8-704b-4ad4-9583-0f5810b9382d method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
 [1] INFO     [db:245] Getting messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
 [1] DEBUG    [chat_service:184] Retrieved 0 messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with pagination metadata.
-[1] INFO:     127.0.0.1:52765 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 1/agents,
-[1] INFO     [async_socket:37] 2T_iTU3CsmXjiFkAAAAC: Received packet MESSAGE data 1/agents,
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet OPEN data {'sid': '8GXTFFSKbdscIygGAAAE', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet OPEN data {'sid': '8GXTFFSKbdscIygGAAAE', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] 8GXTFFSKbdscIygGAAAE: Received request to upgrade to websocket
-[1] INFO     [async_socket:89] 8GXTFFSKbdscIygGAAAE: Received request to upgrade to websocket
-[1] INFO:     ('127.0.0.1', 52855) - "WebSocket /socket.io/?session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
-[1] 8GXTFFSKbdscIygGAAAE: Upgrade to websocket successful
-[1] INFO     [async_socket:217] 8GXTFFSKbdscIygGAAAE: Upgrade to websocket successful
-[1] INFO:     connection closed
+[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=2a385aef-5c4f-4fa9-b5b8-11d7127f8f56 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=d31e8a79-76f8-445e-934f-bd8f20097e70 method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
+[1] INFO     [db:245] Getting messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
+[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with pagination metadata.
+[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
+[1] 4VbcOpVhX_bNeatQAAAA: Sending packet OPEN data {'sid': '4VbcOpVhX_bNeatQAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet OPEN data {'sid': '4VbcOpVhX_bNeatQAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
+[1] 4VbcOpVhX_bNeatQAAAA: Received request to upgrade to websocket
+[1] INFO     [async_socket:89] 4VbcOpVhX_bNeatQAAAA: Received request to upgrade to websocket
+[1] INFO:     ('127.0.0.1', 51617) - "WebSocket /socket.io/?session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
+[1] 4VbcOpVhX_bNeatQAAAA: Upgrade to websocket successful
+[1] INFO     [async_socket:217] 4VbcOpVhX_bNeatQAAAA: Upgrade to websocket successful
 [1] INFO:     connection open
-[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 0/agents,
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 0/agents,
-[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=NX86ydJ4a6C-LQBBAAAF agent_id=chloe session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707 remote_addr=127.0.0.1)
-[1] NX86ydJ4a6C-LQBBAAAF is entering room agent_chloe [/agents]
-[1] INFO     [async_server:303] NX86ydJ4a6C-LQBBAAAF is entering room agent_chloe [/agents]
-[1] NX86ydJ4a6C-LQBBAAAF is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] INFO     [async_server:303] NX86ydJ4a6C-LQBBAAAF is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] emitting event "connect:status" to NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] INFO     [async_server:176] emitting event "connect:status" to NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"NX86ydJ4a6C-LQBBAAAF","namespace":"/agents"}]
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"NX86ydJ4a6C-LQBBAAAF","namespace":"/agents"}]
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 0/agents,{"sid":"NX86ydJ4a6C-LQBBAAAF"}
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 0/agents,{"sid":"NX86ydJ4a6C-LQBBAAAF"}
-[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
-[1] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] INFO     [async_server:594] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] INFO     [async_server:594] received event "join" from NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746240446919_40","type":"text","text":"hello","content":"hello","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T02:47:26.919Z"}]
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746240446919_40","type":"text","text":"hello","content":"hello","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T02:47:26.919Z"}]
-[1] received event "message" from NX86ydJ4a6C-LQBBAAAF [/agents]
-[1] INFO     [async_server:594] received event "message" from NX86ydJ4a6C-LQBBAAAF [/agents]
+[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 0/agents,
+[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 0/agents,
+[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=RarJiSIgqEvgiqr-AAAB agent_id=chloe session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707 remote_addr=127.0.0.1)
+[1] RarJiSIgqEvgiqr-AAAB is entering room agent_chloe [/agents]
+[1] INFO     [async_server:303] RarJiSIgqEvgiqr-AAAB is entering room agent_chloe [/agents]
+[1] RarJiSIgqEvgiqr-AAAB is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] INFO     [async_server:303] RarJiSIgqEvgiqr-AAAB is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
+[1] emitting event "connect:status" to RarJiSIgqEvgiqr-AAAB [/agents]
+[1] INFO     [async_server:176] emitting event "connect:status" to RarJiSIgqEvgiqr-AAAB [/agents]
+[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"RarJiSIgqEvgiqr-AAAB","namespace":"/agents"}]
+[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"RarJiSIgqEvgiqr-AAAB","namespace":"/agents"}]
+[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 0/agents,{"sid":"RarJiSIgqEvgiqr-AAAB"}
+[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 0/agents,{"sid":"RarJiSIgqEvgiqr-AAAB"}
+[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
+[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
+[1] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
+[1] INFO     [async_server:594] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
+[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
+[1] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
+[1] INFO     [async_server:594] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
+[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746243808099_893","type":"text","text":"jerty","content":"jerty","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T03:43:28.100Z"}]
+[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746243808099_893","type":"text","text":"jerty","content":"jerty","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T03:43:28.100Z"}]
+[1] received event "message" from RarJiSIgqEvgiqr-AAAB [/agents]
+[1] INFO     [async_server:594] received event "message" from RarJiSIgqEvgiqr-AAAB [/agents]
 [1] INFO     [socket_service:722] Received message from agent chloe in session 63399371-4b1d-4d73-be3c-c6a9e4abe707
 [1] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
 [1] INFO     [async_server:176] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hello","agent_id":"chloe","timestamp":"2025-05-03T02:47:26.920726"}]
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"hello","agent_id":"chloe","timestamp":"2025-05-03T02:47:26.920726"}]
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T02:47:26.921381","message_id":"msg_1746240446919_40"}]
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T02:47:26.921381","message_id":"msg_1746240446919_40"}]
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
-[1] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] INFO     [async_socket:77] 8GXTFFSKbdscIygGAAAE: Sending packet PING data None
-[1] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
-[1] INFO     [async_socket:37] 8GXTFFSKbdscIygGAAAE: Received packet PONG data 
+[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"jerty","agent_id":"chloe","timestamp":"2025-05-03T03:43:28.101536"}]
+[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"jerty","agent_id":"chloe","timestamp":"2025-05-03T03:43:28.101536"}]
+[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T03:43:28.102209","message_id":"msg_1746243808099_893"}]
+[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T03:43:28.102209","message_id":"msg_1746243808099_893"}]
+
+
+```
+
+Component unmounting, cleaning up all connections...
+socket-service.ts:1408 Cleaning up Socket.IO service
+App.tsx:224 Attempting initial connection for all agents...
+socket-service.ts:1394 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
+App.tsx:179 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
+socket-service.ts:185 Connection in progress, waiting...
+socket-service.ts:696 Received connection status: {connected: true, agent_id: 'chloe', session_id: '63399371-4b1d-4d73-be3c-c6a9e4abe707', socket_id: 'RarJiSIgqEvgiqr-AAAB', namespace: '/agents'}
+socket-service.ts:1394 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
+App.tsx:179 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
+socket-service.ts:406 Socket.IO connected
+socket-service.ts:272 Connected to Socket.IO server, session: 63399371-4b1d-4d73-be3c-c6a9e4abe707, agent: chloe
+socket-service.ts:1394 Agent chloe status updated: {connection: 'connected', activity: 'responding'}
+App.tsx:179 [chloe] Status changed: {connection: 'connected', activity: 'responding'}
+socket-service.ts:798 Message sent successfully: {status: 'received', timestamp: '2025-05-03T03:43:28.102209', message_id: 'msg_1746243808099_893'}

@@ -9,6 +9,7 @@ import json
 import uuid
 import asyncio
 import logging
+import random
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Tuple, Callable, Awaitable
 
@@ -291,6 +292,17 @@ async def handle_text_message(sio, sid: str, message: Dict[str, Any], namespace:
                     skip_sid=sid
                 )
                 logger.debug(f"Message {message.get('id')} sent to agent {message.get('toAgent')}")
+                
+                # Trigger agent response generation if the message is targeting an agent
+                asyncio.create_task(
+                    generate_agent_response(
+                        sio=sio, 
+                        session_id=session_id, 
+                        agent_id=message.get("toAgent"), 
+                        message=message,
+                        namespace=namespace
+                    )
+                )
             else:
                 # Otherwise, broadcast to the session room
                 await sio.emit(
@@ -528,6 +540,242 @@ async def handle_task_update(sio, sid: str, message: Dict[str, Any], namespace: 
             "message": f"Internal error: {str(e)}"
         }
         
+async def generate_agent_response(sio, session_id: str, agent_id: str, message: Dict[str, Any], namespace: str) -> None:
+    """
+    Generate a response from an agent after receiving a message targeted at it.
+    
+    Args:
+        sio: SocketIO server instance
+        session_id: Chat session ID
+        agent_id: Target agent ID
+        message: The original message sent to the agent
+        namespace: Socket.IO namespace
+    """
+    try:
+        # Log detailed information about the message
+        logger.info(f"⭐ AGENT RESPONSE GENERATION STARTED ⭐")
+        logger.info(f"Generating response from agent {agent_id} for message {message.get('id')} in session {session_id}")
+        logger.info(f"Message details: type={message.get('type')}, text={message.get('text')}, content={message.get('content')}")
+        logger.info(f"Using namespace: {namespace}")
+        
+        # Get agent instance from chat service
+        from ..services.chat_service import chat_service
+        agent = chat_service.get_agent(agent_id)
+        
+        if not agent:
+            logger.error(f"Agent {agent_id} not found, cannot generate response")
+            return
+        
+        logger.info(f"Successfully retrieved agent: {agent.id} ({agent.name if hasattr(agent, 'name') else 'Unknown'})")
+        
+        # Get ADK session for this chat session
+        adk_session = chat_service.get_or_create_adk_session(session_id)
+        
+        if not adk_session:
+            logger.error(f"Could not create or get ADK session for {session_id}")
+            return
+        
+        logger.info(f"Successfully created/retrieved ADK session for {session_id}")
+        
+        # Extract text content from message - first try text, then content, then fallback
+        user_content = None
+        if message.get('type') == 'text':
+            if 'text' in message and message['text']:
+                user_content = message.get('text')
+                logger.info(f"Using 'text' field from message: {user_content[:50]}...")
+            elif 'content' in message and message['content']:
+                user_content = message.get('content')
+                logger.info(f"Using 'content' field from message: {user_content[:50]}...")
+        else:
+            # For other message types, try to extract content or use a default prompt
+            user_content = message.get('content', message.get('text', 'Please respond to this message.'))
+            logger.info(f"Using extracted content from non-text message: {user_content[:50]}...")
+        
+        if not user_content:
+            logger.warning(f"Empty content in message {message.get('id')}, using default prompt")
+            user_content = "Please respond to this message."
+        
+        # Prepare variables for agent's system prompt
+        template_vars = {
+            "session_id": session_id,
+            "user_name": message.get('fromUser', 'User'),
+            "message_id": message.get('id'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        logger.info(f"Prepared template variables: {template_vars}")
+        
+        # Prepare agent context
+        try:
+            # Get agent-specific system prompt with all template variables filled in
+            logger.debug(f"Getting system prompt for agent {agent_id}")
+            system_prompt = agent.get_system_prompt(**template_vars)
+            logger.info(f"Successfully retrieved system prompt for agent {agent_id} - {len(system_prompt)} chars")
+        except Exception as prompt_err:
+            logger.error(f"Error preparing agent system prompt: {prompt_err}", exc_info=True)
+            system_prompt = "You are a helpful AI assistant."
+            logger.info(f"Using fallback system prompt: {system_prompt}")
+        
+        # Generate response using ADK
+        try:
+            # Start a new message for streaming response
+            response_uuid = str(uuid.uuid4())
+            response_timestamp = datetime.utcnow().isoformat()
+            
+            logger.info(f"Creating initial empty response message with ID {response_uuid}")
+            
+            # Create initial empty response message in the database
+            response_message = {
+                "id": response_uuid,
+                "type": "text",
+                "fromAgent": agent_id,
+                "sessionId": session_id,
+                "content": "",  # Start with empty content for streaming
+                "inReplyTo": message.get('id'),
+                "timestamp": response_timestamp
+            }
+            
+            # Store initial empty message to begin the response
+            logger.debug(f"Storing initial empty message in database")
+            initial_stored, initial_error, initial_uuid = await store_message(response_message)
+            
+            if not initial_stored:
+                logger.error(f"Failed to store initial agent response message: {initial_error}")
+                return
+                
+            logger.info(f"Initial empty message stored successfully with ID {initial_uuid}")
+            
+            # Broadcast initial message to session room
+            room = f"session_{session_id}"
+            logger.info(f"Broadcasting initial empty message to room {room}")
+            await sio.emit(
+                "message", 
+                {**response_message, "streaming": True, "type": "text"},  # Mark as streaming and ensure type is set
+                room=room,
+                namespace=namespace
+            )
+            logger.info(f"Initial empty message broadcast successfully")
+            
+            # Since we don't have direct access to ADK in this context, we'll call the agent to generate a response
+            try:
+                # Use agent's own method to generate response if available
+                if hasattr(agent, 'generate_response') and callable(agent.generate_response):
+                    # If agent has ADK-compatible generate_response method
+                    logger.info(f"Agent {agent_id} has generate_response method, calling it")
+                    logger.info(f"Calling generate_response with message: {user_content[:50]}...")
+                    response_text = await agent.generate_response(
+                        session=adk_session,
+                        message=user_content,
+                        system_prompt=system_prompt
+                    )
+                    logger.info(f"Agent {agent_id} generated response with generate_response: {response_text[:50]}...")
+                else:
+                    # Simulate response as fallback
+                    logger.warning(f"Agent {agent_id} doesn't have generate_response method, using fallback")
+                    
+                    # Fallback to a simple response
+                    import random
+                    responses = [
+                        f"I received your message: '{user_content[:50]}...' and I'm processing it.",
+                        "I'm here to help! What would you like to know?",
+                        "Thanks for your message. How can I assist you further?",
+                        f"This is a simulated response from {agent.name if hasattr(agent, 'name') else agent_id}. In a production environment, I would generate an actual response using my AI model."
+                    ]
+                    response_text = random.choice(responses)
+                    logger.info(f"Using fallback response: {response_text}")
+                    
+                    # Add a small delay to simulate processing time
+                    logger.debug(f"Adding artificial delay for fallback response")
+                    await asyncio.sleep(1)
+                
+                logger.info(f"Response text generated: {response_text[:100]}...")
+                
+                # Update the message with the generated content
+                updated_message = {**response_message, "content": response_text, "streaming": False}
+                
+                # Store the updated message with content
+                logger.info(f"Saving final message with content to database")
+                try:
+                    # Note: chat_service.save_message is not an async function, so don't use await
+                    saved_message = chat_service.save_message(
+                        session_id=session_id,
+                        msg_type=MessageType.AGENT,
+                        agent_id=agent_id,
+                        parts=[{"type": "text", "content": response_text}],
+                        message_metadata={
+                            "message_id": response_uuid,
+                            "in_reply_to": message.get('id'),
+                            "timestamp": response_timestamp
+                        }
+                    )
+                    
+                    if saved_message:
+                        logger.info(f"Final message saved successfully: {saved_message.get('message_uuid')}")
+                    else:
+                        logger.warning(f"No confirmation of final message save")
+                    
+                    # Broadcast completed message to session room
+                    logger.info(f"Broadcasting final message to room {room}")
+                    
+                    # Ensure we're sending a properly formatted message for the UI
+                    final_message = {
+                        "id": response_uuid,
+                        "type": "text",
+                        "fromAgent": agent_id,
+                        "sessionId": session_id,
+                        "content": response_text,
+                        "inReplyTo": message.get('id'),
+                        "timestamp": response_timestamp,
+                        "streaming": False
+                    }
+                    
+                    # Broadcast to room
+                    await sio.emit(
+                        "message",
+                        final_message,
+                        room=room,
+                        namespace=namespace
+                    )
+                    logger.info(f"Final message broadcast successful with content: {response_text[:50]}...")
+                    
+                except Exception as save_err:
+                    logger.error(f"Error saving or broadcasting final message: {save_err}", exc_info=True)
+                    raise
+                
+                logger.info(f"Agent {agent_id} generated and delivered response for message {message.get('id')}")
+                logger.info(f"⭐ AGENT RESPONSE GENERATION COMPLETED ⭐")
+                
+            except Exception as gen_err:
+                logger.error(f"Error generating response from agent {agent_id}: {gen_err}", exc_info=True)
+                
+                # Send error notification to the session
+                error_message = {
+                    "id": str(uuid.uuid4()),
+                    "type": "error",
+                    "fromAgent": agent_id,
+                    "sessionId": session_id,
+                    "content": f"Error generating response: {str(gen_err)}",
+                    "inReplyTo": message.get('id'),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+                logger.info(f"Broadcasting error message to room {room}")
+                await sio.emit(
+                    "message", 
+                    error_message,
+                    room=room,
+                    namespace=namespace
+                )
+                logger.error(f"⭐ AGENT RESPONSE GENERATION FAILED ⭐")
+                
+        except Exception as e:
+            logger.error(f"Failed to process agent response: {e}", exc_info=True)
+            logger.error(f"⭐ AGENT RESPONSE GENERATION FAILED ⭐")
+            
+    except Exception as e:
+        logger.error(f"Unhandled error in generate_agent_response: {e}", exc_info=True)
+        logger.error(f"⭐ AGENT RESPONSE GENERATION FAILED ⭐")
+
 # Message handler registry - maps message types to handler functions
 MESSAGE_HANDLERS = {
     "text": handle_text_message,

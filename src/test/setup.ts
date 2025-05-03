@@ -19,7 +19,7 @@ vi.mock('socket.io-client', () => {
     disconnect: vi.fn(),
     connected: false,
     timeout: vi.fn(() => ({
-      emit: vi.fn((event, data, callback) => {
+      emit: vi.fn((_event: string, _data: any, callback?: Function) => {
         if (callback) callback(null, { status: 'success' });
         return true;
       })
@@ -27,9 +27,9 @@ vi.mock('socket.io-client', () => {
   };
   
   // Track instances for testing
-  const mockInstances = [];
+  const mockInstances: any[] = [];
   
-  const mockIO = vi.fn(() => {
+  const mockIO: any = vi.fn(() => {
     mockInstances.push(mockSocket);
     return mockSocket;
   });
