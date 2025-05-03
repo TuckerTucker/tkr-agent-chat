@@ -77,13 +77,47 @@ export class MessageRouter {
         currentAgentId = 'chloe',
         defaultAgentId = 'chloe',
         conversationId = 'default',
-        messageId = `msg-${Date.now()}`,
+        messageId = message.id || `msg-${Date.now()}`,
         timeout = 30000 // 30 second timeout
       } = options;
 
+      // Import standardized message adapter if needed
+      const messageAdapter = await import('./message-adapter');
+      
+      // Normalize the message to standardized format if it's not already
+      let standardizedMessage = message;
+      let messageContent = '';
+      
+      if (!message.session_id && message.content) {
+        // Message is in legacy format, normalize it
+        if (typeof messageAdapter.normalizeMessage === 'function') {
+          standardizedMessage = messageAdapter.normalizeMessage(message);
+        } else {
+          // Basic conversion if adapter not available
+          standardizedMessage = {
+            id: message.id || messageId,
+            type: message.type || 'text',
+            session_id: conversationId,
+            from_user: true,
+            content: message.content,
+            timestamp: message.timestamp || new Date().toISOString()
+          };
+        }
+      }
+      
+      // Extract content from message
+      if (typeof standardizedMessage.content === 'string') {
+        messageContent = standardizedMessage.content;
+      } else if (message.content && typeof message.content === 'string') {
+        messageContent = message.content;
+      } else {
+        // Fallback
+        messageContent = '';
+      }
+
       // Parse message for @mentions and determine routing
       const routing = routeMessageToAgents(
-        message.content, 
+        messageContent, 
         availableAgents, 
         currentAgentId, 
         defaultAgentId
@@ -96,9 +130,9 @@ export class MessageRouter {
       // Set up message tracking
       const messageTracker = {
         messageId,
-        conversationId,
-        content: message.content,
-        timestamp: message.timestamp || new Date().toISOString(),
+        conversationId: standardizedMessage.session_id || conversationId,
+        content: messageContent,
+        timestamp: standardizedMessage.timestamp || new Date().toISOString(),
         routing,
         responses: [],
         completed: false
@@ -109,7 +143,13 @@ export class MessageRouter {
 
       // Send message to each target agent and collect responses
       for (const agentId of routing.targetAgents) {
-        const sendPromise = this._sendToAgent(agentId, message, messageTracker)
+        // Create a copy of the message with the target agent set
+        const targetedMessage = { 
+          ...standardizedMessage,
+          to_agent: agentId
+        };
+        
+        const sendPromise = this._sendToAgent(agentId, targetedMessage, messageTracker)
           .then(response => {
             // Store response
             responseQueue.set(agentId, response);
@@ -224,7 +264,7 @@ export class MessageRouter {
    * Send a message to a specific agent
    * @private
    * @param {string} agentId - Agent ID
-   * @param {Object} message - Message to send
+   * @param {Object} message - Message to send (standardized format)
    * @param {Object} messageTracker - Message tracking object
    * @returns {Promise<Object>} Agent response
    */
@@ -251,15 +291,44 @@ export class MessageRouter {
         });
       }
 
+      // Extract the message content
+      let messageContent = '';
+      if (typeof message.content === 'string') {
+        messageContent = message.content;
+      } else if (message.content) {
+        messageContent = JSON.stringify(message.content);
+      }
+
+      // Prepare message metadata
+      const metadata = {
+        ...(message.metadata || {}),
+        messageId: messageTracker.messageId,
+        conversationId: messageTracker.conversationId || message.session_id,
+        sessionId: message.session_id || messageTracker.conversationId,
+        timestamp: message.timestamp || messageTracker.timestamp
+      };
+
       // Process message with the agent
-      const response = await agent.processMessage({
-        content: message.content,
-        metadata: {
-          ...message.metadata,
-          messageId: messageTracker.messageId,
-          conversationId: messageTracker.conversationId
-        }
-      });
+      // Different agents may expect different formats, so we provide both
+      // standardized and legacy formats
+      const processMessage = {
+        // Standardized format properties
+        id: message.id || messageTracker.messageId,
+        type: message.type || 'text',
+        session_id: message.session_id || messageTracker.conversationId,
+        content: messageContent,
+        from_user: message.from_user || true,
+        to_agent: agentId,
+        timestamp: message.timestamp || messageTracker.timestamp,
+        metadata,
+        
+        // Legacy format properties for backward compatibility
+        conversationId: messageTracker.conversationId,
+        content: messageContent,  // Also as top-level for legacy compatibilty
+        metadata
+      };
+
+      const response = await agent.processMessage(processMessage);
 
       // Emit typing complete
       if (this.eventBus) {

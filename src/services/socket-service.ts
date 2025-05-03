@@ -13,6 +13,31 @@
 import io from 'socket.io-client';
 import EventEmitter from 'eventemitter3';
 
+// Import standardized message schema
+import { 
+  MessageType, 
+  UserTextMessage, 
+  AgentTextMessage,
+  AgentToAgentMessage,
+  SystemMessage,
+  ErrorMessage as StandardErrorMessage,
+  ContextUpdateMessage,
+  TaskUpdateMessage,
+  MessageStatus,
+  Message
+} from '../types/messages';
+
+// Import message adapters
+import { 
+  createUserTextMessage,
+  createAgentTextMessage,
+  normalizeMessage,
+  standardToLegacy,
+  legacyToStandard,
+  isStandardFormat,
+  isLegacyFormat 
+} from '../components/lib/message-adapter';
+
 // Environment variables using Vite
 const BASE_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000';
 
@@ -31,7 +56,7 @@ export interface AgentStreamingPacket {
   error?: string; // Error message from the backend
 }
 
-// A2A Message Types
+// A2A Message Types (Legacy format)
 export interface A2AMessage {
   type: string;
   from_agent: string;
@@ -40,7 +65,7 @@ export interface A2AMessage {
   timestamp?: string;
 }
 
-// Task Event Types
+// Task Event Types (Legacy format)
 export interface TaskEvent {
   type: string;
   task_id: string;
@@ -51,7 +76,7 @@ export interface TaskEvent {
   timestamp?: string;
 }
 
-// Context Event Types
+// Context Event Types (Legacy format)
 export interface ContextEvent {
   type: string;
   context_id: string;
@@ -61,7 +86,7 @@ export interface ContextEvent {
   timestamp?: string;
 }
 
-// Error message types
+// Error message types (Legacy format)
 export interface ErrorMessage {
   error_code: string;
   message: string;
@@ -99,7 +124,7 @@ export interface AgentStatus {
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'error';
 export type AgentActivityStatus = 'idle' | 'thinking' | 'responding' | 'error';
 
-// Message for sending
+// Message for sending (Legacy format)
 export interface OutgoingMessage {
   id: string;
   text: string;
@@ -533,29 +558,30 @@ class SocketService extends EventEmitter {
   private handleMessage(data: any) {
     console.log('Socket.IO message received:', data);
     
-    // Skip echoed user messages - if there's no fromAgent, and data has toAgent, it's an echo of the user's message
-    if (!data.fromAgent && data.toAgent && data.type === 'text') {
+    // Skip echoed user messages - if there's no fromAgent/from_agent, and data has toAgent/to_agent, it's an echo
+    if (
+      (!data.fromAgent && !data.from_agent) && 
+      (data.toAgent || data.to_agent) && 
+      (data.type === 'text' || data.type === MessageType.TEXT)
+    ) {
       console.log('Ignoring echoed user message:', data);
       return;
     }
     
-    // First, handle agent messages in the new format from Socket.IO
-    if (data.fromAgent && data.content) {
-      const agentId = data.fromAgent;
-      const messageText = data.content;
-      const isError = data.type === 'error';
-      const isStreaming = !!data.streaming;
+    // Normalize message to standardized format
+    const standardMessage = normalizeMessage(data);
+    
+    // Get agent ID from standardized format
+    const agentId = standardMessage.from_agent || '';
+    
+    // Process by message type
+    if (standardMessage.type === MessageType.TEXT && standardMessage.from_agent) {
+      // Text message from agent
+      const messageText = standardMessage.content as string;
+      const isStreaming = !!standardMessage.streaming;
       
       // Determine agent activity status
       let activity: AgentActivityStatus = isStreaming ? 'responding' : 'idle';
-      
-      if (isError) {
-        activity = 'error';
-        this.callbacks.onError?.(agentId, { 
-          code: 500, 
-          message: typeof messageText === 'string' ? messageText : 'Unknown error'
-        });
-      }
       
       // Update agent status
       this.updateAgentStatus(agentId, { connection: 'connected', activity });
@@ -563,9 +589,8 @@ class SocketService extends EventEmitter {
       // Create packet for callback
       const packet: AgentStreamingPacket = {
         message: messageText,
-        turn_complete: !isStreaming, // If not streaming, message is complete
-        interrupted: false,
-        error: isError ? messageText : undefined
+        turn_complete: standardMessage.turn_complete ?? !isStreaming, // If not streaming, message is complete
+        interrupted: false
       };
       
       // Call message handler callback if provided
@@ -573,48 +598,76 @@ class SocketService extends EventEmitter {
       
       // Emit message event to local listeners
       this.emit('message', { agentId, packet });
-      return;
-    }
-    
-    // Handle legacy format messages
-    const agentId = data.agent_id || this.lastAgentId;
-    const messageText = data.message || '';
-    const turnComplete = data.turn_complete || false;
-    
-    // Determine agent activity status
-    let activity: AgentActivityStatus = 'responding';
-    
-    if (data.error) {
-      activity = 'error';
-      // If there's an error in the message, notify error handler
+      
+    } else if (standardMessage.type === MessageType.ERROR) {
+      // Error message
+      const errorMessage = standardMessage as Partial<StandardErrorMessage>;
+      const messageText = errorMessage.content as string;
+      
+      // Update agent status to error
+      this.updateAgentStatus(agentId, { connection: 'connected', activity: 'error' });
+      
+      // Notify error handler callback
       this.callbacks.onError?.(agentId, { 
         code: 500, 
-        message: typeof data.error === 'string' ? data.error : 'Unknown error' 
+        message: typeof messageText === 'string' ? messageText : 'Unknown error'
       });
-    } else if (turnComplete) {
-      activity = 'idle';
-      // If turn is complete, notify message complete handler
-      this.callbacks.onMessageComplete?.(agentId);
+      
+      // Create packet for callback
+      const packet: AgentStreamingPacket = {
+        message: messageText,
+        turn_complete: true,
+        interrupted: false,
+        error: messageText
+      };
+      
+      // Call message handler callback if provided
+      this.callbacks.onPacket?.(agentId, packet);
+      
+      // Emit message event to local listeners
+      this.emit('message', { agentId, packet });
+      
+    } else if (isLegacyFormat(data)) {
+      // Handle remaining legacy format messages that couldn't be properly normalized
+      const legacyAgentId = data.agent_id || agentId || this.lastAgentId;
+      const messageText = data.message || '';
+      const turnComplete = data.turn_complete || false;
+      
+      // Determine agent activity status
+      let activity: AgentActivityStatus = 'responding';
+      
+      if (data.error) {
+        activity = 'error';
+        // If there's an error in the message, notify error handler
+        this.callbacks.onError?.(legacyAgentId, { 
+          code: 500, 
+          message: typeof data.error === 'string' ? data.error : 'Unknown error' 
+        });
+      } else if (turnComplete) {
+        activity = 'idle';
+        // If turn is complete, notify message complete handler
+        this.callbacks.onMessageComplete?.(legacyAgentId);
+      }
+      
+      // Update agent status
+      if (legacyAgentId) {
+        this.updateAgentStatus(legacyAgentId, { connection: 'connected', activity });
+      }
+      
+      // Create packet for callback
+      const packet: AgentStreamingPacket = {
+        message: messageText,
+        turn_complete: turnComplete,
+        interrupted: data.interrupted || false,
+        error: data.error
+      };
+      
+      // Call message handler callback if provided
+      this.callbacks.onPacket?.(legacyAgentId, packet);
+      
+      // Emit message event to local listeners
+      this.emit('message', { agentId: legacyAgentId, packet });
     }
-    
-    // Update agent status
-    if (agentId) {
-      this.updateAgentStatus(agentId, { connection: 'connected', activity });
-    }
-    
-    // Create packet for callback
-    const packet: AgentStreamingPacket = {
-      message: messageText,
-      turn_complete: turnComplete,
-      interrupted: data.interrupted || false,
-      error: data.error
-    };
-    
-    // Call message handler callback if provided
-    this.callbacks.onPacket?.(agentId, packet);
-    
-    // Emit message event to local listeners
-    this.emit('message', { agentId, packet });
   }
   
   /**
@@ -793,10 +846,17 @@ class SocketService extends EventEmitter {
   async sendTextMessage(agentId: string, text: string): Promise<any> {
     if (!text.trim()) return;
     
-    // Create message object with proper format for new backend
-    const message: OutgoingMessage = {
-      id: `msg_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      text: text.trim(),
+    // Create a standardized message
+    const standardMessage = createUserTextMessage(
+      text.trim(),
+      this.lastSessionId,
+      agentId
+    );
+    
+    // Create legacy format message for compatibility
+    const legacyMessage: OutgoingMessage = {
+      id: standardMessage.id,
+      text: standardMessage.content as string,
       timestamp: Date.now(),
       agentId,
       sessionId: this.lastSessionId,
@@ -805,40 +865,48 @@ class SocketService extends EventEmitter {
     
     // If offline, queue the message and return
     if (this.offlineMode || !this.connected || !this.socket) {
-      return this.queueMessage(message);
+      return this.queueMessage(legacyMessage);
     }
     
     // Send message
     return new Promise((resolve, reject) => {
-      // Add to pending messages
-      this.pendingMessages.set(message.id, {
-        message,
+      // Add to pending messages (using legacy format for now)
+      this.pendingMessages.set(standardMessage.id, {
+        message: legacyMessage,
         resolve,
         reject,
         timestamp: Date.now()
       });
       
       try {
-        // Create message in the format expected by the new message handler
+        // Convert standardized message to format expected by server
+        // For backward compatibility, we send both formats (standardized and legacy)
+        // eventually we'll use just standardMessage directly
         const formattedMessage = {
-          id: message.id,
-          type: 'text',
-          text: message.text,
-          content: message.text, // Add content field for new API
-          sessionId: this.lastSessionId, // Use camelCase for new API
-          fromAgent: undefined, // Set to undefined for user messages
-          toAgent: agentId, // Target agent ID
-          timestamp: new Date().toISOString()
+          // Standardized fields (snake_case)
+          id: standardMessage.id,
+          type: standardMessage.type,
+          session_id: standardMessage.session_id,
+          from_user: standardMessage.from_user,
+          to_agent: standardMessage.to_agent,
+          content: standardMessage.content,
+          timestamp: standardMessage.timestamp,
+          
+          // Legacy fields (camelCase) - for backward compatibility
+          sessionId: standardMessage.session_id,
+          text: standardMessage.content,
+          fromAgent: undefined,
+          toAgent: standardMessage.to_agent
         };
         
         // Send message with acknowledgment and timeout
         this.socket!.timeout(5000).emit('message', formattedMessage, (err: Error | null, ack: any) => {
           // Remove from pending messages
-          this.pendingMessages.delete(message.id);
+          this.pendingMessages.delete(standardMessage.id);
           
           if (err) {
             console.error('Error sending message:', err);
-            this.handleMessageTimeout(message.id, err);
+            this.handleMessageTimeout(standardMessage.id, err);
             reject(err);
           } else {
             console.log('Message sent successfully:', ack);
@@ -854,10 +922,10 @@ class SocketService extends EventEmitter {
       } catch (error) {
         // Handle immediate errors
         console.error('Error sending message:', error);
-        this.pendingMessages.delete(message.id);
+        this.pendingMessages.delete(standardMessage.id);
         
         // Queue message for retry if it's a connection error
-        this.queueMessage(message);
+        this.queueMessage(legacyMessage);
         
         reject(error);
       }

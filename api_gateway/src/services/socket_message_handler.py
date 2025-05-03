@@ -11,46 +11,93 @@ import asyncio
 import logging
 import random
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple, Callable, Awaitable
+from typing import Dict, Any, Optional, List, Tuple, Callable, Awaitable, Union
+from pydantic import ValidationError
 
 from ..services.logger_service import logger_service
 from ..services.error_service import error_service
 from ..models.error_responses import ErrorCodes, ErrorCategory, ErrorSeverity
 from ..services.chat_service import chat_service
 from ..models.messages import MessageType
-# Temporarily comment out missing imports
-# from ..db import save_message_to_db, get_message_by_id
+
+# Import standardized message schema
+from ..models.message_schema import (
+    MessageType as SocketMessageType,
+    BaseMessage as SocketBaseMessage,
+    Message as SocketMessage,
+    UserTextMessage,
+    AgentTextMessage,
+    AgentToAgentMessage,
+    ContextUpdateMessage,
+    TaskUpdateMessage,
+    ErrorMessage as SocketErrorMessage,
+    MessageStatus
+)
 
 # Get a module-specific logger
 logger = logger_service.get_logger(__name__)
-
-# Message type definitions
-MESSAGE_TYPES = [
-    "text",            # Plain text message
-    "agent_message",   # Message from one agent to another
-    "system",          # System notification or status update
-    "task_update",     # Task status update
-    "context_update",  # Context sharing update
-    "error",           # Error message
-    "ack",             # Message acknowledgment
-    "ping",            # Connection check
-    "pong"             # Connection check response
-]
-
-# Message status definitions
-MESSAGE_STATUS = [
-    "sent",            # Message sent, not yet acknowledged
-    "delivered",       # Message delivered to recipient
-    "read",            # Message read by recipient
-    "error",           # Error during delivery
-    "pending",         # Message queued locally but not sent
-    "retrying"         # Message delivery being retried
-]
 
 # Validator functions
 def validate_message_format(message: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
     """
     Validate the format of an incoming message.
+    
+    Args:
+        message: The message object to validate
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    # Check if message has legacy format or standardized format
+    if "sessionId" in message and "id" in message:
+        # Legacy format
+        return validate_legacy_message_format(message)
+    elif "session_id" in message and "id" in message:
+        # Standardized format
+        return validate_standardized_message_format(message)
+    else:
+        return False, "Missing required fields: id, session_id or sessionId"
+
+def validate_standardized_message_format(message: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    """
+    Validate message using the standardized schema with Pydantic models.
+    
+    Args:
+        message: The message object to validate
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    try:
+        # First validate as base message
+        base_message = SocketBaseMessage(**message)
+        
+        # Then validate based on message type
+        if base_message.type == SocketMessageType.TEXT:
+            if message.get("from_user"):
+                UserTextMessage(**message)
+            else:
+                AgentTextMessage(**message)
+        elif base_message.type == SocketMessageType.AGENT_MESSAGE:
+            AgentToAgentMessage(**message)
+        elif base_message.type == SocketMessageType.CONTEXT_UPDATE:
+            ContextUpdateMessage(**message)
+        elif base_message.type == SocketMessageType.TASK_UPDATE:
+            TaskUpdateMessage(**message)
+        elif base_message.type == SocketMessageType.ERROR:
+            SocketErrorMessage(**message)
+            
+        # All validations passed
+        return True, None
+        
+    except ValidationError as e:
+        return False, f"Invalid message format: {str(e)}"
+    except Exception as e:
+        return False, f"Validation error: {str(e)}"
+
+def validate_legacy_message_format(message: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    """
+    Validate legacy message format.
     
     Args:
         message: The message object to validate
@@ -65,19 +112,24 @@ def validate_message_format(message: Dict[str, Any]) -> Tuple[bool, Optional[str
         if field not in message:
             return False, f"Missing required field: {field}"
     
-    # Validate message type
-    if message["type"] not in MESSAGE_TYPES:
+    # Validate message type with both old and new types for compatibility
+    valid_types = [t.value for t in SocketMessageType] + [
+        "text", "agent_message", "system", "task_update", 
+        "context_update", "error", "ack", "ping", "pong"
+    ]
+    
+    if message["type"] not in valid_types:
         return False, f"Invalid message type: {message['type']}"
     
     # Validate content based on message type
-    if message["type"] == "text" and "content" not in message:
-        return False, "Text messages must have content"
+    if message["type"] == "text" and not message.get("content") and not message.get("text"):
+        return False, "Text messages must have content or text"
         
     if message["type"] == "agent_message":
-        if "fromAgent" not in message:
-            return False, "Agent messages must specify fromAgent"
-        if "toAgent" not in message:
-            return False, "Agent messages must specify toAgent"
+        if not message.get("fromAgent") and not message.get("from_agent"):
+            return False, "Agent messages must specify fromAgent or from_agent"
+        if not message.get("toAgent") and not message.get("to_agent"):
+            return False, "Agent messages must specify toAgent or to_agent"
             
     # All checks passed
     return True, None
@@ -113,45 +165,76 @@ async def store_message(message: Dict[str, Any]) -> Tuple[bool, Optional[str], O
     Store a message in the database.
     
     Args:
-        message: The message to store
+        message: The message to store (in either legacy or standardized format)
         
     Returns:
         Tuple of (success, error_message, message_uuid)
     """
     try:
-        # Prepare message for storage
-        message_uuid = message.get("id") or str(uuid.uuid4())
-        session_id = message.get("sessionId")
+        # Import message adapter
+        from .message_adapter import normalize_message, is_legacy_format, is_standard_format
         
-        # Determine sender type and ID
-        from_agent = message.get("fromAgent")
-        from_user = message.get("fromUser")
+        # Normalize the message to standardized format
+        if is_legacy_format(message) or not is_standard_format(message):
+            try:
+                standardized_message = normalize_message(message)
+            except Exception as norm_err:
+                logger.warning(f"Failed to normalize message: {norm_err}, proceeding with original format")
+                standardized_message = message
+        else:
+            standardized_message = message
+        
+        # Get core message information
+        message_uuid = standardized_message.get("id") or message.get("id") or str(uuid.uuid4())
+        session_id = standardized_message.get("session_id") or message.get("sessionId")
+        
+        # Determine sender type and ID based on standardized format
+        from_agent = standardized_message.get("from_agent")
+        from_user = standardized_message.get("from_user") 
         
         if from_agent:
             message_type = MessageType.AGENT
             agent_id = from_agent
         else:
             message_type = MessageType.USER
-            agent_id = message.get("toAgent")  # For user messages, this is the target agent
+            agent_id = standardized_message.get("to_agent")  # Target agent
             
-        # Prepare message parts
-        if message.get("type") == "text":
-            message_parts = [{"type": "text", "content": message.get("content")}]
+        # Prepare message parts based on content
+        content = standardized_message.get("content")
+        if content is not None:
+            if isinstance(content, str):
+                message_parts = [{"type": "text", "content": content}]
+            else:
+                # JSON content
+                message_parts = [{"type": "json", "content": json.dumps(content)}]
         else:
-            # For other message types, store the whole message as JSON
-            message_parts = [{"type": "json", "content": json.dumps(message)}]
+            # Fallback to legacy fields
+            text_content = message.get("text") or message.get("content") or ""
+            message_parts = [{"type": "text", "content": text_content}]
             
-        # Prepare metadata
+        # Prepare metadata from standardized format
         metadata = {
-            "timestamp": message.get("timestamp") or datetime.utcnow().isoformat(),
+            "timestamp": standardized_message.get("timestamp") or datetime.utcnow().isoformat(),
             "message_id": message_uuid,
             "socket_message": True,
-            "message_type": message.get("type")
+            "message_type": standardized_message.get("type")
         }
         
+        # Add streaming flags if present
+        if "streaming" in standardized_message:
+            metadata["streaming"] = standardized_message["streaming"]
+        if "turn_complete" in standardized_message:
+            metadata["turn_complete"] = standardized_message["turn_complete"]
+            
+        # Add reply reference if present
+        if standardized_message.get("in_reply_to"):
+            metadata["in_reply_to"] = standardized_message["in_reply_to"]
+            
         # Add any additional metadata from the message
-        if message.get("metadata"):
-            metadata.update(message.get("metadata"))
+        if standardized_message.get("metadata"):
+            metadata.update(standardized_message["metadata"])
+        elif message.get("metadata"):
+            metadata.update(message["metadata"])
             
         # Save to database using chat_service
         saved_message = chat_service.save_message(
@@ -548,15 +631,21 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
         sio: SocketIO server instance
         session_id: Chat session ID
         agent_id: Target agent ID
-        message: The original message sent to the agent
+        message: The original message sent to the agent (legacy or standardized format)
         namespace: Socket.IO namespace
     """
     try:
+        # Import message adapter
+        from .message_adapter import normalize_message, standard_to_legacy
+        
         # Log detailed information about the message
         logger.info(f"⭐ AGENT RESPONSE GENERATION STARTED ⭐")
         logger.info(f"Generating response from agent {agent_id} for message {message.get('id')} in session {session_id}")
-        logger.info(f"Message details: type={message.get('type')}, text={message.get('text')}, content={message.get('content')}")
+        logger.info(f"Message details: type={message.get('type')}, content={message.get('content') or message.get('text')}")
         logger.info(f"Using namespace: {namespace}")
+        
+        # Convert message to standardized format if needed
+        standard_message = normalize_message(message)
         
         # Get agent instance from chat service
         from ..services.chat_service import chat_service
@@ -577,29 +666,27 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
         
         logger.info(f"Successfully created/retrieved ADK session for {session_id}")
         
-        # Extract text content from message - first try text, then content, then fallback
+        # Extract text content from standardized message
         user_content = None
-        if message.get('type') == 'text':
-            if 'text' in message and message['text']:
-                user_content = message.get('text')
-                logger.info(f"Using 'text' field from message: {user_content[:50]}...")
-            elif 'content' in message and message['content']:
-                user_content = message.get('content')
-                logger.info(f"Using 'content' field from message: {user_content[:50]}...")
-        else:
-            # For other message types, try to extract content or use a default prompt
-            user_content = message.get('content', message.get('text', 'Please respond to this message.'))
-            logger.info(f"Using extracted content from non-text message: {user_content[:50]}...")
+        if standard_message.get('content'):
+            if isinstance(standard_message['content'], str):
+                user_content = standard_message['content']
+                logger.info(f"Using content from standardized message: {user_content[:50]}...")
+            else:
+                # JSON content, convert to string
+                user_content = json.dumps(standard_message['content'])
+                logger.info(f"Using serialized JSON content: {user_content[:50]}...")
         
+        # Fallback to legacy format fields if needed
         if not user_content:
-            logger.warning(f"Empty content in message {message.get('id')}, using default prompt")
-            user_content = "Please respond to this message."
+            user_content = message.get('text') or message.get('content') or 'Please respond to this message.'
+            logger.info(f"Using fallback content extraction: {user_content[:50]}...")
         
         # Prepare variables for agent's system prompt
         template_vars = {
             "session_id": session_id,
-            "user_name": message.get('fromUser', 'User'),
-            "message_id": message.get('id'),
+            "user_name": standard_message.get('from_user', 'User'),
+            "message_id": standard_message.get('id'),
             "timestamp": datetime.utcnow().isoformat()
         }
         
@@ -618,21 +705,34 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
         
         # Generate response using ADK
         try:
-            # Start a new message for streaming response
+            # Create response message in standardized format
             response_uuid = str(uuid.uuid4())
             response_timestamp = datetime.utcnow().isoformat()
             
+            # Import message types from standardized schema
+            from ..models.message_schema import MessageType as SocketMessageType
+            
             logger.info(f"Creating initial empty response message with ID {response_uuid}")
             
-            # Create initial empty response message in the database
+            # Create initial empty response message in standardized format
             response_message = {
                 "id": response_uuid,
-                "type": "text",
+                "type": SocketMessageType.TEXT,
+                "session_id": session_id,
+                "from_agent": agent_id,
+                "content": "",  # Start with empty content for streaming
+                "in_reply_to": standard_message.get('id'),
+                "timestamp": response_timestamp,
+                "streaming": True
+            }
+            
+            # Convert to legacy format for backward compatibility
+            legacy_response_message = {
+                **response_message,
                 "fromAgent": agent_id,
                 "sessionId": session_id,
-                "content": "",  # Start with empty content for streaming
-                "inReplyTo": message.get('id'),
-                "timestamp": response_timestamp
+                "inReplyTo": standard_message.get('id'),
+                "text": ""
             }
             
             # Store initial empty message to begin the response
@@ -648,9 +748,22 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
             # Broadcast initial message to session room
             room = f"session_{session_id}"
             logger.info(f"Broadcasting initial empty message to room {room}")
+            
+            # Send both standardized and legacy formats for maximum compatibility
+            broadcast_message = {
+                # Standardized fields
+                **response_message,
+                
+                # Legacy fields
+                "fromAgent": agent_id,
+                "sessionId": session_id,
+                "inReplyTo": standard_message.get('id'),
+                "text": "",
+            }
+            
             await sio.emit(
                 "message", 
-                {**response_message, "streaming": True, "type": "text"},  # Mark as streaming and ensure type is set
+                broadcast_message,
                 room=room,
                 namespace=namespace
             )
@@ -691,7 +804,12 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
                 logger.info(f"Response text generated: {response_text[:100]}...")
                 
                 # Update the message with the generated content
-                updated_message = {**response_message, "content": response_text, "streaming": False}
+                updated_message = {
+                    **response_message,
+                    "content": response_text,
+                    "streaming": False,
+                    "turn_complete": True
+                }
                 
                 # Store the updated message with content
                 logger.info(f"Saving final message with content to database")
@@ -704,8 +822,10 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
                         parts=[{"type": "text", "content": response_text}],
                         message_metadata={
                             "message_id": response_uuid,
-                            "in_reply_to": message.get('id'),
-                            "timestamp": response_timestamp
+                            "in_reply_to": standard_message.get('id'),
+                            "timestamp": response_timestamp,
+                            "streaming": False,
+                            "turn_complete": True
                         }
                     )
                     
@@ -717,22 +837,30 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
                     # Broadcast completed message to session room
                     logger.info(f"Broadcasting final message to room {room}")
                     
-                    # Ensure we're sending a properly formatted message for the UI
-                    final_message = {
+                    # Prepare final broadcast message with both formats
+                    final_broadcast_message = {
+                        # Standardized fields
                         "id": response_uuid,
-                        "type": "text",
+                        "type": SocketMessageType.TEXT.value,
+                        "session_id": session_id,
+                        "from_agent": agent_id,
+                        "content": response_text,
+                        "in_reply_to": standard_message.get('id'),
+                        "timestamp": response_timestamp,
+                        "streaming": False,
+                        "turn_complete": True,
+                        
+                        # Legacy fields
                         "fromAgent": agent_id,
                         "sessionId": session_id,
-                        "content": response_text,
-                        "inReplyTo": message.get('id'),
-                        "timestamp": response_timestamp,
-                        "streaming": False
+                        "text": response_text,
+                        "inReplyTo": standard_message.get('id')
                     }
                     
                     # Broadcast to room
                     await sio.emit(
                         "message",
-                        final_message,
+                        final_broadcast_message,
                         room=room,
                         namespace=namespace
                     )
@@ -742,21 +870,28 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
                     logger.error(f"Error saving or broadcasting final message: {save_err}", exc_info=True)
                     raise
                 
-                logger.info(f"Agent {agent_id} generated and delivered response for message {message.get('id')}")
+                logger.info(f"Agent {agent_id} generated and delivered response for message {standard_message.get('id')}")
                 logger.info(f"⭐ AGENT RESPONSE GENERATION COMPLETED ⭐")
                 
             except Exception as gen_err:
                 logger.error(f"Error generating response from agent {agent_id}: {gen_err}", exc_info=True)
                 
-                # Send error notification to the session
+                # Create error message in standardized format
                 error_message = {
+                    # Standardized fields
                     "id": str(uuid.uuid4()),
-                    "type": "error",
+                    "type": SocketMessageType.ERROR.value,
+                    "session_id": session_id,
+                    "from_agent": agent_id,
+                    "content": f"Error generating response: {str(gen_err)}",
+                    "in_reply_to": standard_message.get('id'),
+                    "timestamp": datetime.utcnow().isoformat(),
+                    
+                    # Legacy fields
                     "fromAgent": agent_id,
                     "sessionId": session_id,
-                    "content": f"Error generating response: {str(gen_err)}",
-                    "inReplyTo": message.get('id'),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "inReplyTo": standard_message.get('id'),
+                    "text": f"Error generating response: {str(gen_err)}"
                 }
                 
                 logger.info(f"Broadcasting error message to room {room}")
