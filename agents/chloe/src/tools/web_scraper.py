@@ -13,10 +13,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import requests
-import logging
-from typing import Dict, Any, Optional
 from bs4 import BeautifulSoup
-import re
 
 # Import standardized tool error handling
 from agents.common.tool_errors import (
@@ -38,12 +35,15 @@ TOOL_NAME = "web_scraper"
 # Simple in-memory rate limit store
 _request_store = {}
 
+def _extract_domain(url: str) -> str:
+    """
+    Extract domain from URL.
+    
     Args:
         url: The URL to scrape
-        selectors: Optional CSS selectors to extract specific content
-
+        
     Returns:
-        A dictionary containing the scraped text content or an error message.
+        The hostname from the URL.
     """
     logger.info(f"Web scraper tool invoked for URL: '{url}'")
     
@@ -56,6 +56,31 @@ _request_store = {}
         return urlparse(url).hostname
     except Exception:
         raise ValueError(f"Invalid URL: {url}")
+
+def _should_rate_limit(domain: str) -> bool:
+    """
+    Check if a domain should be rate limited based on recent requests.
+    
+    Args:
+        domain: The domain to check
+        
+    Returns:
+        Boolean indicating whether to rate limit the request
+    """
+    current_time = time.time()
+    if domain not in _request_store:
+        _request_store[domain] = {'last_request': current_time, 'count': 1}
+        return False
+        
+    # Rate limit: max 1 request per 2 seconds per domain
+    time_diff = current_time - _request_store[domain]['last_request']
+    if time_diff < 2:
+        return True
+        
+    # Update the store
+    _request_store[domain]['last_request'] = current_time
+    _request_store[domain]['count'] += 1
+    return False
 
 def _clean_text(text):
     text = re.sub(r'\s+', ' ', text)
@@ -207,10 +232,10 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
         paragraphs = [
             _clean_text(tag.get_text())
             for tag in tags
-            if tag.get_text() and
+            if (tag.get_text() and
                len(tag.get_text().split()) > 3 and
                not re.match(r"^[\d\W]+$", tag.get_text()) and
-               not re.search(r"privacy|cookie|terms", tag.get_text(), re.IGNORECASE)
+               not re.search(r"privacy|cookie|terms", tag.get_text(), re.IGNORECASE))
         ]
         content = "\n".join(paragraphs).strip()
         elapsed = time.time() - start_time

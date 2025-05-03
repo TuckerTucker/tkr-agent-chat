@@ -173,7 +173,7 @@ export function AppLayout({
                       currentAgentId={currentAgentId}
                       allowMarkdown={true}
                       placeholder="Type a message..."
-                      disabled={!agentStatuses[currentAgentId] || agentStatuses[currentAgentId].connection !== 'connected'}
+                      disabled={!agentStatuses[currentAgentId] || agentStatuses[currentAgentId].connection === 'error'}
                       onTyping={() => {}}
                     />
                   </div>

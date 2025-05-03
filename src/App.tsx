@@ -217,7 +217,7 @@ function AppWithNotifications() {
     let mounted = true;
     let connectTimeout: NodeJS.Timeout | null = null;
 
-    const attemptConnections = () => {
+    const attemptConnections = async () => {
       if (!mounted) return;
 
       // Clear any pending connection attempts
@@ -228,21 +228,44 @@ function AppWithNotifications() {
 
       // Only attempt connections if we haven't already
       if (!isInitialConnect.current) {
-        console.log("Attempting initial connection for all agents...");
+        console.log(`Attempting initial connection for all agents for session ${selectedSessionId}...`);
+        
+        // Make sure all previous connections are closed
+        socketService.disconnect();
+        
+        // Update all agent statuses to connecting
+        const updatedStatuses = { ...agentStatuses };
         availableAgents.forEach(agentId => {
-          // Update status to connecting before attempting connection
-          setAgentStatuses(prev => ({
-            ...prev,
-            [agentId]: { 
-              ...prev[agentId],
-              connection: 'connecting' 
-            }
-          }));
-          socketService.connect({
-            sessionId: selectedSessionId,
-            agentId: agentId
-          });
+          updatedStatuses[agentId] = { 
+            connection: 'connecting',
+            activity: 'idle' 
+          };
         });
+        setAgentStatuses(updatedStatuses);
+        
+        // Connect each agent sequentially for more reliability
+        for (const agentId of availableAgents) {
+          try {
+            await socketService.connect({
+              sessionId: selectedSessionId,
+              agentId: agentId
+            });
+            
+            console.log(`Connected agent ${agentId} to session ${selectedSessionId}`);
+          } catch (error) {
+            console.error(`Failed to connect agent ${agentId}:`, error);
+            
+            // Update status to error
+            setAgentStatuses(prev => ({
+              ...prev,
+              [agentId]: { 
+                connection: 'error',
+                activity: 'error'
+              }
+            }));
+          }
+        }
+        
         isInitialConnect.current = true;
       }
     };
@@ -257,12 +280,22 @@ function AppWithNotifications() {
         clearTimeout(connectTimeout);
       }
     };
-  }, [selectedSessionId, availableAgents]);
+  }, [selectedSessionId, availableAgents, agentStatuses]);
 
-  // Global cleanup - only on component unmount
+  // Global cleanup - only on component unmount or when navigating away
   useEffect(() => {
+    // Set up beforeunload handler to clean up connections when navigating away
+    const handleBeforeUnload = () => {
+      console.log("Page unloading, cleaning up all connections...");
+      socketService.cleanup();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Return cleanup function for component unmount
     return () => {
       console.log("Component unmounting, cleaning up all connections...");
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       socketService.cleanup();
       isInitialConnect.current = false;
     };
@@ -276,11 +309,24 @@ function AppWithNotifications() {
     initialLoad: true
   });
   
+  // Reset pagination when conversation changes
+  useEffect(() => {
+    // Reset pagination state when changing conversations
+    setMessagesPagination({
+      hasMore: true,
+      loading: false,
+      cursor: undefined,
+      initialLoad: true
+    });
+  }, [selectedSessionId]);
+
   // Fetch messages for the selected session with pagination
-  const { data: messagesData } = useQuery<MessageRead[] | PaginatedResponse<MessageRead>>({
+  const { data: messagesData, isLoading: messagesLoading } = useQuery<MessageRead[] | PaginatedResponse<MessageRead>>({
     queryKey: ["messages", selectedSessionId, { initialLoad: messagesPagination.initialLoad }],
     queryFn: () => {
       if (!selectedSessionId) return Promise.resolve([]);
+      
+      console.log(`Fetching messages for session ${selectedSessionId}`);
       
       // Use pagination parameters - when initialLoad, we don't use a cursor
       return getMessages(selectedSessionId, {
@@ -291,6 +337,8 @@ function AppWithNotifications() {
       });
     },
     enabled: !!selectedSessionId,
+    staleTime: 10000, // Consider data fresh for 10 seconds
+    retry: 2, // Retry failed requests twice
   });
   
   // Extract messages from either array or paginated response
@@ -318,8 +366,21 @@ function AppWithNotifications() {
 
   // Update local messages when server messages change
   useEffect(() => {
-    // Skip if no messages to process
-    if (!messages.length) return;
+    // Always reset previous message cache when session changes
+    if (!selectedSessionId) {
+      prevMessagesRef.current = '';
+      return;
+    }
+    
+    // Handle empty messages array case - could be a new conversation or still loading
+    if (!messages.length) {
+      // Only clear existing messages if we previously had messages
+      if (prevMessagesRef.current !== '') {
+        prevMessagesRef.current = '';
+        setLocalMessages([]);
+      }
+      return;
+    }
     
     // Create a stable representation of messages for comparison
     const messageIds = messages.map((msg: MessageRead) => msg.message_uuid).join(',');
@@ -327,6 +388,8 @@ function AppWithNotifications() {
     // Only update if messages have changed
     if (messageIds !== prevMessagesRef.current) {
       prevMessagesRef.current = messageIds;
+      
+      console.log(`Loading ${messages.length} messages for session ${selectedSessionId}`);
       
       const uiMessages = messages.map((msg: MessageRead) => createUIMessage({
         id: msg.message_uuid,
@@ -350,7 +413,7 @@ function AppWithNotifications() {
       
       setLocalMessages(uiMessages);
     }
-  }, [messages, agentMetadata]);
+  }, [messages, agentMetadata, selectedSessionId]);
 
   // Derived state for current conversation
   const currentMessages = useMemo(() => {
@@ -415,9 +478,31 @@ function AppWithNotifications() {
 
   const handleSelectConversation = useCallback((conv: { id: string }) => {
     if (conv.id !== selectedSessionId) {
+      // First disconnect all existing socket connections
+      socketService.disconnect();
+      
+      // Clear local messages for the previous session
+      setLocalMessages([]);
+      
+      // Set new session ID
       setSelectedSessionId(conv.id);
-      // Reset Socket.IO connections when switching sessions
+      
+      // Reset agent statuses to disconnected
+      setAgentStatuses(prev => {
+        const resetStatuses = { ...prev };
+        Object.keys(resetStatuses).forEach(agentId => {
+          resetStatuses[agentId] = {
+            connection: 'disconnected',
+            activity: 'idle'
+          };
+        });
+        return resetStatuses;
+      });
+      
+      // Reset Socket.IO connection flag when switching sessions
       isInitialConnect.current = false;
+      
+      console.log(`Switched to conversation: ${conv.id}`);
     }
   }, [selectedSessionId]);
 
@@ -676,7 +761,7 @@ function AppWithNotifications() {
             agentStatuses={agentStatuses}
             onLoadMoreMessages={handleLoadMoreMessages}
             hasMoreMessages={messagesPagination.hasMore}
-            isLoadingMessages={messagesPagination.loading}
+            isLoadingMessages={messagesPagination.loading || messagesLoading}
           />
         </ErrorBoundary>
       </ThemeProvider>

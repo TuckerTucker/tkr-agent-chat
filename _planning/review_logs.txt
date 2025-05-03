@@ -1,147 +1,53 @@
-tucker@Lapariffic tkr-agent-chat % npm run dev
-
-> tkr-agent-chat@0.0.0 dev
-> echo "🚀 Starting TKR Agent Chat development servers..." && node -e "if (!require('fs').existsSync('.env')) { console.log('\x1b[33m⚠️  No .env file found. Running setup first...\x1b[0m'); require('child_process').execSync('./setup.sh', {stdio: 'inherit'}); }" && concurrently "npm run dev:client" "npm run dev:server"
-
-🚀 Starting TKR Agent Chat development servers...
-[0] 
-[0] > tkr-agent-chat@0.0.0 dev:client
-[0] > vite
-[0] 
-[1] 
-[1] > tkr-agent-chat@0.0.0 dev:server
-[1] > source start_env && uvicorn api_gateway.src.main:app --reload --host 0.0.0.0 --port 8000
-[1] 
-[1] -e \e[38;5;208mActivated 'project_env'.\e[0m
-[1] -e \e[38;5;208mAdding /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat to PYTHONPATH\e[0m
-[1] INFO:     Will watch for changes in these directories: ['/Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat']
-[1] INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-[1] INFO:     Started reloader process [9877] using WatchFiles
-[0] 
-[0]   VITE v6.2.6  ready in 152 ms
-[0] 
-[0]   ➜  Local:   http://localhost:5173/
-[0]   ➜  Network: use --host to expose
-[1] [2025-05-02 21:43:20,034] INFO agents.base: Successfully imported Agent from google.adk
-[1] INFO     [logger_service:260] Logging configured with level: info in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/api_gateway/logs/20250502_214320
-[1] /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/tkr_env/project_env/lib/python3.13/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
-[1] * 'schema_extra' has been renamed to 'json_schema_extra'
-[1]   warnings.warn(message, UserWarning)
-[1] INFO     [agent_health_service:42] AgentHealthService initialized with timeout: 30 minutes
-[1] Server initialized for asgi.
-[1] INFO     [base_server:112] Server initialized for asgi.
-[1] INFO     [logger_service:260] Logging configured with level: debug in directory: /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/logs
-[1] INFO     [socket_service:1120] Initializing Socket.IO server
-[1] INFO     [main:512] Socket.IO server mounted at /socket.io
-[1] INFO:     Started server process [9880]
-[1] INFO:     Waiting for application startup.
-[1] INFO     [db:693] Database schema initialized successfully
-[1] INFO     [main:420] Database initialized.
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Initializing agent: chloe (Chloe)
-[1] INFO     [base_agent:291] Initializing agent: chloe (Chloe)
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] INFO     [base_agent:292] Using model: gemini-2.0-flash-exp
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Tools: 1 tool(s) available
-[1] INFO     [base_agent:293] Tools: 1 tool(s) available
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Agent chloe initialized successfully with ADK
-[1] INFO     [base_agent:304] Agent chloe initialized successfully with ADK
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Initializing agent: phil_connors (Phil Connors)
-[1] INFO     [base_agent:291] Initializing agent: phil_connors (Phil Connors)
-[1] [2025-05-02 21:43:20,136] INFO agents.base: Using model: gemini-2.0-flash-exp
-[1] INFO     [base_agent:292] Using model: gemini-2.0-flash-exp
-[1] [2025-05-02 21:43:20,137] INFO agents.base: Tools: 1 tool(s) available
-[1] INFO     [base_agent:293] Tools: 1 tool(s) available
-[1] [2025-05-02 21:43:20,137] INFO agents.base: Agent phil_connors initialized successfully with ADK
-[1] INFO     [base_agent:304] Agent phil_connors initialized successfully with ADK
-[1] INFO     [main:240] Loaded 2 agents: ['chloe', 'phil_connors']
-[1] INFO     [chat_service:61] Chat Service loaded 2 agents.
-[1] INFO     [main:425] Chat service initialized with agents.
-[1] INFO     [main:429] Context cleanup background task started
-[1] INFO     [main:432] Message cleanup background task started
-[1] INFO     [main:435] Session cleanup background task started
-[1] INFO     [main:438] Agent health monitoring background task started
-[1] INFO     [main:445] Socket.IO connection manager initialized
-[1] INFO     [socket_service:1115] Started Socket.IO background tasks
-[1] INFO     [main:449] Socket.IO background tasks started
-[1] INFO     [main:252] Starting context cleanup background task (interval: 300s, batch_size: 100)
-[1] INFO     [main:275] Starting message cleanup task (interval: 30 min, max messages: 500)
-[1] DEBUG    [chat_service:86] Retrieved 9 sessions.
-[1] INFO     [main:309] Starting session cleanup task (interval: 60 min, inactivity timeout: 120 min)
-[1] INFO     [main:367] Starting agent health monitoring task (interval: 5 min, auto-restart: True)
-[1] DEBUG    [main:403] Agent health check: All 2 agents healthy
-[1] INFO     [socket_connection_manager:216] Connection monitoring started
-[1] INFO:     Application startup complete.
-[1] INFO     [socket_connection_manager:269] Connection metrics - Total: 0, By namespace: {}
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions (request_id=ef91bf5d-f12b-4faf-a870-5fc37625c4fe method=OPTIONS path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents (request_id=0f6488df-c2aa-49b3-8c8a-5b4e8df394a9 method=OPTIONS path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] Info: Agent-specific .env file (.env.phil_connors) not found at /Volumes/tkr-riffic/@tkr-projects/tkr-agent-chat/agents/phil_connors/src/../.env.phil_connors.
-[1] DEBUG: Starting ADK imports in chat_service.py...
-[1] DEBUG: Successfully imported ADK components in chat_service.py
-[1] INFO:     127.0.0.1:51611 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
-[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/agents HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions (request_id=6ad1eba0-63fa-4a81-82bb-8ac1eb6844d9 method=GET path=/api/v1/sessions client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents (request_id=5ab87657-d749-42a4-adf2-026dbe551e5b method=GET path=/api/v1/agents client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:51611 - "GET /api/v1/agents HTTP/1.1" 307 Temporary Redirect
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/agents/ (request_id=89a0c36b-252d-465f-9c44-a368127afcbe method=OPTIONS path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] DEBUG    [chat_service:86] Retrieved 9 sessions.
-[1] INFO:     127.0.0.1:51611 - "OPTIONS /api/v1/agents/ HTTP/1.1" 200 OK
-[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/agents/ (request_id=5dcf2274-e951-4297-9537-861a354e0e3c method=GET path=/api/v1/agents/ client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:51610 - "GET /api/v1/agents/ HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=58fd8d2a-6643-4598-b2dd-06a00d2e1e57 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=7bf3d2b8-704b-4ad4-9583-0f5810b9382d method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with pagination metadata.
-[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=2a385aef-5c4f-4fa9-b5b8-11d7127f8f56 method=OPTIONS path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO:     127.0.0.1:51610 - "OPTIONS /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] DEBUG    [logger_service:298] Request: GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages (request_id=d31e8a79-76f8-445e-934f-bd8f20097e70 method=GET path=/api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages client_ip=127.0.0.1 user_agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36)
-[1] INFO     [db:245] Getting messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with params: skip=0, limit=50, cursor=None, direction=desc, include_total=False
-[1] DEBUG    [chat_service:184] Retrieved 0 messages for session 63399371-4b1d-4d73-be3c-c6a9e4abe707 with pagination metadata.
-[1] INFO:     127.0.0.1:51610 - "GET /api/v1/sessions/63399371-4b1d-4d73-be3c-c6a9e4abe707/messages?limit=50&direction=desc&include_pagination=true HTTP/1.1" 200 OK
-[1] 4VbcOpVhX_bNeatQAAAA: Sending packet OPEN data {'sid': '4VbcOpVhX_bNeatQAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet OPEN data {'sid': '4VbcOpVhX_bNeatQAAAA', 'upgrades': [], 'pingTimeout': 60000, 'pingInterval': 25000, 'maxPayload': 5242880}
-[1] 4VbcOpVhX_bNeatQAAAA: Received request to upgrade to websocket
-[1] INFO     [async_socket:89] 4VbcOpVhX_bNeatQAAAA: Received request to upgrade to websocket
-[1] INFO:     ('127.0.0.1', 51617) - "WebSocket /socket.io/?session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707&agent_id=chloe&client_type=client&EIO=4&transport=websocket" [accepted]
-[1] 4VbcOpVhX_bNeatQAAAA: Upgrade to websocket successful
-[1] INFO     [async_socket:217] 4VbcOpVhX_bNeatQAAAA: Upgrade to websocket successful
-[1] INFO:     connection open
-[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 0/agents,
-[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 0/agents,
-[1] INFO     [logger_service:298] Agent Socket.IO connection established (socket_id=RarJiSIgqEvgiqr-AAAB agent_id=chloe session_id=63399371-4b1d-4d73-be3c-c6a9e4abe707 remote_addr=127.0.0.1)
-[1] RarJiSIgqEvgiqr-AAAB is entering room agent_chloe [/agents]
-[1] INFO     [async_server:303] RarJiSIgqEvgiqr-AAAB is entering room agent_chloe [/agents]
-[1] RarJiSIgqEvgiqr-AAAB is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] INFO     [async_server:303] RarJiSIgqEvgiqr-AAAB is entering room session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] emitting event "connect:status" to RarJiSIgqEvgiqr-AAAB [/agents]
-[1] INFO     [async_server:176] emitting event "connect:status" to RarJiSIgqEvgiqr-AAAB [/agents]
-[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"RarJiSIgqEvgiqr-AAAB","namespace":"/agents"}]
-[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["connect:status",{"connected":true,"agent_id":"chloe","session_id":"63399371-4b1d-4d73-be3c-c6a9e4abe707","socket_id":"RarJiSIgqEvgiqr-AAAB","namespace":"/agents"}]
-[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 0/agents,{"sid":"RarJiSIgqEvgiqr-AAAB"}
-[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 0/agents,{"sid":"RarJiSIgqEvgiqr-AAAB"}
-[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
-[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"session","id":"63399371-4b1d-4d73-be3c-c6a9e4abe707"}]
-[1] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] INFO     [async_server:594] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,["join",{"type":"agent","id":"chloe"}]
-[1] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] INFO     [async_server:594] received event "join" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746243808099_893","type":"text","text":"jerty","content":"jerty","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T03:43:28.100Z"}]
-[1] INFO     [async_socket:37] 4VbcOpVhX_bNeatQAAAA: Received packet MESSAGE data 2/agents,0["message",{"id":"msg_1746243808099_893","type":"text","text":"jerty","content":"jerty","sessionId":"63399371-4b1d-4d73-be3c-c6a9e4abe707","toAgent":"chloe","timestamp":"2025-05-03T03:43:28.100Z"}]
-[1] received event "message" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] INFO     [async_server:594] received event "message" from RarJiSIgqEvgiqr-AAAB [/agents]
-[1] INFO     [socket_service:722] Received message from agent chloe in session 63399371-4b1d-4d73-be3c-c6a9e4abe707
-[1] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] INFO     [async_server:176] emitting event "message" to session_63399371-4b1d-4d73-be3c-c6a9e4abe707 [/agents]
-[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"jerty","agent_id":"chloe","timestamp":"2025-05-03T03:43:28.101536"}]
-[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 2/agents,["message",{"type":"text","message":"jerty","agent_id":"chloe","timestamp":"2025-05-03T03:43:28.101536"}]
-[1] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T03:43:28.102209","message_id":"msg_1746243808099_893"}]
-[1] INFO     [async_socket:77] 4VbcOpVhX_bNeatQAAAA: Sending packet MESSAGE data 3/agents,0[{"status":"received","timestamp":"2025-05-03T03:43:28.102209","message_id":"msg_1746243808099_893"}]
-
-
+Component unmounting, cleaning up all connections...
+socket-service.ts:1454 Cleaning up Socket.IO service
+App.tsx:329 Fetching messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
+App.tsx:329 Fetching messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
+App.tsx:392 Loading 12 messages for session 0e5e306d-ca35-441c-a197-219ca2971d6a
+App.tsx:231 Attempting initial connection for all agents for session 0e5e306d-ca35-441c-a197-219ca2971d6a...
+socket-service.ts:1440 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
+socket-service.ts:742 Received connection status: {connected: true, agent_id: 'chloe', session_id: '0e5e306d-ca35-441c-a197-219ca2971d6a', socket_id: 'vIzH3zfYaXB2NyXuAAAB', namespace: '/agents'}
+socket-service.ts:1440 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
+socket-service.ts:406 Socket.IO connected
+socket-service.ts:272 Connected to Socket.IO server, session: 0e5e306d-ca35-441c-a197-219ca2971d6a, agent: chloe
+App.tsx:254 Connected agent chloe to session 0e5e306d-ca35-441c-a197-219ca2971d6a
+socket-service.ts:1143 Disconnecting from Socket.IO server
+socket-service.ts:1440 Agent chloe status updated: {connection: 'disconnected', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'disconnected', activity: 'idle'}
+socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connecting', activity: 'idle'}
+App.tsx:186 [phil_connors] Status changed: {connection: 'connecting', activity: 'idle'}
+socket-service.ts:742 Received connection status: {connected: true, agent_id: 'phil_connors', session_id: '0e5e306d-ca35-441c-a197-219ca2971d6a', socket_id: 'RYZ2KUYQmcGjUEx9AAAD', namespace: '/agents'}
+socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connected', activity: 'idle'}
+App.tsx:186 [phil_connors] Status changed: {connection: 'connected', activity: 'idle'}
+socket-service.ts:406 Socket.IO connected
+socket-service.ts:272 Connected to Socket.IO server, session: 0e5e306d-ca35-441c-a197-219ca2971d6a, agent: phil_connors
+App.tsx:254 Connected agent phil_connors to session 0e5e306d-ca35-441c-a197-219ca2971d6a
+socket-service.ts:1143 Disconnecting from Socket.IO server
+socket-service.ts:1440 Agent phil_connors status updated: {connection: 'disconnected', activity: 'idle'}
+App.tsx:186 [phil_connors] Status changed: {connection: 'disconnected', activity: 'idle'}
+App.tsx:505 Switched to conversation: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+2App.tsx:329 Fetching messages for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+App.tsx:231 Attempting initial connection for all agents for session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb...
+socket-service.ts:1440 Agent chloe status updated: {connection: 'connecting', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'connecting', activity: 'idle'}
+socket-service.ts:742 Received connection status: {connected: true, agent_id: 'chloe', session_id: '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', socket_id: 'Dp0B97E-d2VIaTj4AAAF', namespace: '/agents'}
+socket-service.ts:1440 Agent chloe status updated: {connection: 'connected', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'connected', activity: 'idle'}
+socket-service.ts:406 Socket.IO connected
+socket-service.ts:272 Connected to Socket.IO server, session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb, agent: chloe
+App.tsx:254 Connected agent chloe to session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
+socket-service.ts:1143 Disconnecting from Socket.IO server
+socket-service.ts:1440 Agent chloe status updated: {connection: 'disconnected', activity: 'idle'}
+App.tsx:186 [chloe] Status changed: {connection: 'disconnected', activity: 'idle'}
+socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connecting', activity: 'idle'}
+App.tsx:186 [phil_connors] Status changed: {connection: 'connecting', activity: 'idle'}
+socket-service.ts:742 Received connection status: {connected: true, agent_id: 'phil_connors', session_id: '3b9af753-7da3-4d21-a6f8-8f10fba0e2eb', socket_id: 'WHlfCyU1xuuAfu3rAAAH', namespace: '/agents'}
+socket-service.ts:1440 Agent phil_connors status updated: {connection: 'connected', activity: 'idle'}
+App.tsx:186 [phil_connors] Status changed: {connection: 'connected', activity: 'idle'}
+socket-service.ts:406 Socket.IO connected
+socket-service.ts:272 Connected to Socket.IO server, session: 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb, agent: phil_connors
+App.tsx:254 Connected agent phil_connors to session 3b9af753-7da3-4d21-a6f8-8f10fba0e2eb
 ```
 
 Component unmounting, cleaning up all connections...
