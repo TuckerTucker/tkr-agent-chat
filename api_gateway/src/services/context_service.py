@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta, UTC
 from typing import Optional, Dict, Any, List, Tuple
 
-from ..db import (
+from ..db_factory import (
     share_context as db_share_context,
     get_shared_contexts,
     update_shared_context,
@@ -24,6 +24,24 @@ from ..models.error_responses import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Metrics tracking for context operations
+from datetime import datetime, timedelta, UTC
+import threading
+from collections import defaultdict, Counter
+
+# Simple metrics storage
+_context_metrics = {
+    "shares": Counter(),         # Count shares by source_agent_id
+    "retrievals": Counter(),     # Count retrievals by target_agent_id
+    "shares_by_session": defaultdict(Counter),  # Count shares by session_id and source_agent_id
+    "retrievals_by_session": defaultdict(Counter),  # Count retrievals by session_id and target_agent_id
+    "relevance_scores": defaultdict(list),  # Track relevance scores for analysis
+    "context_sizes": [],         # Track context sizes in bytes
+    "operations_per_minute": defaultdict(int),  # Operations per minute
+    "last_reset": datetime.now(UTC)  # Last metrics reset
+}
+_metrics_lock = threading.Lock()  # Thread safety for metrics updates
 
 # Configuration constants (can be overridden by environment variables)
 DEFAULT_MAX_CONTEXTS = int(os.environ.get("MAX_CONTEXTS_PER_AGENT", "10"))
@@ -75,6 +93,79 @@ def calculate_relevance_score(content: Dict[str, Any], query: str) -> float:
     return min(1.0, final_score)
 
 class ContextService:
+    def update_metrics(self, operation: str, **kwargs):
+        """Update metrics for context operations."""
+        with _metrics_lock:
+            # Record operation timestamp for operations/minute tracking
+            current_minute = datetime.now(UTC).strftime("%Y%m%d%H%M")
+            _context_metrics["operations_per_minute"][current_minute] += 1
+            
+            # Reset metrics if they're over 24 hours old
+            now = datetime.now(UTC)
+            if now - _context_metrics["last_reset"] > timedelta(hours=24):
+                _context_metrics["operations_per_minute"].clear()
+                _context_metrics["context_sizes"] = []
+                _context_metrics["last_reset"] = now
+                # Keep agent and session counters for long-term analysis
+            
+            # Record specific operations
+            if operation == "share":
+                source_id = kwargs.get("source_agent_id", "unknown")
+                target_id = kwargs.get("target_agent_id", "unknown")
+                session_id = kwargs.get("session_id", "unknown")
+                context_size = kwargs.get("context_size", 0)
+                
+                _context_metrics["shares"][source_id] += 1
+                if session_id:
+                    _context_metrics["shares_by_session"][session_id][source_id] += 1
+                if context_size:
+                    _context_metrics["context_sizes"].append(context_size)
+                    
+            elif operation == "retrieve":
+                target_id = kwargs.get("target_agent_id", "unknown")
+                session_id = kwargs.get("session_id", "unknown")
+                
+                _context_metrics["retrievals"][target_id] += 1
+                if session_id:
+                    _context_metrics["retrievals_by_session"][session_id][target_id] += 1
+                    
+            elif operation == "relevance":
+                score = kwargs.get("score", 0.0)
+                query = kwargs.get("query", "unknown")
+                
+                if score is not None:
+                    _context_metrics["relevance_scores"][query[:50]].append(score)
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get current context metrics."""
+        with _metrics_lock:
+            # Calculate summary metrics
+            total_shares = sum(_context_metrics["shares"].values())
+            total_retrievals = sum(_context_metrics["retrievals"].values())
+            avg_context_size = sum(_context_metrics["context_sizes"]) / len(_context_metrics["context_sizes"]) if _context_metrics["context_sizes"] else 0
+            
+            # Get operations per minute for recent time window
+            now = datetime.now(UTC)
+            window_start = (now - timedelta(minutes=60)).strftime("%Y%m%d%H%M")
+            recent_ops = {k: v for k, v in _context_metrics["operations_per_minute"].items() if k >= window_start}
+            
+            # Calculate average relevance score
+            all_scores = []
+            for scores in _context_metrics["relevance_scores"].values():
+                all_scores.extend(scores)
+            avg_relevance = sum(all_scores) / len(all_scores) if all_scores else 0
+            
+            return {
+                "total_shares": total_shares,
+                "total_retrievals": total_retrievals,
+                "top_sharers": dict(sorted(_context_metrics["shares"].items(), key=lambda x: x[1], reverse=True)[:5]),
+                "top_retrievers": dict(sorted(_context_metrics["retrievals"].items(), key=lambda x: x[1], reverse=True)[:5]),
+                "avg_context_size_bytes": avg_context_size,
+                "avg_relevance_score": avg_relevance,
+                "operations_last_hour": sum(recent_ops.values()),
+                "last_reset": _context_metrics["last_reset"].isoformat()
+            }
+            
     def share_context(
         self,
         source_agent_id: str,
@@ -126,7 +217,16 @@ class ContextService:
         # After adding new context, prune if needed
         self._prune_contexts_if_needed(target_agent_id, session_id)
         
-        logger.info(f"Created shared context {context['id']} from {source_agent_id} to {target_agent_id}")
+        # Update metrics
+        content_size = len(json.dumps(context_data))
+        self.update_metrics("share", 
+            source_agent_id=source_agent_id, 
+            target_agent_id=target_agent_id,
+            session_id=session_id,
+            context_size=content_size
+        )
+        
+        logger.info(f"Created shared context {context['id']} from {source_agent_id} to {target_agent_id} ({content_size} bytes)")
         return context
 
     def get_shared_context(
@@ -148,24 +248,84 @@ class ContextService:
         Returns:
             List[Dict]: List of available context objects
         """
-        contexts = get_shared_contexts(
-            target_agent_id=target_agent_id,
-            session_id=session_id,
-            source_agent_id=source_agent_id
-        )
-        
-        # Sort by creation time (descending)
-        contexts.sort(
-            key=lambda ctx: ctx.get('context_metadata', {}).get('created_at', ''),
-            reverse=True
-        )
-        
-        # Apply limit
-        if limit and limit > 0:
-            contexts = contexts[:limit]
+        try:
+            logger.info(f"Retrieving contexts for agent {target_agent_id} in session {session_id}")
             
-        return contexts
+            contexts = get_shared_contexts(
+                target_agent_id=target_agent_id,
+                session_id=session_id,
+                source_agent_id=source_agent_id
+            )
+            
+            logger.info(f"Found {len(contexts)} raw contexts for agent {target_agent_id} in session {session_id}")
+            
+            # Sort by creation time (descending)
+            contexts.sort(
+                key=lambda ctx: ctx.get('context_metadata', {}).get('created_at', ''),
+                reverse=True
+            )
+            
+            # Apply limit
+            if limit and limit > 0:
+                contexts = contexts[:limit]
+                logger.info(f"Applied limit {limit}, now have {len(contexts)} contexts")
+            
+            # Update metrics
+            self.update_metrics("retrieve", 
+                target_agent_id=target_agent_id,
+                session_id=session_id
+            )
+            
+            logger.info(f"Retrieved {len(contexts)} contexts for agent {target_agent_id}" + 
+                       (f" in session {session_id}" if session_id else ""))
+                
+            return contexts
+        except Exception as e:
+            logger.error(f"Error getting shared contexts: {e}", exc_info=True)
+            # Return empty list in case of error
+            return []
 
+    def get_all_session_contexts(
+        self,
+        session_id: str,
+        limit: int = DEFAULT_MAX_CONTEXTS
+    ) -> List[Dict]:
+        """
+        Get all contexts for a session regardless of source or target agent.
+        
+        Args:
+            session_id: The session ID to get contexts for
+            limit: Maximum number of contexts to return
+            
+        Returns:
+            List[Dict]: List of all context objects for the session
+        """
+        try:
+            logger.info(f"Getting all contexts for session {session_id}")
+            
+            # Import here to avoid circular imports
+            from ..db_factory import get_session_contexts
+            
+            # Get all contexts for this session
+            contexts = get_session_contexts(session_id)
+            
+            logger.info(f"Found {len(contexts)} contexts for session {session_id}")
+            
+            # Sort by creation time (descending)
+            contexts.sort(
+                key=lambda ctx: ctx.get('context_metadata', {}).get('created_at', ''),
+                reverse=True
+            )
+            
+            # Apply limit
+            if limit > 0:
+                contexts = contexts[:limit]
+                
+            return contexts
+        except Exception as e:
+            logger.error(f"Error getting all session contexts: {e}", exc_info=True)
+            return []
+    
     def filter_relevant_context(
         self,
         contexts: List[Dict],
@@ -189,6 +349,12 @@ class ContextService:
         for context in contexts:
             # Calculate relevance score
             score = calculate_relevance_score(context['content'], query)
+            
+            # Update relevance metrics
+            self.update_metrics("relevance", 
+                score=score,
+                query=query
+            )
 
             if score >= min_score:
                 scored_contexts.append({
@@ -294,7 +460,10 @@ class ContextService:
         )
 
         if not contexts:
+            logger.debug(f"No contexts available to format for agent {target_agent_id} in session {session_id}")
             return None
+            
+        logger.info(f"Formatting {len(contexts)} contexts for agent {target_agent_id} in session {session_id}")
 
         # Sort contexts by timestamp (newest first)
         contexts.sort(key=lambda x: x.get('context_metadata', {}).get('created_at', ''), reverse=True)
@@ -332,9 +501,11 @@ class ContextService:
             current_size += entry_size
         
         if not included_contexts:
+            logger.debug(f"No contexts were included after size filtering for agent {target_agent_id}")
             return None
             
         formatted_context += "".join(included_contexts)
+        logger.info(f"Successfully formatted {len(included_contexts)} contexts ({current_size} bytes) for agent {target_agent_id}")
         return formatted_context
         
     def _prune_contexts_if_needed(

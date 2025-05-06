@@ -54,11 +54,18 @@ def legacy_to_standard(message: Dict[str, Any]) -> Dict[str, Any]:
     # Handle agent vs user specifics
     if message.get("fromAgent") or message.get("from_agent"):
         standard_message["from_agent"] = message.get("fromAgent") or message.get("from_agent")
-    elif message.get("fromUser") or message.get("from_user"):
+        # Ensure it's explicitly marked as not a user message
+        standard_message["from_user"] = False
+    elif message.get("fromUser") or message.get("from_user") or message.get("fromUser") == True or message.get("from_user") == True:
+        # Explicitly set to true (handle both boolean and string values)
         standard_message["from_user"] = True
+        # Make sure from_agent is not set
+        standard_message.pop("from_agent", None)
     else:
         # Default to user message if no source specified
         standard_message["from_user"] = True
+        # Make sure from_agent is not set
+        standard_message.pop("from_agent", None)
     
     # Handle target agent
     if message.get("toAgent") or message.get("to_agent"):

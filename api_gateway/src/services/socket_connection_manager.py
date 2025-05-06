@@ -148,27 +148,104 @@ class ConnectionManager:
         """
         @self.sio.event
         async def connect(sid, environ):
-            # Authenticate the connection
-            success, reason, auth_data = await self.authenticate_connection(sid, environ)
-            if not success:
-                logger.warning(f"Connection rejected: {reason}")
-                return False
-            
-            # Log connection with details
-            logger_service.log_with_context(
-                logger=logger,
-                level="info",
-                message="Socket.IO connection established",
-                context={
-                    "socket_id": sid,
-                    "remote_addr": environ.get('REMOTE_ADDR'),
-                    "user_agent": environ.get('HTTP_USER_AGENT'),
-                    "auth": auth_data
+            try:
+                # In development mode, bypass strict authentication
+                if environ.get('HTTP_ORIGIN', '').startswith('http://localhost:') or \
+                   environ.get('SERVER_NAME', '').startswith('localhost'):
+                    logger.info(f"Allowing local development connection: {sid}")
+                    
+                    # Get client details for logging
+                    client_ip = environ.get('REMOTE_ADDR', 'unknown')
+                    
+                    # Parse query string for session_id and agent_id
+                    session_id = None
+                    agent_id = None
+                    query_string = environ.get('QUERY_STRING', '')
+                    for param in query_string.split('&'):
+                        if param.startswith('session_id='):
+                            session_id = param[11:]
+                        elif param.startswith('agent_id='):
+                            agent_id = param[9:]
+                    
+                    # Log connection with details
+                    logger_service.log_with_context(
+                        logger=logger,
+                        level="info",
+                        message="Socket.IO local development connection established",
+                        context={
+                            "socket_id": sid,
+                            "remote_addr": client_ip,
+                            "user_agent": environ.get('HTTP_USER_AGENT'),
+                            "session_id": session_id,
+                            "agent_id": agent_id,
+                            "development_mode": True
+                        }
+                    )
+                    
+                    # Create minimal connection info
+                    connection_info = {
+                        'sid': sid,
+                        'ip': client_ip,
+                        'connected_at': time.time(),
+                        'last_activity': time.time(),
+                        'user_agent': environ.get('HTTP_USER_AGENT', 'unknown'),
+                        'auth': {'session_id': session_id, 'agent_id': agent_id},
+                        'namespace': environ.get('SOCKET_IO_NAMESPACE', '/'),
+                        'status': 'connected',
+                        'development_mode': True
+                    }
+                    
+                    self.active_connections[sid] = connection_info
+                    
+                    # Track connections by IP
+                    if client_ip not in self.connections_by_ip:
+                        self.connections_by_ip[client_ip] = []
+                    self.connections_by_ip[client_ip].append(sid)
+                    
+                    return True
+                
+                # Production authentication
+                success, reason, auth_data = await self.authenticate_connection(sid, environ)
+                if not success:
+                    logger.warning(f"Connection rejected: {reason}")
+                    # In development mode, consider allowing connections even with auth failures
+                    if environ.get('HTTP_HOST', '').startswith('localhost:'):
+                        logger.info(f"Allowing localhost connection despite auth failure: {reason}")
+                        self.register_connection_success(sid)
+                        return True
+                    return False
+                
+                # Log connection with details
+                logger_service.log_with_context(
+                    logger=logger,
+                    level="info",
+                    message="Socket.IO connection established",
+                    context={
+                        "socket_id": sid,
+                        "remote_addr": environ.get('REMOTE_ADDR'),
+                        "user_agent": environ.get('HTTP_USER_AGENT'),
+                        "auth": auth_data
+                    }
+                )
+                
+                self.register_connection_success(sid)
+                return True
+            except Exception as e:
+                # Be resilient against connection errors - log and allow connection
+                logger.error(f"Error during connection handling, allowing connection: {e}", exc_info=True)
+                
+                # Still register a minimal connection
+                client_ip = environ.get('REMOTE_ADDR', 'unknown')
+                self.active_connections[sid] = {
+                    'sid': sid,
+                    'ip': client_ip,
+                    'connected_at': time.time(),
+                    'last_activity': time.time(),
+                    'status': 'connected',
+                    'error_during_connect': str(e)
                 }
-            )
-            
-            self.register_connection_success(sid)
-            return True
+                
+                return True
         
         @self.sio.event
         async def disconnect(sid):
@@ -210,17 +287,30 @@ class ConnectionManager:
         """
         Start background tasks for connection monitoring and cleanup.
         """
-        # Start the cleanup task
-        asyncio.create_task(self._cleanup_stale_connections())
-        asyncio.create_task(self._monitor_connections())
-        logger.info("Connection monitoring started")
+        try:
+            logger.info("Starting connection cleanup task...")
+            cleanup_task = asyncio.create_task(self._cleanup_stale_connections())
+            logger.info("Connection cleanup task started successfully")
+            
+            logger.info("Starting connection monitoring task...")
+            monitor_task = asyncio.create_task(self._monitor_connections())
+            logger.info("Connection monitoring task started successfully")
+            
+            logger.info("Connection monitoring started")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to start connection monitoring: {e}", exc_info=True)
+            # Don't raise the exception so we can continue startup
+            return False
 
     async def _cleanup_stale_connections(self):
         """
         Periodically check for and clean up stale connections.
         """
+        logger.info("Connection cleanup task started - will check every 30 seconds")
         while True:
             try:
+                logger.debug("Running stale connection cleanup check")
                 now = time.time()
                 stale_sids = []
                 

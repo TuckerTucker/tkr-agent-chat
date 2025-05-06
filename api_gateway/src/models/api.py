@@ -88,3 +88,14 @@ class ContextConfigResponse(BaseModel):
     default_ttl_minutes: int
     min_relevance_score: float
     context_limit_bytes: int
+    
+class ContextMetricsResponse(BaseModel):
+    """Response with context metrics."""
+    total_shares: int
+    total_retrievals: int
+    top_sharers: Dict[str, int]
+    top_retrievers: Dict[str, int]
+    avg_context_size_bytes: float
+    avg_relevance_score: float
+    operations_last_hour: int
+    last_reset: str

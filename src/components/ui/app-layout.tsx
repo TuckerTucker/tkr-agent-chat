@@ -6,7 +6,7 @@ import { ChatInput } from './chat-input';
 import { AGENT_THEMES } from '../lib/agent-themes';
 import { cn } from '../lib/utils';
 import { AgentCard, AgentCardCompact } from './agent-card';
-import { ConversationListItem } from './conversation-list-item';
+import { ConversationList } from './conversation-list';
 import '../theme/tooltip.css';
 
 /**
@@ -16,7 +16,7 @@ export function AppLayout({
   conversations = [],
   currentConversation = null,
   onSendMessage = async () => Promise.resolve(),
-  // onCreateConversation param not used in this component but included in props type
+  onCreateConversation = () => {},
   onSelectConversation = () => {},
   onRenameConversation = async () => Promise.resolve(),
   onDeleteConversation = async () => Promise.resolve(),
@@ -56,19 +56,15 @@ export function AppLayout({
             </div>
             {/* Sidebar content: conversations */}
             <div className="flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-border/50 scrollbar-track-transparent">
-                {conversations.map((conversation: Conversation) => (
-                  <ConversationListItem
-                    key={conversation.id}
-                    id={conversation.id}
-                    title={conversation.title}
-                    isSelected={currentConversation?.id === conversation.id}
-                    onSelect={onSelectConversation}
-                    onRename={onRenameConversation}
-                    onDelete={onDeleteConversation}
-                  />
-                ))}
-              </div>
+              <ConversationList
+                conversations={conversations}
+                currentConversation={currentConversation}
+                onSelectConversation={onSelectConversation}
+                onCreateConversation={onCreateConversation}
+                onDeleteConversation={onDeleteConversation}
+                onUpdateTitle={onRenameConversation}
+                className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+              />
             </div>
           </aside>
 

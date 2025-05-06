@@ -31,8 +31,8 @@ except ImportError as e:
     class Session: pass
     class InMemorySessionService: pass
 
-# Local Imports
-from ..db import (
+# Local Imports - Using db_factory for database-agnostic access
+from ..db_factory import (
     create_session as db_create_session,
     get_session as db_get_session,
     list_sessions as db_list_sessions,
@@ -261,7 +261,7 @@ class ChatService:
             # Occasionally check if we need to trim messages
             # Use random chance to avoid checking on every message
             if random.random() < 0.1:  # 10% chance to check and trim
-                from ..db import trim_session_messages
+                from ..db_factory import trim_session_messages
                 # Get message count limit from environment or use default
                 max_messages = int(os.environ.get("MAX_SESSION_MESSAGES", "500"))
                 deleted_count = trim_session_messages(session_id, max_messages)

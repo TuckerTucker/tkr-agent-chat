@@ -23,6 +23,16 @@ class MessageType(str, Enum):
     PONG = "pong"                     # Connection check response
 
 
+class AgentMessageType(str, Enum):
+    """Subtypes for Agent-to-Agent (A2A) messages."""
+    CONTEXT_UPDATE = "context_update"   # Sharing context between agents
+    TASK_REQUEST = "task_request"       # Requesting assistance with a task
+    TASK_RESPONSE = "task_response"     # Responding to a task request
+    INFORMATION = "information"         # Sharing information with no response needed
+    QUESTION = "question"               # Asking for information, expects response
+    COORDINATION = "coordination"       # Coordinating activities between agents
+
+
 class MessageStatus(str, Enum):
     """Message delivery status."""
     SENT = "sent"             # Message sent, not yet acknowledged
@@ -96,9 +106,11 @@ class AgentToAgentMessage(BaseMessage):
     """Message sent from one agent to another."""
     type: MessageType = MessageType.AGENT_MESSAGE
     from_agent: str
-    to_agent: str
+    to_agent: Optional[str] = None  # Optional to allow for broadcast to all agents
+    message_type: Optional[AgentMessageType] = None  # Subtype of agent message
     content: Any
     task_id: Optional[str] = None
+    target_agents: Optional[List[str]] = None  # For targeting multiple specific agents
 
 
 class SystemMessage(BaseMessage):

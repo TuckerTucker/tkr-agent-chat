@@ -32,40 +32,41 @@ app:
   dev server: npm run dev # starts client and server concurrently
 
 database:
-  framework: "SQLite"
-  language: "SQL"
+  framework: "LMDB"
+  language: "Python"
   features:
-    - "JSON1 extension for complex data"
-    - "WAL mode for concurrency"
-    - "Built-in datetime functions"
-    - "Full-text search capabilities"
+    - "Fast key-value store"
+    - "Memory-mapped files for performance"
+    - "ACID transactions"
+    - "Multi-process concurrency"
   code_organization:
     structure:
-      - "api_gateway/scripts/init_db.py"  # Direct SQL schema management
+      - "api_gateway/src/db_lmdb.py"      # LMDB implementation 
       - "api_gateway/src/models/"         # Type definitions
-      - "api_gateway/src/database.py"     # Connection management
+      - "api_gateway/src/db_factory.py"   # Database factory pattern
     naming:
-      tables: "snake_case"
-      columns: "snake_case"
-      constraints: "SCREAMING_SNAKE_CASE"
+      collections: "snake_case"
+      keys: "camelCase"
+      indices: "snake_case"
   schema_management:
-    approach: "Direct SQL with CREATE TABLE IF NOT EXISTS"
-    migrations: "Safe column additions with ALTER TABLE"
+    approach: "Programmatic schema with msgpack serialization"
+    migrations: "Key-based evolution with backward compatibility"
     validation:
-      - "CHECK constraints for data integrity"
-      - "FOREIGN KEY constraints for relationships"
-      - "DEFAULT values for timestamps"
-      - "UNIQUE constraints where needed"
+      - "Type checking in serialization/deserialization"
+      - "Secondary indices for relationships"
+      - "ISO format for timestamps"
+      - "Composite keys for uniqueness constraints"
   performance:
     optimizations:
-      - "WAL journal mode"
-      - "Strategic indexing"
-      - "JSON1 optimization"
-      - "Efficient datetime comparisons"
+      - "Memory-mapped files"
+      - "Dupsort for index optimization"
+      - "Batch operations"
+      - "Efficient binary serialization with msgpack"
     settings:
-      - "PRAGMA foreign_keys=ON"
-      - "PRAGMA journal_mode=WAL"
-      - "PRAGMA synchronous=NORMAL"
+      - "map_size=10GB"
+      - "writemap=True"
+      - "max_dbs=10"
+      - "metasync=False (for performance)"
 
 data_sources:
   rest_endpoints:

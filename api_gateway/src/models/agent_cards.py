@@ -19,4 +19,4 @@ class AgentCard(BaseModel):
     updated_at: Optional[str] = None
 
     class Config:
-        from_attributes = True  # For compatibility with both dict and SQLite Row objects
+        from_attributes = True  # Enables attribute-based access for compatibility

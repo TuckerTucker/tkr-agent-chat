@@ -16,7 +16,8 @@ from ..models.api import (
     FilterContextRequest,
     BatchCleanupResponse,
     ContextStatsResponse,
-    ContextConfigResponse
+    ContextConfigResponse,
+    ContextMetricsResponse
 )
 
 # Import configuration constants
@@ -28,6 +29,11 @@ from ..services.context_service import (
 )
 
 router = APIRouter(prefix="/api/v1/context", tags=["context"])
+
+@router.get("/metrics", response_model=ContextMetricsResponse)
+def get_context_metrics() -> Dict:
+    """Get metrics about context usage."""
+    return context_service.get_metrics()
 
 @router.post("/share", response_model=SharedContextResponse)
 def share_context(request: ShareContextRequest) -> Dict:
@@ -199,3 +205,53 @@ def get_context_config() -> Dict:
         min_relevance_score=DEFAULT_MIN_RELEVANCE_SCORE,
         context_limit_bytes=DEFAULT_CONTEXT_LIMIT_BYTES
     )
+    
+@router.get("/debug/test")
+def test_context_sharing(
+    source_agent_id: str,
+    target_agent_id: str,
+    session_id: str,
+    content: str = "Test context from debug endpoint"
+):
+    """Debug endpoint to test context sharing between agents."""
+    try:
+        # Create context data
+        context_data = {
+            "content": content,
+            "timestamp": datetime.now(UTC).isoformat()
+        }
+        
+        # Share context
+        context = context_service.share_context(
+            source_agent_id=source_agent_id,
+            target_agent_id=target_agent_id,
+            context_data=context_data,
+            session_id=session_id
+        )
+        
+        # Format context
+        formatted_context = context_service.format_context_for_content(
+            target_agent_id=target_agent_id,
+            session_id=session_id
+        )
+        
+        # Return debug info
+        return {
+            "success": True,
+            "context_id": context["id"],
+            "source_agent": source_agent_id,
+            "target_agent": target_agent_id,
+            "session_id": session_id,
+            "content": content,
+            "context_size": len(content),
+            "formatted_context": formatted_context,
+            "formatted_context_size": len(formatted_context) if formatted_context else 0
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "source_agent": source_agent_id,
+            "target_agent": target_agent_id,
+            "session_id": session_id
+        }

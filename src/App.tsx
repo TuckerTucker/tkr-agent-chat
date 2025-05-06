@@ -3,7 +3,7 @@ import { ThemeProvider } from "./components/theme/theme-provider";
 import { AppLayout } from "./components/ui/app-layout";
 import { ErrorBoundary, ErrorMessage } from "./components/ui/error-boundary";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   getSessions, 
   getAgents, 
@@ -72,6 +72,8 @@ const createAgentMessage = (agentId: string, message: string, agentMetadata: Rec
 function AppWithNotifications() {
   // Get notification functions
   const { addNotification } = useNotifications();
+  // Get React Query client for cache invalidation
+  const queryClient = useQueryClient();
   
   // Data fetching with React Query
   const { data: sessions = [] } = useQuery<ChatSessionRead[]>({
@@ -126,9 +128,15 @@ function AppWithNotifications() {
     }
   }, [agents]);
 
-  // Select the first session by default when sessions load
+  // Load selectedSessionId from localStorage or select the first session
   useEffect(() => {
-    if (!selectedSessionId && sessions.length > 0) {
+    const savedSessionId = localStorage.getItem('selectedSessionId');
+    
+    if (savedSessionId && sessions.some(s => s.id === savedSessionId)) {
+      // Use saved session if it exists in available sessions
+      setSelectedSessionId(savedSessionId);
+    } else if (!selectedSessionId && sessions.length > 0) {
+      // Fall back to first session if no saved session or it doesn't exist anymore
       setSelectedSessionId(sessions[0].id);
     }
   }, [sessions, selectedSessionId]);
@@ -230,8 +238,8 @@ function AppWithNotifications() {
       if (!isInitialConnect.current) {
         console.log(`Attempting initial connection for all agents for session ${selectedSessionId}...`);
         
-        // Make sure all previous connections are closed
-        socketService.disconnect();
+        // First make sure all previous connections are properly closed
+        await socketService.disconnect();
         
         // Update all agent statuses to connecting
         const updatedStatuses = { ...agentStatuses };
@@ -248,7 +256,9 @@ function AppWithNotifications() {
           try {
             await socketService.connect({
               sessionId: selectedSessionId,
-              agentId: agentId
+              agentId: agentId,
+              forceNew: true,
+              reconnect: true
             });
             
             console.log(`Connected agent ${agentId} to session ${selectedSessionId}`);
@@ -337,8 +347,9 @@ function AppWithNotifications() {
       });
     },
     enabled: !!selectedSessionId,
-    staleTime: 10000, // Consider data fresh for 10 seconds
-    retry: 2, // Retry failed requests twice
+    staleTime: 24 * 60 * 60 * 1000, // Consider data fresh for 24 hours (prevents reload on refresh)
+    gcTime: 7 * 24 * 60 * 60 * 1000, // Keep in cache for 7 days
+    retry: 3, // Retry failed requests three times
   });
   
   // Extract messages from either array or paginated response
@@ -471,38 +482,50 @@ function AppWithNotifications() {
       
       // Reset Socket.IO connections for new session
       isInitialConnect.current = false;
+      
+      // Invalidate the sessions query to update the UI with the new session
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
     } catch (error) {
       console.error("Failed to create conversation:", error);
-    }
-  }, []);
-
-  const handleSelectConversation = useCallback((conv: { id: string }) => {
-    if (conv.id !== selectedSessionId) {
-      // First disconnect all existing socket connections
-      socketService.disconnect();
-      
-      // Clear local messages for the previous session
-      setLocalMessages([]);
-      
-      // Set new session ID
-      setSelectedSessionId(conv.id);
-      
-      // Reset agent statuses to disconnected
-      setAgentStatuses(prev => {
-        const resetStatuses = { ...prev };
-        Object.keys(resetStatuses).forEach(agentId => {
-          resetStatuses[agentId] = {
-            connection: 'disconnected',
-            activity: 'idle'
-          };
-        });
-        return resetStatuses;
+      addNotification({
+        type: 'error',
+        message: 'Failed to create new conversation.',
+        duration: 5000
       });
-      
-      // Reset Socket.IO connection flag when switching sessions
-      isInitialConnect.current = false;
-      
-      console.log(`Switched to conversation: ${conv.id}`);
+    }
+  }, [queryClient, addNotification]);
+
+  const handleSelectConversation = useCallback(async (conv: { id: string }) => {
+    if (conv.id !== selectedSessionId) {
+      try {
+        // First disconnect all existing socket connections
+        await socketService.disconnect();
+        
+        // Clear local messages for the previous session
+        setLocalMessages([]);
+        
+        // Set new session ID
+        setSelectedSessionId(conv.id);
+        
+        // Reset agent statuses to disconnected
+        setAgentStatuses(prev => {
+          const resetStatuses = { ...prev };
+          Object.keys(resetStatuses).forEach(agentId => {
+            resetStatuses[agentId] = {
+              connection: 'disconnected',
+              activity: 'idle'
+            };
+          });
+          return resetStatuses;
+        });
+        
+        // Reset Socket.IO connection flag when switching sessions
+        isInitialConnect.current = false;
+        
+        console.log(`Switched to conversation: ${conv.id}`);
+      } catch (error) {
+        console.error("Error while switching conversations:", error);
+      }
     }
   }, [selectedSessionId]);
 
@@ -511,7 +534,7 @@ function AppWithNotifications() {
   }, []);
   
   // Handler for connection retry attempts
-  const handleRetryConnection = useCallback((agentId: string) => {
+  const handleRetryConnection = useCallback(async (agentId: string) => {
     console.log(`Attempting to reconnect agent: ${agentId}`);
     
     if (selectedSessionId) {
@@ -523,14 +546,31 @@ function AppWithNotifications() {
         }
       }));
       
-      // First disconnect to clean up any lingering state
-      socketService.disconnect();
-      
-      // Then reconnect with current session
-      socketService.connect({
-        sessionId: selectedSessionId,
-        agentId: agentId
-      });
+      try {
+        // First disconnect to clean up any lingering state
+        await socketService.disconnect();
+        
+        // Then reconnect with current session
+        await socketService.connect({
+          sessionId: selectedSessionId,
+          agentId: agentId,
+          forceNew: true,
+          reconnect: true
+        });
+        
+        console.log(`Reconnected agent ${agentId} to session ${selectedSessionId}`);
+      } catch (error) {
+        console.error(`Failed to reconnect agent ${agentId}:`, error);
+        
+        // Update status to error
+        setAgentStatuses(prev => ({
+          ...prev,
+          [agentId]: { 
+            connection: 'error',
+            activity: 'error'
+          }
+        }));
+      }
     }
   }, [selectedSessionId]);
 
@@ -681,10 +721,8 @@ function AppWithNotifications() {
     
     try {
       await updateSession(id, { title: newTitle });
-      // Since we're using React Query, we should invalidate the sessions query
-      // to trigger a refetch with the updated data
-      // For simplicity, let's just refetch sessions directly
-      await getSessions();
+      // Invalidate the sessions query to update the UI
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
     } catch (error) {
       console.error("Failed to rename conversation:", error);
       // Show error notification
@@ -694,7 +732,7 @@ function AppWithNotifications() {
         duration: 5000
       });
     }
-  }, [addNotification]);
+  }, [addNotification, queryClient]);
 
   // Handle deleting a conversation
   const handleDeleteConversation = useCallback(async (id: string) => {
@@ -713,8 +751,8 @@ function AppWithNotifications() {
         }
       }
       
-      // Refetch sessions to update the list
-      await getSessions();
+      // Invalidate and refetch the sessions query to update the UI
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
       
       // Show success notification
       addNotification({
@@ -730,7 +768,7 @@ function AppWithNotifications() {
         duration: 5000
       });
     }
-  }, [selectedSessionId, sessions, addNotification]);
+  }, [selectedSessionId, sessions, addNotification, queryClient]);
 
 
   return (

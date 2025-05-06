@@ -6,7 +6,6 @@ import json
 import pytest
 import asyncio
 import uuid
-import sqlite3
 from datetime import datetime, timedelta, UTC
 from unittest.mock import patch, AsyncMock, MagicMock
 
@@ -208,16 +207,20 @@ async def test_context_expiration(setup_context_service, mock_agents):
     )
     assert len(contexts_before) == 1
     
-    # Directly execute SQL to make the context expired and bypass any caching
-    with sqlite3.connect(str(DEFAULT_DB_PATH)) as conn:
-        conn.execute("PRAGMA foreign_keys=ON")
-        cursor = conn.cursor()
-        # Set the expiration time to be in the past
-        cursor.execute(
-            "UPDATE shared_contexts SET expires_at = datetime('now', '-1 day') WHERE session_id = ?", 
-            (session_id,)
+    # Use the context service to update the context's expiration time to the past
+    contexts = context_service.get_shared_context(
+        target_agent_id="agent2",
+        session_id=session_id
+    )
+    
+    # Get the context ID and update its expiration time
+    if contexts:
+        context_id = contexts[0]["id"]
+        one_day_ago = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+        context_service.update_context(
+            context_id,
+            {"expires_at": one_day_ago}
         )
-        conn.commit()
     
     # Clean up expired contexts using the database function
     removed = context_service.batch_cleanup_contexts()

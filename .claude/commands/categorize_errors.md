@@ -1,0 +1,1 @@
+Review _planning/review_logs.txt and categorize the issues. 

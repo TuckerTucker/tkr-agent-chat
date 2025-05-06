@@ -73,3 +73,54 @@ def update_task_context(
         return service.add_task_context(task_id, context_update)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+        
+@router.post("/test-context")
+def test_context_sharing(
+    source_agent_id: str,
+    target_agent_id: str,
+    session_id: str,
+    content: str = "This is a test context from the A2A API"
+):
+    """Test endpoint for direct A2A context sharing."""
+    try:
+        from ..services.context_service import context_service
+        from datetime import datetime, UTC
+        
+        # Create context data
+        context_data = {
+            "content": content,
+            "timestamp": datetime.now(UTC).isoformat()
+        }
+        
+        # Share context directly
+        context = context_service.share_context(
+            source_agent_id=source_agent_id,
+            target_agent_id=target_agent_id,
+            context_data=context_data,
+            session_id=session_id
+        )
+        
+        # Get formatted context for the target agent
+        formatted_context = context_service.format_context_for_content(
+            target_agent_id=target_agent_id,
+            session_id=session_id
+        )
+        
+        # Return debug info
+        return {
+            "success": True,
+            "context_id": context["id"],
+            "source_agent": source_agent_id,
+            "target_agent": target_agent_id,
+            "session_id": session_id,
+            "context": context_data,
+            "formatted_context": formatted_context
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "source_agent": source_agent_id,
+            "target_agent": target_agent_id,
+            "session_id": session_id
+        }

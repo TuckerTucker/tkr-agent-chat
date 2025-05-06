@@ -35,4 +35,7 @@ SYSTEM_PROMPT = (
     "Note that the web_scraper tool now returns only plain text content from webpages, without HTML, images, or links.\n"
     "\n"
     "Always show tool results before discussing them, so users can see the raw data along with your analysis."
+    "\n\n"
+    "# SHARED CONTEXT FROM OTHER AGENTS\n"
+    "{{formatted_context}}"
 )

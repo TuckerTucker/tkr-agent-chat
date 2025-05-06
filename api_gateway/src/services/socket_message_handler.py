@@ -18,6 +18,7 @@ from ..services.logger_service import logger_service
 from ..services.error_service import error_service
 from ..models.error_responses import ErrorCodes, ErrorCategory, ErrorSeverity
 from ..services.chat_service import chat_service
+from ..services.context_service import context_service
 from ..models.messages import MessageType
 
 # Import standardized message schema
@@ -195,9 +196,14 @@ async def store_message(message: Dict[str, Any]) -> Tuple[bool, Optional[str], O
         if from_agent:
             message_type = MessageType.AGENT
             agent_id = from_agent
-        else:
+        elif from_user:
             message_type = MessageType.USER
             agent_id = standardized_message.get("to_agent")  # Target agent
+        else:
+            # Default to user message if no sender type is specified
+            message_type = MessageType.USER
+            agent_id = standardized_message.get("to_agent")  # Target agent
+            logger.warning(f"Message has neither from_agent nor from_user specified, defaulting to USER type: {standardized_message.get('id')}")
             
         # Prepare message parts based on content
         content = standardized_message.get("content")
@@ -236,19 +242,58 @@ async def store_message(message: Dict[str, Any]) -> Tuple[bool, Optional[str], O
         elif message.get("metadata"):
             metadata.update(message["metadata"])
             
-        # Save to database using chat_service
-        saved_message = chat_service.save_message(
-            session_id=session_id,
-            msg_type=message_type,
-            agent_id=agent_id,
-            parts=message_parts,
-            message_metadata=metadata
-        )
+        # Log detailed information about message before saving
+        logger.info(f"📝 SAVING MESSAGE 📝 session={session_id}, type={message_type.name}, agent_id={agent_id or 'None'}")
+        logger.info(f"Message parts preview: {str(message_parts)[:100]}...")
         
-        if saved_message:
-            return True, None, saved_message.get("message_uuid")
-        else:
-            return False, "Failed to save message to database", None
+        # Save to database using chat_service with retry logic
+        retry_count = 0
+        max_retries = 3
+        retry_delay = 0.5  # seconds
+        
+        while retry_count < max_retries:
+            try:
+                saved_message = chat_service.save_message(
+                    session_id=session_id,
+                    msg_type=message_type,
+                    agent_id=agent_id,
+                    parts=message_parts,
+                    message_metadata=metadata
+                )
+                logger.info(f"✅ MESSAGE SAVED ✅ id={saved_message.get('message_uuid')}, type={message_type.name}")
+                
+                if saved_message:
+                    # Verify message was saved by reading it back
+                    try:
+                        from ..db_factory import get_message_by_uuid
+                        verification = get_message_by_uuid(saved_message.get("message_uuid"))
+                        if verification:
+                            logger.info(f"✅ MESSAGE VERIFIED ✅ id={saved_message.get('message_uuid')}")
+                            return True, None, saved_message.get("message_uuid")
+                        else:
+                            logger.warning(f"⚠️ MESSAGE VERIFICATION FAILED ⚠️ id={saved_message.get('message_uuid')}")
+                            retry_count += 1
+                            await asyncio.sleep(retry_delay)
+                            continue
+                    except Exception as verify_err:
+                        logger.error(f"Error verifying message: {verify_err}", exc_info=True)
+                        # Continue with success if verification fails but message save succeeded
+                        return True, None, saved_message.get("message_uuid")
+                else:
+                    retry_count += 1
+                    logger.warning(f"⚠️ MESSAGE SAVE RETURNED NONE (Retry {retry_count}/{max_retries}) ⚠️")
+                    await asyncio.sleep(retry_delay)
+                    continue
+            except Exception as e:
+                logger.error(f"❌ MESSAGE SAVE FAILED (Retry {retry_count+1}/{max_retries}) ❌: {e}", exc_info=True)
+                retry_count += 1
+                if retry_count < max_retries:
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    return False, f"Error saving message after {max_retries} attempts: {str(e)}", None
+        
+        return False, "Failed to save message to database after retries", None
             
     except Exception as e:
         logger.error(f"Error storing message: {e}", exc_info=True)
@@ -334,6 +379,10 @@ async def handle_text_message(sio, sid: str, message: Dict[str, Any], namespace:
         Acknowledgment object
     """
     try:
+        # Log message details for debugging
+        logger.info(f"⭐ HANDLING TEXT MESSAGE ⭐ id={message.get('id')} session={message.get('session_id') or message.get('sessionId')}")
+        logger.info(f"Message format indicators: from_user={message.get('from_user')}, fromUser={message.get('fromUser')}, from_agent={message.get('from_agent')}, fromAgent={message.get('fromAgent')}, type={message.get('type')}")
+        
         # Validate message
         is_valid, error = validate_message_format(message)
         if not is_valid:
@@ -870,6 +919,17 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
                     logger.error(f"Error saving or broadcasting final message: {save_err}", exc_info=True)
                     raise
                 
+                # Extract key information and share context with other agents
+                asyncio.create_task(
+                    share_response_context(
+                        sio=sio,
+                        session_id=session_id,
+                        source_agent_id=agent_id,
+                        response_text=response_text,
+                        namespace=namespace
+                    )
+                )
+                
                 logger.info(f"Agent {agent_id} generated and delivered response for message {standard_message.get('id')}")
                 logger.info(f"⭐ AGENT RESPONSE GENERATION COMPLETED ⭐")
                 
@@ -910,6 +970,130 @@ async def generate_agent_response(sio, session_id: str, agent_id: str, message: 
     except Exception as e:
         logger.error(f"Unhandled error in generate_agent_response: {e}", exc_info=True)
         logger.error(f"⭐ AGENT RESPONSE GENERATION FAILED ⭐")
+
+async def share_response_context(sio, session_id: str, source_agent_id: str, response_text: str, namespace: str) -> None:
+    """
+    Extract context from agent responses and share with other agents.
+    
+    Args:
+        sio: SocketIO server instance
+        session_id: Chat session ID
+        source_agent_id: Agent that generated the response
+        response_text: The generated response content 
+        namespace: Socket.IO namespace
+    """
+    try:
+        logger.info(f"🔄 CONTEXT SHARING: Starting context sharing from agent {source_agent_id} in session {session_id}")
+        logger.info(f"🔄 CONTEXT SHARING: Response text length: {len(response_text)} chars")
+        
+        # Import chat_service here to avoid unbound local variable error
+        from ..services.chat_service import chat_service
+        
+        # Get all agents in the session
+        agents = chat_service.get_agents()
+        logger.info(f"🔄 CONTEXT SHARING: Got agents - type: {type(agents)}, count: {len(agents) if hasattr(agents, '__len__') else 'unknown'}")
+        
+        # Skip sharing if there's only one agent
+        # Handle both dictionary and list return types from get_agents()
+        if isinstance(agents, dict):
+            logger.info(f"🔄 CONTEXT SHARING: Agents returned as dictionary with {len(agents)} items")
+            active_agents = [a for a in agents.values() if hasattr(a, 'id') and a.id != source_agent_id]
+        else:
+            logger.info(f"🔄 CONTEXT SHARING: Agents returned as list or other type with {len(agents) if hasattr(agents, '__len__') else 'unknown'} items")
+            active_agents = [a for a in agents if hasattr(a, 'id') and a.id != source_agent_id]
+            
+        logger.info(f"🔄 CONTEXT SHARING: Found {len(active_agents)} active agents other than source agent")
+        
+        if not active_agents:
+            logger.info(f"🔄 CONTEXT SHARING: No other agents available for context sharing in session {session_id}")
+            return
+        
+        # Log active agents
+        for i, agent in enumerate(active_agents):
+            logger.info(f"🔄 CONTEXT SHARING: Active agent {i+1}: {agent.id} ({agent.name if hasattr(agent, 'name') else 'unknown'})")
+            
+        # Extract a meaningful context summary from the response
+        # (could be enhanced with better content extraction or summarization)
+        context_data = {
+            "content": response_text,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        logger.info(f"🔄 CONTEXT SHARING: Created context data with timestamp {context_data['timestamp']}")
+        logger.info(f"🔄 CONTEXT SHARING: Context data content: {context_data['content'][:100]}...")
+        
+        # Share with all other agents in the session
+        context_update_ids = []
+        for agent in active_agents:
+            try:
+                logger.info(f"🔄 CONTEXT SHARING: Attempting to share context with agent {agent.id}")
+                # Debug check if agent exists in the database
+                agent_info = chat_service.get_agent(agent.id)
+                logger.info(f"🔄 CONTEXT SHARING: Agent {agent.id} exists: {agent_info is not None}")
+                
+                context_update = context_service.share_context(
+                    source_agent_id=source_agent_id,
+                    target_agent_id=agent.id,
+                    context_data=context_data,
+                    session_id=session_id
+                )
+                context_update_ids.append(context_update["id"])
+                logger.info(f"🔄 CONTEXT SHARING: Successfully shared context from {source_agent_id} to {agent.id} with ID {context_update['id']}")
+                
+                # Debug log the formatted context after sharing
+                formatted = context_service.format_context_for_content(
+                    target_agent_id=agent.id,
+                    session_id=session_id
+                )
+                logger.info(f"🔄 CONTEXT SHARING: Formatted context for agent {agent.id}: {formatted[:100] if formatted else 'None'}...")
+                
+            except Exception as agent_err:
+                logger.error(f"🔄 CONTEXT SHARING: Failed to share context with agent {agent.id}: {agent_err}", exc_info=True)
+                
+        # Only broadcast if context was actually shared
+        if context_update_ids:
+            # Broadcast context update event to clients
+            context_update_msg = {
+                "id": str(uuid.uuid4()),
+                "type": "context_update",
+                "session_id": session_id,
+                "from_agent": source_agent_id,
+                "context_ids": context_update_ids,
+                "contextData": context_data,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            await sio.emit(
+                "context:update", 
+                context_update_msg,
+                room=f"session_{session_id}",
+                namespace=namespace
+            )
+            
+            # Also emit A2A message for other agents to be notified
+            a2a_message = {
+                "id": str(uuid.uuid4()),
+                "type": "agent_message",
+                "message_type": "context_update",
+                "session_id": session_id,
+                "from_agent": source_agent_id,
+                "content": {
+                    "context_ids": context_update_ids,
+                    "summary": f"Agent {source_agent_id} shared context with other agents"
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            await sio.emit(
+                "message", 
+                a2a_message,
+                room=f"session_{session_id}",
+                namespace=namespace
+            )
+            
+            logger.info(f"Context update broadcasts sent to session {session_id} for {len(context_update_ids)} context updates")
+    except Exception as e:
+        logger.error(f"Error in share_response_context: {e}", exc_info=True)
 
 # Message handler registry - maps message types to handler functions
 MESSAGE_HANDLERS = {

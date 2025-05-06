@@ -112,34 +112,71 @@ def setup_context_service(setup_test_database):
 @pytest.fixture
 def mock_agents():
     """Create mock agents for testing."""
-    class MockAgent:
-        def __init__(self, agent_id):
-            self.id = agent_id
-            self.name = f"Test Agent {agent_id}"
-            self.description = "A test agent for unit tests"
-            self.color = "#ff5733"
-            self.capabilities = ["testing", "mocking"]
-            self._health_status = "healthy"
-            self._last_error = None
-            self._last_activity = None
+    from unittest.mock import MagicMock, AsyncMock
+    
+    # Create base agent mock
+    def create_agent_mock(agent_id, name):
+        agent_mock = MagicMock()
+        agent_mock.id = agent_id
+        agent_mock.name = name
+        agent_mock.description = f"Mock agent {name} for testing"
+        agent_mock.color = "#ff5733"
+        agent_mock.capabilities = ["testing", "context_aware"]
+        agent_mock._health_status = "healthy"
+        agent_mock._last_error = None
+        agent_mock._last_activity = datetime.now(UTC).isoformat()
+        
+        # Mock generate_response method
+        async def mock_generate_response(session, message, system_prompt=None):
+            return f"Response from {name} to message: {message[:30]}..."
+        
+        agent_mock.generate_response = AsyncMock(side_effect=mock_generate_response)
+        
+        # Mock get_system_prompt method
+        def mock_get_system_prompt(**kwargs):
+            template_vars = kwargs.copy()
             
-        def get_health_status(self):
+            # Create a basic prompt with template vars
+            prompt = f"You are {name}, an AI assistant.\n\n"
+            
+            # Add formatted context if available
+            if 'formatted_context' in template_vars:
+                prompt += template_vars['formatted_context']
+                
+            return prompt
+        
+        agent_mock.get_system_prompt = mock_get_system_prompt
+        
+        # Add health status method
+        def get_health_status():
             return {
-                "id": self.id,
-                "name": self.name,
-                "status": self._health_status,
-                "last_error": self._last_error,
-                "last_activity": self._last_activity,
+                "id": agent_id,
+                "name": name,
+                "status": agent_mock._health_status,
+                "last_error": agent_mock._last_error,
+                "last_activity": agent_mock._last_activity,
                 "tools_available": 5,
-                "capabilities": self.capabilities
+                "capabilities": agent_mock.capabilities
             }
             
-        def reset_state(self):
-            self._health_status = "healthy"
-            self._last_error = None
+        agent_mock.get_health_status = get_health_status
+        
+        # Add reset state method
+        def reset_state():
+            agent_mock._health_status = "healthy"
+            agent_mock._last_error = None
+            
+        agent_mock.reset_state = reset_state
+        
+        return agent_mock
     
-    return {
-        "agent1": MockAgent("agent1"),
-        "agent2": MockAgent("agent2"),
-        "agent3": MockAgent("agent3")
+    # Create test agents
+    agents = {
+        'agent1': create_agent_mock('agent1', 'Mock Agent One'),
+        'agent2': create_agent_mock('agent2', 'Mock Agent Two'),
+        'agent3': create_agent_mock('agent3', 'Mock Agent Three'),
+        'chloe': create_agent_mock('chloe', 'Chloe'),
+        'phil_connors': create_agent_mock('phil_connors', 'Phil Connors')
     }
+    
+    return agents

@@ -388,13 +388,24 @@ class BaseAgent(ADKAgentBase):
                 )
                 
                 # Also, format context specifically for this prompt
-                formatted_context = context_service.format_context_for_content(
-                    target_agent_id=self.id,
-                    session_id=session_id
-                )
-                
-                if formatted_context:
-                    template_vars["formatted_context"] = formatted_context
+                logger.info(f"🔄 CONTEXT PROCESSING: Attempting to format context for agent {self.id} in session {session_id}")
+                try:
+                    formatted_context = context_service.format_context_for_content(
+                        target_agent_id=self.id,
+                        session_id=session_id
+                    )
+                    
+                    if formatted_context:
+                        logger.info(f"🔄 CONTEXT PROCESSING: Adding formatted context to prompt for agent {self.id} ({len(formatted_context)} chars)")
+                        logger.debug(f"🔄 CONTEXT PROCESSING: Context content preview: {formatted_context[:100]}...")
+                        template_vars["formatted_context"] = formatted_context
+                    else:
+                        logger.info(f"🔄 CONTEXT PROCESSING: No formatted context available for agent {self.id}")
+                        # Provide empty string instead of None for formatted_context to avoid template errors
+                        template_vars["formatted_context"] = ""
+                except Exception as ctx_err:
+                    logger.error(f"🔄 CONTEXT PROCESSING: Error formatting context for agent {self.id}: {ctx_err}", exc_info=True)
+                    template_vars["formatted_context"] = ""  # Ensure the template variable exists even on error
             
         except ImportError as e:
             logger.warning(f"Context service not available: {e}")

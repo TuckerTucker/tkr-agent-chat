@@ -34,14 +34,17 @@ from ..services.socket_error_handler import socket_error_handler
 logger = logger_service.get_logger("socket.io")
 
 # Create Socket.IO AsyncServer with ASGI mode
+# NOTE: Socket.IO handles its own CORS. FastAPI's CORS middleware is configured to exclude
+# Socket.IO routes to prevent duplicate CORS headers, which would cause client errors.
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins='*',  # Configure as needed
+    cors_allowed_origins=["http://localhost:5173"],  # Explicitly allow frontend origin
     logger=True,
     engineio_logger=True,  # More verbose logging
     ping_timeout=60,  # Increased ping timeout for reliability
     ping_interval=25,  # More frequent pings
-    max_http_buffer_size=5 * 1024 * 1024  # 5MB max buffer for larger messages
+    max_http_buffer_size=5 * 1024 * 1024,  # 5MB max buffer for larger messages
+    always_connect=True  # Always accept connections, even with auth errors
 )
 
 # Connection tracking
@@ -699,27 +702,55 @@ class AgentNamespace(socketio.AsyncNamespace):
             # Update metrics
             socket_metrics.message_received()
             
-            # Log message receipt
-            logger.info(f"Received message from agent {agent_id} in session {session_id}", extra={
+            # Determine if this is an agent message or a user message
+            from_user = data.get('from_user')
+            from_agent = data.get('from_agent') or data.get('fromAgent')
+            
+            if from_user:
+                source_type = "user"
+            elif from_agent:
+                source_type = f"agent {agent_id}"
+            else:
+                # Default to user since most client messages are user messages
+                source_type = "user" 
+                
+            # Log message receipt with correct sender type
+            logger.info(f"Received message from {source_type} in session {session_id}", extra={
                 "socket_id": sid,
                 "message_type": data.get('type'),
-                "content_length": len(str(data.get('content', '')))
+                "content_length": len(str(data.get('content', ''))),
+                "from_user": from_user,
+                "from_agent": from_agent
             })
             
             # Process message based on type
             msg_type = data.get('type', 'text')
             
             if msg_type == 'text':
+                # If this is a user message, first save it to the database
+                # Import store_message handler from socket_message_handler
+                from ..services.socket_message_handler import store_message, handle_text_message
+                
+                # For user messages, explicitly store the message first
+                if from_user:
+                    logger.info(f"Storing user message to database for session {session_id}")
+                    stored, error, saved_id = await store_message(data)
+                    if not stored:
+                        logger.error(f"Failed to store user message: {error}")
+                    else:
+                        logger.info(f"Successfully stored user message with ID: {saved_id}")
+                
                 # Broadcast message to session
                 await self.emit('message', {
                     'type': 'text',
-                    'message': data.get('text', ''),
-                    'agent_id': agent_id,
+                    'message': data.get('text', '') or data.get('content', ''),
+                    'from_user': from_user,
+                    'agent_id': from_agent,
                     'timestamp': datetime.utcnow().isoformat()
                 }, room=f'session_{session_id}')
                 
                 # Check if this message targets a specific agent and needs a response
-                target_agent_id = data.get('toAgent')
+                target_agent_id = data.get('toAgent') or data.get('to_agent')
                 if target_agent_id:
                     logger.info(f"Message targets agent {target_agent_id}, generating agent response")
                     
@@ -760,12 +791,22 @@ class AgentNamespace(socketio.AsyncNamespace):
                         'timestamp': datetime.utcnow().isoformat()
                     }, room=f'agent_{target_agent}')
             
-            # Return acknowledgment
-            return {
+            # Build acknowledgment response including persistence info
+            ack_response = {
                 'status': 'received',
                 'timestamp': datetime.utcnow().isoformat(),
                 'message_id': data.get('id', str(uuid.uuid4()))
             }
+                
+            # Add persistence confirmation if we stored a user message
+            if from_user and 'saved_id' in locals() and saved_id:
+                ack_response["status"] = "delivered"
+                ack_response["persisted"] = True
+                ack_response["persistedId"] = saved_id
+                logger.info(f"Acknowledging persisted user message with ID: {saved_id}")
+                
+            # Return acknowledgment with persistence info
+            return ack_response
             
         except Exception as e:
             logger.error(f"Error handling agent message: {e}", exc_info=True)
@@ -1052,12 +1093,17 @@ async def broadcast_task_update(task_data: Dict[str, Any]) -> None:
 # Connection status check for monitoring
 async def check_connections():
     """Periodically check connection status and clean up stale connections."""
+    logger.info("Socket.IO connection check task started - will check every 60 seconds")
     while True:
         try:
+            logger.debug("Running connection status check")
             now = datetime.utcnow()
             stale_connections = []
             
             # Check each connection for activity
+            connection_count = len(active_connections)
+            logger.debug(f"Checking {connection_count} active connections")
+            
             for sid, connection in active_connections.items():
                 try:
                     # Skip if not connected
@@ -1080,19 +1126,27 @@ async def check_connections():
                     logger.error(f"Error checking connection {sid}: {conn_err}")
             
             # Process stale connections
-            for sid in stale_connections:
-                try:
-                    # Send ping to check if still alive
-                    await sio.emit('ping', {'timestamp': now.isoformat()}, room=sid, namespace='/')
-                    logger.info(f"Sent ping to stale connection {sid}")
-                except Exception as ping_err:
-                    logger.error(f"Error pinging stale connection {sid}: {ping_err}")
+            stale_count = len(stale_connections)
+            if stale_count > 0:
+                logger.info(f"Found {stale_count} stale connections to ping")
+                
+                for sid in stale_connections:
+                    try:
+                        # Send ping to check if still alive
+                        await sio.emit('ping', {'timestamp': now.isoformat()}, room=sid, namespace='/')
+                        logger.info(f"Sent ping to stale connection {sid}")
+                    except Exception as ping_err:
+                        logger.error(f"Error pinging stale connection {sid}: {ping_err}")
+            else:
+                logger.debug("No stale connections found")
                     
             # Sleep for interval
+            logger.debug("Connection check complete, sleeping for 60 seconds")
             await asyncio.sleep(60)  # Check every minute
             
         except Exception as e:
             logger.error(f"Error in connection monitoring: {e}", exc_info=True)
+            logger.info("Connection monitoring error, will retry in 60 seconds")
             await asyncio.sleep(60)  # Continue checking despite errors
 
 # Metrics endpoint for monitoring
@@ -1113,15 +1167,26 @@ def get_socketio_app():
 # Start background tasks
 async def start_background_tasks():
     """Start background tasks for Socket.IO service."""
+    logger.info("Creating Socket.IO connection monitoring task...")
     asyncio.create_task(check_connections())
-    logger.info("Started Socket.IO background tasks")
+    logger.info("Socket.IO connection monitoring task created successfully")
+    return True  # Explicitly return to confirm successful completion
 
 # Initialize the Socket.IO server
 def initialize():
     """Initialize the Socket.IO server."""
-    logger.info("Initializing Socket.IO server")
+    logger.info("Initializing Socket.IO server (detailed)...")
     
-    # Initialize error handler with Socket.IO server
-    socket_error_handler.initialize(sio)
-    
-    return get_socketio_app()
+    try:
+        # Initialize error handler with Socket.IO server
+        logger.info("Initializing Socket.IO error handler...")
+        socket_error_handler.initialize(sio)
+        logger.info("Socket.IO error handler initialized successfully")
+        
+        app = get_socketio_app()
+        logger.info("Socket.IO ASGI app created successfully")
+        return app
+    except Exception as e:
+        logger.error(f"Error initializing Socket.IO server: {e}", exc_info=True)
+        # Return a minimal app instead of failing completely
+        return socketio.ASGIApp(sio)

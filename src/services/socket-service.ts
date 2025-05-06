@@ -255,19 +255,22 @@ class SocketService extends EventEmitter {
         // Create Socket.IO connection with appropriate namespace
         this.socket = io(`${BASE_URL}${targetNamespace}`, {
           path: '/socket.io',
-          transports: ['websocket', 'polling'],  // Prefer WebSocket but fallback to polling
+          transports: ['polling', 'websocket'],  // Start with polling then upgrade to websocket
           reconnection: reconnect,
           reconnectionAttempts: this.maxReconnectAttempts,
           reconnectionDelay: RECONNECTION_DELAY,
           reconnectionDelayMax: RECONNECTION_DELAY_MAX,
           timeout: CONNECTION_TIMEOUT,
           autoConnect: true,
+          forceNew: true,  // Force a new connection
           query: {
             session_id: sessionId,
             agent_id: agentId || '',
             client_type: 'client'
           }
         });
+        
+        console.log(`Connecting to Socket.IO server: ${BASE_URL}${targetNamespace} with session: ${sessionId}, agent: ${agentId || 'none'}`);
         
         // Set up Socket.IO event handlers
         this.setupEventHandlers();
@@ -1204,37 +1207,74 @@ class SocketService extends EventEmitter {
   
   /**
    * Disconnect from the Socket.IO server
+   * @returns Promise that resolves when disconnect is complete
    */
-  disconnect() {
-    if (!this.socket) return;
-    
-    console.log('Disconnecting from Socket.IO server');
-    
-    try {
-      // Clean up event handlers
-      this.cleanupEventHandlers();
-      
-      // Close socket
-      this.socket.disconnect();
-      
-      // Reset state
-      this.socket = null;
-      this.connected = false;
-      this.connecting = false;
-      this.reconnecting = false;
-      this.offlineMode = true;
-      
-      // Update agent status if there's a current agent
-      if (this.lastAgentId) {
-        this.updateAgentStatus(this.lastAgentId, { connection: 'disconnected', activity: 'idle' });
-        this.callbacks.onDisconnect?.(this.lastAgentId, 'manual_disconnect');
+  disconnect(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (!this.socket) {
+        resolve();
+        return;
       }
       
-      // Emit disconnect event to local listeners
-      this.emit('connection:status', { connected: false, reason: 'manual_disconnect' });
-    } catch (error) {
-      console.error('Error disconnecting from Socket.IO server:', error);
-    }
+      console.log('Disconnecting from Socket.IO server');
+      
+      try {
+        // Set flags first to prevent reconnection attempts
+        this.connected = false;
+        this.connecting = false;
+        this.reconnecting = false;
+        
+        // Clean up event handlers
+        this.cleanupEventHandlers();
+        
+        // Only use timeout if socket is still connected
+        if (this.socket.connected) {
+          // Attempt clean disconnect with timeout - increased to 5 seconds
+          const disconnectTimeout = setTimeout(() => {
+            console.log('Forced Socket.IO disconnect due to timeout');
+            if (this.socket) {
+              this.socket.close();
+              this.socket = null;
+            }
+            resolve();
+          }, 5000);
+          
+          // Set up one-time listener for disconnect event
+          this.socket.once('disconnect', () => {
+            console.log('Socket.IO disconnected cleanly');
+            clearTimeout(disconnectTimeout);
+            this.socket = null;
+            resolve();
+          });
+          
+          // Close socket
+          this.socket.disconnect();
+        } else {
+          // Socket wasn't connected, just clean up
+          this.socket = null;
+          resolve();
+        }
+        
+        // Reset state
+        this.connected = false;
+        this.connecting = false;
+        this.reconnecting = false;
+        this.offlineMode = true;
+        
+        // Update agent status if there's a current agent
+        if (this.lastAgentId) {
+          this.updateAgentStatus(this.lastAgentId, { connection: 'disconnected', activity: 'idle' });
+          this.callbacks.onDisconnect?.(this.lastAgentId, 'manual_disconnect');
+        }
+        
+        // Emit disconnect event to local listeners
+        this.emit('connection:status', { connected: false, reason: 'manual_disconnect' });
+      } catch (error) {
+        console.error('Error disconnecting from Socket.IO server:', error);
+        this.socket = null;
+        resolve(); // Still resolve even on error
+      }
+    });
   }
   
   /**

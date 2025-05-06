@@ -36,7 +36,7 @@ from .services.context_service import context_service
 from .services.agent_health_service import agent_health_service
 from .services import socket_service  # Import Socket.IO service
 from .models.error_responses import StandardErrorResponse, ErrorCodes, ErrorCategory, ErrorSeverity
-from .db import init_database  # Import our new direct SQL database module
+from .db_factory import init_database, get_database_info  # Import database factory
 from dotenv import load_dotenv
 
 # Load environment variables from .env file in the project root
@@ -101,10 +101,25 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS configuration
+# CORS configuration - using a custom class to exclude Socket.IO routes
+class CustomCORSMiddleware(CORSMiddleware):
+    """Custom CORS middleware that excludes Socket.IO routes"""
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+            
+        # Skip CORS handling for Socket.IO routes to prevent duplicate headers
+        path = scope.get("path", "")
+        if path.startswith("/socket.io"):
+            return await self.app(scope, receive, send)
+            
+        # For all other routes, apply normal CORS handling
+        return await super().__call__(scope, receive, send)
+
+# Add our custom CORS middleware
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],  # Frontend dev servers
+    CustomCORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Explicitly allow frontend origin
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
@@ -264,7 +279,7 @@ async def message_cleanup_task():
                 # Process each session
                 for session in sessions:
                     session_id = session['id']
-                    from .db import trim_session_messages
+                    from .db_factory import trim_session_messages
                     deleted = trim_session_messages(session_id, max_messages)
                     if deleted > 0:
                         cleaned_count += deleted
@@ -396,40 +411,57 @@ async def agent_health_monitoring_task():
 async def startup_event():
     """Initialize services and database on startup."""
     try:
-        # Initialize Database using direct SQL
+        logger.info("=== STARTUP SEQUENCE BEGINNING ===")
+        
+        # Initialize LMDB Database
+        logger.info("STEP 1: Initializing LMDB database...")
         init_database()
-        logger.info("Database initialized.")
+        db_info = get_database_info()
+        logger.info(f"LMDB database initialized: implementation={db_info['implementation']}, path={db_info['path']}")
 
         # Load agents into ChatService
+        logger.info("STEP 2: Loading agents into ChatService...")
         loaded_agents = load_agents()
         chat_service.set_agents(loaded_agents)
-        logger.info("Chat service initialized with agents.")
+        logger.info(f"Chat service initialized with {len(loaded_agents)} agents: {list(loaded_agents.keys())}")
         
         # Start background cleanup tasks
+        logger.info("STEP 3: Starting background cleanup tasks...")
+        
+        logger.info("3.1: Starting context cleanup task...")
         asyncio.create_task(context_cleanup_task())
         logger.info("Context cleanup background task started")
         
+        logger.info("3.2: Starting message cleanup task...")
         asyncio.create_task(message_cleanup_task())
         logger.info("Message cleanup background task started")
         
+        logger.info("3.3: Starting inactive session cleanup task...")
         asyncio.create_task(inactive_session_cleanup_task())
         logger.info("Session cleanup background task started")
         
+        logger.info("3.4: Starting agent health monitoring task...")
         asyncio.create_task(agent_health_monitoring_task())
         logger.info("Agent health monitoring background task started")
         
         # Initialize Socket.IO connection manager
+        logger.info("STEP 4: Initializing Socket.IO connection manager...")
         from .services.socket_connection_manager import get_connection_manager
         connection_manager = get_connection_manager(socket_service.sio)
+        logger.info("4.1: Registering connection events...")
         connection_manager.register_connection_events()
+        logger.info("4.2: Starting connection monitoring...")
         asyncio.create_task(connection_manager.start_monitoring())
         logger.info("Socket.IO connection manager initialized")
         
         # Start Socket.IO background tasks
+        logger.info("STEP 5: Starting Socket.IO background tasks...")
         await socket_service.start_background_tasks()
         logger.info("Socket.IO background tasks started")
+        
+        logger.info("=== STARTUP SEQUENCE COMPLETED ===")
     except Exception as e:
-        logger.error(f"Startup error: {e}")
+        logger.error(f"Startup error: {e}", exc_info=True)
         raise
 
 @app.on_event("shutdown")
@@ -485,13 +517,14 @@ app.include_router(
     tags=["context"]
 )
 
-# Mount Socket.IO app
+# Mount Socket.IO app - Socket.IO handles its own CORS to avoid duplicate headers
 socketio_app = socket_service.initialize()
 app.mount('/socket.io', socketio_app)
-logger.info("Socket.IO server mounted at /socket.io")
+logger.info("Socket.IO server mounted at /socket.io - CORS handled by Socket.IO itself")
 
 # Health Check
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint with system status information."""
     # Get basic agent health information
@@ -537,7 +570,8 @@ async def health_check():
         },
         "features": ["a2a", "socket.io", "agents", "agent_health_monitoring"],
         "active_adk_sessions": len(chat_service.active_adk_sessions),
-        "socket_io": socket_io_metrics
+        "socket_io": socket_io_metrics,
+        "database": get_database_info()
     }
 
 if __name__ == "__main__":

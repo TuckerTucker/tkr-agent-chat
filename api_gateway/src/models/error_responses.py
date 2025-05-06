@@ -75,7 +75,7 @@ class StandardErrorResponse(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "error_code": "ADK_SESSION_FAILED",
                 "message": "Failed to create ADK session for agent",
@@ -155,7 +155,7 @@ class SocketErrorResponse(Exception):
         super().__init__(message)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "error_code": "SOCKET_CONNECTION_TIMEOUT",
                 "message": "Socket.IO connection timed out",
@@ -186,7 +186,7 @@ class TaskErrorResponse(StandardErrorResponse):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "error_code": "TASK_CREATION_FAILED",
                 "message": "Failed to create task",
