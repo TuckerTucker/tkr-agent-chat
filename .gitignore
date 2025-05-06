@@ -1,9 +1,8 @@
 reference_tkr-agent-chat-cf78e38e209b729a1964b7cad6c8caa7cde971d8
 
-# Project specific
-chat_database.db 
+# Project specificchat_database.db 
+api_gateway/chats/chat_database/*
 
-chat-interface-V0-vercel
 
 # Logs
 logs
