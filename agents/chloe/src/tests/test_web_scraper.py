@@ -35,6 +35,7 @@ def test_successful_scrape(mock_get):
     assert "error" not in result
     assert result["title"] == "Test Page"
     assert result["url"] == "https://example.com"
+    assert result["metadata"] == {"displayType": "web-scraper"}
     
     # Check content is present
     assert "This is test content." in result["text"]
@@ -57,7 +58,8 @@ def test_selector_extraction(mock_get, monkeypatch):
     mock_response.raise_for_status.return_value = None
     mock_get.return_value = mock_response
     
-    result = web_scraper("http://fake.com", selectors={"content": ".foo"})
+    result = web_scraper("http://fake.com", selector=".foo")
     
     assert "bar" in result["text"]
     assert result["url"] == "http://fake.com"
+    assert result["metadata"] == {"displayType": "web-scraper"}

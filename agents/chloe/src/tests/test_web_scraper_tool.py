@@ -46,6 +46,7 @@ class TestWebScraperTool(unittest.TestCase):
         self.assertNotIn("error", result)
         self.assertEqual(result["title"], "Test Title")
         self.assertEqual(result["url"], "https://test.com")
+        self.assertEqual(result["metadata"], {"displayType": "web-scraper"})
         
         # Check that content is present
         self.assertIn("First paragraph.", result["text"])
@@ -82,12 +83,13 @@ class TestWebScraperTool(unittest.TestCase):
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = web_scraper("https://test.com", selectors={"content": ".content"})
+        result = web_scraper("https://test.com", selector=".content")
         self.assertNotIn("error", result)
         self.assertEqual(result["title"], "Test Title")
         self.assertEqual(result["url"], "https://test.com")
         self.assertIn("Target content", result["text"])
         self.assertNotIn("Ignore this", result["text"])
+        self.assertEqual(result["metadata"], {"displayType": "web-scraper"})
 
     @patch('requests.get')
     def test_web_scraper_http_error(self, mock_get):

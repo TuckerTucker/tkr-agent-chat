@@ -94,7 +94,7 @@ def _clean_text(text):
 
 def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip_rate_limit: bool = False) -> Dict[str, Any]:
     """
-    Fetches and extracts content from a web page.
+    Fetches and extracts text from a web page.
     
     Args:
         url: The URL to scrape
@@ -103,7 +103,7 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
         skip_rate_limit: Whether to bypass rate limiting
         
     Returns:
-        Dictionary with content or standardized error response
+        Dictionary with scraped text or standardized error response
     """
     logger.info(f"web_scraper called with url={url}, selector={selector}, timeout={timeout}, skip_rate_limit={skip_rate_limit}")
     start_time = time.time()
@@ -140,9 +140,11 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
         if domain == "example.com":
             logger.info("Returning mock response for example.com")
             return {
-                "content": "This is a mocked response for example.com for testing purposes.",
+                "text": "This is a mocked response for example.com for testing purposes.",
                 "url": url,
-                "mocked": True
+                "title": None,
+                "mocked": True,
+                "metadata": {"displayType": "web-scraper"}
             }
             
         # Rate limiting check
@@ -182,6 +184,7 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
             return error
 
         soup = BeautifulSoup(html, "html.parser")
+        title = soup.title.get_text(strip=True) if soup.title else None
 
         # Remove unwanted elements
         elements_to_remove = [
@@ -201,21 +204,27 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
             if not elements:
                 logger.info(f"No elements found matching selector: {selector}")
                 # This is not an error condition, just no matching elements
+                title = soup.title.get_text(strip=True) if soup.title else None
                 return {
-                    "content": None,
+                    "text": None,
                     "message": "No elements found matching selector",
                     "selector": selector,
                     "url": url,
-                    "found_elements": False
+                    "title": title,
+                    "found_elements": False,
+                    "metadata": {"displayType": "web-scraper"}
                 }
             content = [el.get_text(strip=True) for el in elements]
             logger.info(f"Extracted {len(content)} elements for selector: {selector}")
+            title = soup.title.get_text(strip=True) if soup.title else None
             return {
-                "content": content,
+                "text": content,
                 "selector": selector,
                 "url": url,
+                "title": title,
                 "found_elements": True,
-                "element_count": len(content)
+                "element_count": len(content),
+                "metadata": {"displayType": "web-scraper"}
             }
 
         # General content extraction
@@ -242,10 +251,12 @@ def web_scraper(url: str, selector: Optional[str] = None, timeout: int = 8, skip
         logger.info(f"Scraping complete for {url} ({len(content)} chars, {elapsed:.2f}s)")
         
         return {
-            "content": content,
+            "text": content,
             "url": url,
+            "title": title,
             "elapsed_seconds": round(elapsed, 2),
-            "content_length": len(content)
+            "content_length": len(content),
+            "metadata": {"displayType": "web-scraper"}
         }
         
     except Exception as e:
