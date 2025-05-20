@@ -500,22 +500,11 @@ async def handle_context_update(sio, sid: str, message: Dict[str, Any], namespac
         session_id = message.get("sessionId")
         source_agent = message.get("fromAgent")
         
-        # Store context using context_service
-        from ..services.context_service import context_service
-        
         context_id = message.get("contextId")
         context_data = message.get("contextData")
-        
+
         try:
-            # Store the context
-            await context_service.store_context(
-                context_id=context_id,
-                session_id=session_id,
-                source_agent_id=source_agent,
-                context_data=context_data
-            )
-            
-            # Share with appropriate agents
+            # Share with appropriate agents and persist context
             if message.get("targetAgents"):
                 # Selective sharing
                 target_agents = message.get("targetAgents")
