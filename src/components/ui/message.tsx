@@ -37,7 +37,6 @@ const MessageFunctions = forwardRef<HTMLDivElement, MessageControlsProps>(({
       aria-label="Message actions"
       role="toolbar"
       aria-orientation="horizontal"
-      aria-orientation-sm="vertical" 
       tabIndex={0}
     >
       <Button
