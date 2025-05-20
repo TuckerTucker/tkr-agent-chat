@@ -5,8 +5,11 @@ Unit tests for the Weather Check Tool in phil_connors Agent.
 import unittest
 import os
 import logging
+import requests
 from unittest.mock import patch, MagicMock
+
 from ..tools.weather_check import weather_check
+from agents.common.tool_errors import ToolErrorCodes
 
 # Store original API key value if it exists
 ORIGINAL_API_KEY = os.getenv("OPENWEATHER_API_KEY")
@@ -67,8 +70,9 @@ class TestWeatherCheckTool(unittest.TestCase):
         mock_get.return_value = mock_response
 
         result = weather_check("Paris")
-        self.assertIn("error", result)
-        self.assertIn("API Error: Invalid API key", result["error"])
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.API_ERROR)
+        self.assertIn("Invalid API key", result["message"])
 
     @patch('requests.get')
     def test_weather_check_http_error(self, mock_get):
@@ -76,9 +80,10 @@ class TestWeatherCheckTool(unittest.TestCase):
         mock_get.side_effect = requests.RequestException("Connection failed")
 
         result = weather_check("Tokyo")
-        self.assertIn("error", result)
-        self.assertIn("Network error fetching weather", result["error"])
-        self.assertIn("Connection failed", result["error"])
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.CONNECTION_ERROR)
+        self.assertIn("Network error", result["message"])
+        self.assertIn("Connection failed", result["message"])
 
     @patch('requests.get')
     def test_weather_check_timeout(self, mock_get):
@@ -86,26 +91,30 @@ class TestWeatherCheckTool(unittest.TestCase):
         mock_get.side_effect = requests.Timeout("Timeout")
 
         result = weather_check("Sydney")
-        self.assertIn("error", result)
-        self.assertIn("Request timed out", result["error"])
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.TIMEOUT_ERROR)
+        self.assertIn("timed out", result["message"])
 
     def test_weather_check_no_api_key(self):
         """Test behavior when API key is not configured."""
         del os.environ["OPENWEATHER_API_KEY"] # Temporarily remove key
         result = weather_check("Berlin")
-        self.assertIn("error", result)
-        self.assertIn("OPENWEATHER_API_KEY) not configured", result["error"])
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.MISSING_API_KEY)
+        self.assertIn("OPENWEATHER_API_KEY", result["message"])
         os.environ["OPENWEATHER_API_KEY"] = "test_key_123" # Put it back for other tests
 
     def test_weather_check_invalid_location(self):
         """Test behavior with invalid location input."""
         result = weather_check("")
-        self.assertIn("error", result)
-        self.assertIn("Invalid location provided", result["error"])
-        
-        result = weather_check(None) # type: ignore 
-        self.assertIn("error", result)
-        self.assertIn("Invalid location provided", result["error"])
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.INVALID_PARAMETER)
+        self.assertIn("Invalid parameter 'location'", result["message"])
+
+        result = weather_check(None)  # type: ignore
+        self.assertTrue(result.get("error"))
+        self.assertEqual(result["error_code"], ToolErrorCodes.INVALID_PARAMETER)
+        self.assertIn("Invalid parameter 'location'", result["message"])
 
 if __name__ == '__main__':
     unittest.main()
