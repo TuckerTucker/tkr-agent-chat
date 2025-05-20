@@ -1,4 +1,4 @@
-# Basic Python Virtual Envirionment Set Up
+# Basic Python Virtual Environment Set Up
  Automatically sets up a Python virtual environment. 
 
 ## Setup
@@ -17,10 +17,10 @@ Start the env
     ```    
     
 1. First it checks if the environment exists.
-env true: Creates and activates the environtment then installs all packages in 'env_requirements' (listed below). 
+env true: Creates and activates the environment then installs all packages in 'env_requirements' (listed below).
 env false: Activates the environment.
 
-### Change Environment Nmme
+### Change Environment Name
 
 Use --env to control the name
 
