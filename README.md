@@ -9,7 +9,7 @@ A web-based chat interface for interacting with multiple specialized AI agents u
 - Context sharing between agents
 - JSON-based structured logging with customizable output
 - React/TypeScript frontend with Tailwind CSS
-- FastAPI backend with SQLite database
+- FastAPI backend with LMDB database
 
 ## Installation
 

@@ -100,7 +100,7 @@ The `.env` file contains the following configuration options:
 | `TKR_LOG_MAX_SIZE_MB` | Maximum log file size before rotation | 10 |
 | `TKR_LOG_BACKUP_COUNT` | Number of backup files to keep | 5 |
 | `TKR_LOG_CONSOLE` | Whether to output logs to console | true |
-| `DATABASE_URL` | SQLite database path | sqlite+aiosqlite:///api_gateway/chats/chat_database.db |
+| `DB_TYPE` | Database backend type | lmdb |
 | `VITE_WS_URL` | WebSocket server URL | ws://localhost:8000 |
 | `VITE_API_URL` | API server URL | http://localhost:8000 |
 | `GOOGLE_API_KEY` | Google AI API key | (required) |

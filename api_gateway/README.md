@@ -4,7 +4,7 @@ The API Gateway provides REST and WebSocket endpoints for the multi-agent chat s
 
 ## Database Setup
 
-The system uses SQLite with Alembic for migrations. The database is automatically initialized when the server starts, but you can also manually initialize or reset it:
+The system uses an LMDB database. The database is automatically created when the server starts, but you can also manually initialize or reset it:
 
 ```bash
 # Initialize the database (creates if not exists)
@@ -13,13 +13,13 @@ npm run db:init
 # Reset the database (deletes existing and recreates)
 npm run db:reset
 
-# The database will be created at:
-# api_gateway/chats/chat_database.db
+# The database files will be created under:
+# api_gateway/chats/chat_database/
 ```
 
 The initialization script:
-1. Creates the database directory if it doesn't exist
-2. Runs all Alembic migrations to set up the schema
+1. Creates the LMDB directory if it doesn't exist
+2. Sets up the required databases
 3. Creates default agent cards
 
 ## Development
